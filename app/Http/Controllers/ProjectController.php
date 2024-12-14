@@ -7,6 +7,7 @@ use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use App\Repositories\ProjectRepositoryInterface;
 use Illuminate\Http\Request;
+use App\Services\ImageService;
 
 class ProjectController extends BaseController
 {
@@ -28,7 +29,8 @@ class ProjectController extends BaseController
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
             'note' => 'nullable|string|max:1000',
-            'status' => 'required|string|in:approved,not_approved,canceled', // Enum validation
+            'status' => 'string|in:approved,not_approved,canceled', // Enum validation
+            'attachments.*' => 'file|max:10240',  // Max 10MB
         ]);
     
         // Determine the authenticated user and type
@@ -47,12 +49,24 @@ class ProjectController extends BaseController
             ], 403); // Forbidden
         }
     
-        // Create the project
-        $project = \App\Models\Project::create($validatedData);
+        // Create the project without the attachments
+        $project = Project::create(collect($validatedData)->except('attachments')->toArray());
+    
+        // Handle attachments using ImageService
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = ImageService::upload($file, 'attachments'); // Use ImageService to save the file
+                $project->attachments()->create([
+                    'file_path' => $path,
+                ]);
+            }
+        }
     
         // Return the created project using a resource
-        return response()->json(new \App\Http\Resources\ProjectResource($project), 201);
+        return response()->json(new ProjectResource($project), 201);
     }
+    
+    
     
 
 }

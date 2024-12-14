@@ -28,7 +28,7 @@ class ProjectRequest extends FormRequest
                 },
             ],
             'note' => 'nullable|string|max:1000',
-            'status' => 'required|string|in:approved,not_approved,canceled',
+            'status' => 'string|in:approved,not_approved,canceled',
             'created_by_id' => [
                 'required',
                 'integer',

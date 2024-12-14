@@ -1,60 +1,15 @@
 <?php
 
-// // app/Http/Controllers/ProductController.php
-// namespace App\Http\Controllers;
-
-// use App\Http\Requests\ProductRequest;
-// use App\Http\Resources\ProductResource;
-// use App\Repositories\ProductRepositoryInterface;
-
-// class ProductController extends Controller
-// {
-//     protected $productRepository;
-
-//     public function __construct(ProductRepositoryInterface $productRepository)
-//     {
-//         $this->productRepository = $productRepository;
-//     }
-
-//     public function index()
-//     {
-//         $products = $this->productRepository->getAll();
-//         return ProductResource::collection($products);
-//     }
-
-//     public function show($id)
-//     {
-//         $product = $this->productRepository->getById($id);
-//         return new ProductResource($product);
-//     }
-
-//     public function store(ProductRequest $request)
-//     {
-//         $product = $this->productRepository->create($request);
-//         return new ProductResource($product);
-//     }
-
-//     public function update(ProductRequest $request, $id)
-//     {
-//         $product = $this->productRepository->update($id, $request);
-//         return new ProductResource($product);
-//     }
-
-//     public function destroy($id)
-//     {
-//         $this->productRepository->delete($id);
-//         return response()->json(['message' => 'Product deleted successfully.']);
-//     }
-// }
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\BaseController;
-
 use App\Http\Requests\ProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Repositories\ProductRepositoryInterface;
+use App\Models\Product;
+use App\Models\Attachment;
+use App\Services\ImageService;
 class ProductController extends BaseController
 {
     private $repository;
@@ -63,4 +18,37 @@ class ProductController extends BaseController
         parent::__construct($repository);
 
     }
+
+    public function store(Request $request)
+{
+    // Validate the incoming request
+    $validatedData = $request->validate([
+        'name' => 'required|string|max:255',
+        'description' => 'required|string',
+        'price' => 'required|numeric|min:0',
+        'note' => 'required|string|max:1000',
+        'attachments.*' => 'file|max:10240', // Max 10MB per file
+    ]);
+
+    // Exclude attachments from the validated data
+    $productData = collect($validatedData)->except('attachments')->toArray();
+
+    // Create the product
+    $product = Product::create($productData);
+
+    // Handle attachments using ImageService
+    if ($request->hasFile('attachments')) {
+        foreach ($request->file('attachments') as $file) {
+            $path = ImageService::upload($file, 'attachments'); // Save the file using ImageService
+            $product->attachments()->create([
+                'file_path' => $path,
+            ]);
+        }
+    }
+
+    // Return the created product using a resource
+    return response()->json(new ProductResource($product->load('attachments')), 201);
+}
+
+
 }

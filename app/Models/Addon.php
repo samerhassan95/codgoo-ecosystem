@@ -13,7 +13,14 @@ class Addon extends Model
     
     public function products()
     {
-        return $this->hasMany(ProductAddon::class);
+        return $this->belongsToMany(Product::class, 'product_addons')
+                    ->withPivot(['some_column_in_pivot_if_needed']);
+    }
+
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_addons')
+                    ->withPivot(['some_column_in_pivot_if_needed']);
     }
     
     

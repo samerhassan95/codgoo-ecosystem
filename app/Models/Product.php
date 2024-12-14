@@ -18,7 +18,10 @@ class Product extends Model
     
     public function addons()
     {
-        return $this->hasMany(ProductAddon::class);
+        return $this->hasMany(ProductAddons::class);
     }
-    
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }    
 }

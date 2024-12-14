@@ -19,5 +19,13 @@ class Project extends Model
     {
         return $this->morphTo('created_by');
     }
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
 
+    public function addons()
+    {
+        return $this->hasMany(ProjectAddons::class);
+    }
 }
