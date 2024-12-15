@@ -21,6 +21,7 @@ Route::prefix('client')->group(function() {
     Route::post('login', [ClientAuthController::class, 'login']);
     Route::post('logout', [ClientAuthController::class, 'logout']);
     Route::post('forgot-password', [ClientAuthController::class, 'forgotPassword']);
+    Route::post('verify-otp', [ClientAuthController::class, 'verifyOtpAndCreateClient']);
 });
 
 Route::middleware('auth:admin')->group(function () {
