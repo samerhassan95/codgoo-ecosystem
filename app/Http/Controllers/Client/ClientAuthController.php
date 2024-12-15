@@ -323,4 +323,157 @@ class ClientAuthController extends Controller
         $result = $this->clientRepo->forgotPassword($request->phone);
         return response()->json($result);
     }
+
+    public function getProfile(Request $request)
+    {
+        $client = auth('client')->user();
+
+        if (!$client) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized. Client not found.',
+                'data' => null
+            ], 401);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile retrieved successfully.',
+            'data' => [
+                'client' => $client,
+                'token' => $request->bearerToken(), 
+                'type' => 'client',  
+            ],
+        ]);
+    }
+
+
+    public function forgotPasswordRequest(Request $request)
+    {
+        // Validate phone number
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|exists:clients,phone',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Phone number does not exist.',
+                'data' => null
+            ], 404);
+        }
+
+        $phone = $request->phone;
+
+        // Generate OTP (4 digits)
+        $otp = 1234;
+
+        // Store OTP in cache for 5 minutes
+        Cache::put('otp', $otp,  now()->addMinutes(10));  // Store OTP in cache for 5 minutes
+
+        // Simulate sending OTP (you can integrate an SMS service here)
+        // For now, we'll just log the OTP (In production, send via SMS)
+        Log::info("OTP for phone {$phone}: {$otp}");
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP sent successfully. Please check your phone.',
+            'data' => null
+        ], 200);
+    }
+
+
+    public function verifyOtp(Request $request)
+    {
+        // Validate the OTP and phone number
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|exists:clients,phone',
+            'otp' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+                'data' => null
+            ], 402);
+        }
+
+        // Retrieve phone and OTP from request
+        $phone = $request->phone;
+        $otp = $request->otp;
+
+        // Check if OTP exists in cache and matches
+        $storedOtp = Cache::get('otp');
+        // dd($storedOtp);
+        if (!$storedOtp || $storedOtp != $otp) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid or expired OTP.',
+                'data' => null
+            ], 402);
+        }
+
+        // Optionally, delete the OTP from cache after it's verified
+        Cache::forget('otp_' . $phone);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP verified successfully. You can now reset your password.',
+            'data' => null
+        ], 200);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        // Validate password and phone number
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|exists:clients,phone',
+            'password' => 'required|min:6|confirmed',  // Password confirmation
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+                'data' => null
+            ], 402);
+        }
+
+        // Retrieve phone and new password from request
+        $phone = $request->phone;
+        $newPassword = $request->password;
+
+        // Retrieve the stored OTP from cache (ensure it's verified before)
+        $storedOtp = Cache::get('otp');
+
+        if (!$storedOtp) {
+            return response()->json([
+                'status' => false,
+                'message' => 'OTP has either expired or was not verified.',
+                'data' => null
+            ], 402);
+        }
+
+        // Find client by phone
+        $client = Client::where('phone', $phone)->first();
+
+        if (!$client) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Client not found.',
+                'data' => null
+            ], 404);
+        }
+
+        // Update password
+        $client->password = Hash::make($newPassword);
+        $client->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password reset successfully.',
+            'data' => null
+        ], 200);
+    }
 }

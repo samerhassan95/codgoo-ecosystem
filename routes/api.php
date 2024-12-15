@@ -20,8 +20,10 @@ Route::prefix('client')->group(function() {
     Route::post('register', [ClientAuthController::class, 'register']);
     Route::post('login', [ClientAuthController::class, 'login']);
     Route::post('logout', [ClientAuthController::class, 'logout']);
-    Route::post('forgot-password', [ClientAuthController::class, 'forgotPassword']);
     Route::post('verify-otp', [ClientAuthController::class, 'verifyOtpAndCreateClient']);
+    Route::post('forgot-password', [ClientAuthController::class, 'forgotPasswordRequest']);
+    Route::post('verify-otp-and-reset-password', [ClientAuthController::class, 'verifyOtp']);
+    Route::post('reset-password', [ClientAuthController::class, 'resetPassword']);
 });
 
 Route::middleware('auth:admin')->group(function () {
@@ -39,6 +41,8 @@ Route::middleware('auth:admin')->group(function () {
 Route::middleware('auth:client')->group(function () {
 
     Route::apiResource('projects', ProjectController::class);
+    Route::apiResource('products', ProductController::class);
+    Route::get('profile', [ClientAuthController::class, 'getProfile']);
 
 
 });
