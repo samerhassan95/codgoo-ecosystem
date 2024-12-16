@@ -11,6 +11,7 @@ use App\Repositories\Client\ClientRepositoryInterface;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -223,7 +224,7 @@ class ClientAuthController extends Controller
                 'country' => $client->country,
                 'type' =>"Client",
                 'token'=>$token
-                
+
             ],
         ]);
     }
@@ -232,6 +233,58 @@ class ClientAuthController extends Controller
 
 
 
+
+    public function updateProfile(Request $request)
+    {
+        $client = auth()->user();  // Get the currently authenticated user
+    
+        // Validation rules (include all fields you want to validate)
+        $request->validate([
+            'username' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|max:255',
+            'phone' => 'sometimes|required|string|max:255',
+            'name' => 'sometimes|required|string|max:255',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'company_name' => 'nullable|string|max:255',
+            'website' => 'nullable|url|max:255',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+        ]);
+        // If there's a photo, handle the upload
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = (new ImageService())->upload($request->file('photo'), 'clients');
+        }
+    
+        // Update profile fields
+        $updated = $client->update([
+            'username' => $request->username ?? $client->username,
+            'name' => $request->name ?? $client->name,
+            'email' => $request->email ?? $client->email,
+            'phone' => $request->phone ?? $client->phone,
+            'photo' => isset($photoPath) ? asset('storage/' . $photoPath) : $client->photo,
+            'company_name' => $request->company_name ?? $client->company_name,
+            'website' => $request->website ?? $client->website,
+            'address' => $request->address ?? $client->address,
+            'city' => $request->city ?? $client->city,
+            'country' => $request->country ?? $client->country,
+        ]);
+    
+        if ($updated) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Profile updated successfully.',
+                'data' => $client
+            ]);
+        }
+    
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to update profile.',
+        ]);
+    }
+    
 
 
 
@@ -341,8 +394,8 @@ class ClientAuthController extends Controller
             'message' => 'Profile retrieved successfully.',
             'data' => [
                 'client' => $client,
-                'token' => $request->bearerToken(), 
-                'type' => 'client',  
+                'token' => $request->bearerToken(),
+                'type' => 'client',
             ],
         ]);
     }
@@ -373,7 +426,7 @@ class ClientAuthController extends Controller
 
         // Simulate sending OTP (you can integrate an SMS service here)
         // For now, we'll just log the OTP (In production, send via SMS)
-        Log::info("OTP for phone {$phone}: {$otp}");
+        // Log::info("OTP for phone {$phone}: {$otp}");
 
         return response()->json([
             'status' => true,
