@@ -264,7 +264,7 @@ class ClientAuthController extends Controller
         'name' => $request->name ?? $client->name,
         'email' => $request->email ?? $client->email,
         'phone' => $request->phone ?? $client->phone,
-        'photo' => isset($photoPath) ? asset('storage/' . $photoPath) : $client->photo,
+        'photo' => isset($photoPath) ? asset( $photoPath) : $client->photo,
         'company_name' => $request->company_name ?? $client->company_name,
         'website' => $request->website ?? $client->website,
         'address' => $request->address ?? $client->address,
