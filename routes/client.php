@@ -5,6 +5,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\Client\ClientAuthController;
 use App\Http\Controllers\ProjectAddonController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:client')->group(function () {
@@ -20,11 +21,25 @@ Route::middleware('auth:client')->group(function () {
         'index' => 'client.milestone.index',
         'show' => 'client.milestone.show',
     ]);
+    Route::get('projects/{projectId}/milestones', [MilestoneController::class, 'getMilestonesForProject'])
+        ->name('client.projects.milestones');
 
     // Profile routes
     Route::get('profile', [ClientAuthController::class, 'getProfile']);
     Route::post('update-profile', [ClientAuthController::class, 'updateProfile']);
 
     Route::apiResource('project-addons', ProjectAddonController::class);
+
+    Route::apiResource('tasks', TaskController::class)->names([
+        'index' => 'client.tasks.index',
+        'show' => 'client.tasks.show',
+        'store' => 'client.tasks.store',
+        'update' => 'client.tasks.update',
+        'destroy' => 'client.tasks.destroy'
+    ]);
+
+
+    Route::get('milestones/{milestone_id}/tasks', [TaskController::class, 'getTasksByMilestone']);
+    Route::get('projects/{project_id}/tasks', [TaskController::class, 'getTasksByProject']);
 
 });

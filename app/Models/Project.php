@@ -28,4 +28,27 @@ class Project extends Model
     {
         return $this->hasMany(ProjectAddons::class);
     }
+
+    public function milestones()
+    {
+        return $this->hasMany(Milestone::class);
+    }
+
+    public function getTotalAddonsAmount()
+{
+    $projectAddonsTotal = $this->addons()->with('addon')->get()->sum(function ($projectAddon) {
+        return $projectAddon->addon->price ?? 0;
+    });
+
+    $productAddonsTotal = $this->product ? $this->product->addons()->with('addon')->get()->sum(function ($productAddon) {
+        return $productAddon->addon->price ?? 0;
+    }) : 0;
+
+    return $projectAddonsTotal + $productAddonsTotal;
+}
+
+    
+
+
+
 }

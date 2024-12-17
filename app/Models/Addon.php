@@ -19,9 +19,9 @@ class Addon extends Model
 
     public function projects()
     {
-        return $this->belongsToMany(Project::class, 'project_addons')
-                    ->withPivot(['some_column_in_pivot_if_needed']);
+        return $this->belongsToMany(Project::class, 'project_addons');
     }
+    
     
     
 }

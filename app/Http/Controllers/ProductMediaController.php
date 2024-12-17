@@ -15,8 +15,8 @@ class ProductMediaController extends BaseController
 
     public function __construct(ProductMediaRepositoryInterface $repository)
     {
-        parent::__construct($repository); // تمرير الـ repository للـ parent
-        $this->repository = $repository; // تأكد من حقن الـ repository هنا
+        parent::__construct($repository);  
+        $this->repository = $repository;
     }
 
     public function store(Request $request)

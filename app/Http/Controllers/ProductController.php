@@ -20,35 +20,42 @@ class ProductController extends BaseController
     }
 
     public function store(Request $request)
-{
-    // Validate the incoming request
-    $validatedData = $request->validate([
-        'name' => 'required|string|max:255',
-        'description' => 'required|string',
-        'price' => 'required|numeric|min:0',
-        'note' => 'required|string|max:1000',
-        'attachments.*' => 'file|max:10240', // Max 10MB per file
-    ]);
-
-    // Exclude attachments from the validated data
-    $productData = collect($validatedData)->except('attachments')->toArray();
-
-    // Create the product
-    $product = Product::create($productData);
-
-    // Handle attachments using ImageService
-    if ($request->hasFile('attachments')) {
-        foreach ($request->file('attachments') as $file) {
-            $path = ImageService::upload($file, 'attachments'); // Save the file using ImageService
-            $product->attachments()->create([
-                'file_path' => $path,
-            ]);
+    {
+        // Validate and prepare data
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric',
+            'note' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validate image
+            'attachments.*' => 'file|max:10240', // Max 10MB per file
+        ]);
+    
+        // Exclude the image from the data to handle it separately
+        $productData = collect($validatedData)->except(['attachments', 'image'])->toArray();
+    
+        // Handle image upload (if provided)
+        if ($request->hasFile('image')) {
+            $imagePath = ImageService::upload($request->file('image'), 'product_images');
+            $productData['image'] = $imagePath;
         }
+    
+        // Create the product
+        $product = Product::create($productData);
+    
+        // Handle attachments using ImageService
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = ImageService::upload($file, 'attachments');
+                $product->attachments()->create([
+                    'file_path' => $path,
+                ]);
+            }
+        }
+    
+        // Return the created product using a resource, including image
+        return response()->json(new ProductResource($product->load('attachments')), 201);
     }
-
-    // Return the created product using a resource
-    return response()->json(new ProductResource($product->load('attachments')), 201);
-}
 
 
 }
