@@ -235,55 +235,57 @@ class ClientAuthController extends Controller
 
 
     public function updateProfile(Request $request)
-    {
-        $client = auth()->user();  // Get the currently authenticated user
-    
-        // Validation rules (include all fields you want to validate)
-        $request->validate([
-            'username' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|max:255',
-            'phone' => 'sometimes|required|string|max:255',
-            'name' => 'sometimes|required|string|max:255',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'company_name' => 'nullable|string|max:255',
-            'website' => 'nullable|url|max:255',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-        ]);
-        // If there's a photo, handle the upload
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $photoPath = (new ImageService())->upload($request->file('photo'), 'clients');
-        }
-    
-        // Update profile fields
-        $updated = $client->update([
-            'username' => $request->username ?? $client->username,
-            'name' => $request->name ?? $client->name,
-            'email' => $request->email ?? $client->email,
-            'phone' => $request->phone ?? $client->phone,
-            'photo' => isset($photoPath) ? asset('storage/' . $photoPath) : $client->photo,
-            'company_name' => $request->company_name ?? $client->company_name,
-            'website' => $request->website ?? $client->website,
-            'address' => $request->address ?? $client->address,
-            'city' => $request->city ?? $client->city,
-            'country' => $request->country ?? $client->country,
-        ]);
-    
-        if ($updated) {
-            return response()->json([
-                'status' => true,
-                'message' => 'Profile updated successfully.',
-                'data' => $client
-            ]);
-        }
-    
+{
+    $client = auth()->user();  // Get the currently authenticated user
+
+    // Validation rules (with unique checks)
+    $request->validate([
+        'username' => 'sometimes|required|string|max:255|unique:clients,username,' . $client->id,
+        'email' => 'sometimes|required|email|max:255|unique:clients,email,' . $client->id,
+        'phone' => 'sometimes|required|string|max:255|unique:clients,phone,' . $client->id,
+        'name' => 'sometimes|required|string|max:255',
+        'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'company_name' => 'nullable|string|max:255',
+        'website' => 'nullable|url|max:255',
+        'address' => 'nullable|string|max:255',
+        'city' => 'nullable|string|max:255',
+        'country' => 'nullable|string|max:255',
+    ]);
+
+    // If there's a photo, handle the upload
+    $photoPath = null;
+    if ($request->hasFile('photo')) {
+        $photoPath = (new ImageService())->upload($request->file('photo'), 'clients');
+    }
+
+    // Update profile fields
+    $updated = $client->update([
+        'username' => $request->username ?? $client->username,
+        'name' => $request->name ?? $client->name,
+        'email' => $request->email ?? $client->email,
+        'phone' => $request->phone ?? $client->phone,
+        'photo' => isset($photoPath) ? asset('storage/' . $photoPath) : $client->photo,
+        'company_name' => $request->company_name ?? $client->company_name,
+        'website' => $request->website ?? $client->website,
+        'address' => $request->address ?? $client->address,
+        'city' => $request->city ?? $client->city,
+        'country' => $request->country ?? $client->country,
+    ]);
+
+    if ($updated) {
         return response()->json([
-            'status' => false,
-            'message' => 'Failed to update profile.',
+            'status' => true,
+            'message' => 'Profile updated successfully.',
+            'data' => $client->makeHidden(['remember_token'])
         ]);
     }
+
+    return response()->json([
+        'status' => false,
+        'message' => 'Failed to update profile.',
+    ]);
+}
+
     
 
 
