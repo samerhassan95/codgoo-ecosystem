@@ -6,6 +6,7 @@ use App\Http\Controllers\ProductMediaController;
 use App\Http\Controllers\AddonController;
 use App\Http\Controllers\ProductAddonController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SliderController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,6 @@ Route::middleware('auth:admin')->group(function () {
             'update' => 'admin.tasks.update',
             'destroy' => 'admin.tasks.destroy'
         ]);
+        Route::apiResource('sliders', SliderController::class);
 
-     
 });

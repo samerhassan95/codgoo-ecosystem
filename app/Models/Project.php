@@ -21,7 +21,7 @@ class Project extends Model
     }
     public function attachments()
     {
-        return $this->morphMany(Attachment::class, 'attachable');
+        return $this->morphMany(attachment::class, 'attachable');
     }
 
     public function addons()
@@ -35,18 +35,25 @@ class Project extends Model
     }
 
     public function getTotalAddonsAmount()
-{
-    $projectAddonsTotal = $this->addons()->with('addon')->get()->sum(function ($projectAddon) {
-        return $projectAddon->addon->price ?? 0;
-    });
+    {
+        $projectAddonsTotal = $this->addons()->with('addon')->get()->sum(function ($projectAddon) {
+            return $projectAddon->addon->price ?? 0;
+        });
 
-    $productAddonsTotal = $this->product ? $this->product->addons()->with('addon')->get()->sum(function ($productAddon) {
-        return $productAddon->addon->price ?? 0;
-    }) : 0;
+        $productAddonsTotal = $this->product ? $this->product->addons()->with('addon')->get()->sum(function ($productAddon) {
+            return $productAddon->addon->price ?? 0;
+        }) : 0;
 
-    return $projectAddonsTotal + $productAddonsTotal;
-}
+        return $projectAddonsTotal + $productAddonsTotal;
+    }
 
+
+    public function sliders()
+    {
+        return $this->belongsToMany(Slider::class, 'slider_projects')
+                    ->withPivot('image')
+                    ->withTimestamps();
+    }
     
 
 
