@@ -41,5 +41,8 @@ Route::middleware('auth:client')->group(function () {
 
     Route::get('milestones/{milestone_id}/tasks', [TaskController::class, 'getTasksByMilestone']);
     Route::get('projects/{project_id}/tasks', [TaskController::class, 'getTasksByProject']);
+    Route::post('change-password', [ClientAuthController::class, 'changePassword']);
+    Route::post('verify-change-phone', [ClientAuthController::class, 'verifyChangePhone']);
+    Route::post('change-phone-request', [ClientAuthController::class, 'changePhoneRequest']);
 
 });

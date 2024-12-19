@@ -28,72 +28,7 @@ class ClientAuthController extends Controller
         $this->clientRepo = $clientRepo;
     }
 
-     // Client Registration
-    //  public function register(Request $request)
-    //  {
-    //      $validator = Validator::make($request->all(), [
-    //          'phone' => 'required|unique:clients,phone',
-    //          'password' => 'required|min:6|max:255',
-    //          'username' => 'required|unique:clients|max:255',
-    //          'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validate photo
-    //          'company_name' => 'nullable|string|max:255',
-    //          'website' => 'nullable|url|max:255',
-    //          'address' => 'nullable|string|max:255',
-    //          'city' => 'nullable|string|max:255',
-    //          'country' => 'nullable|string|max:255',
-    //      ]);
-
-    //      if ($validator->fails()) {
-    //          return response()->json([
-    //              "status" => false,
-    //              'code' => 402,
-    //              'message' => $validator->errors()->first(),
-    //              'data' => null,
-    //          ], 402);
-    //      }
-
-    //      // Use ImageService to handle file upload
-    //      $photoPath = $request->hasFile('photo')
-    //          ? ImageService::upload($request->file('photo'), 'client_photos')
-    //          : null;
-
-    //      // Create the client record
-    //      $client = Client::create([
-    //          "username" => $request->username,
-    //          "phone" => $request->phone,
-    //          "password" => Hash::make($request->password),
-    //          'name' => $request->name,
-    //          'email' => $request->email,
-    //          'photo' => $photoPath, // Save the photo path in the database
-    //          'company_name' => $request->company_name,
-    //          'website' => $request->website,
-    //          'address' => $request->address,
-    //          'city' => $request->city,
-    //          'country' => $request->country,
-    //      ]);
-
-    //      return response()->json([
-    //          'status' => true,
-    //          'code' => 200,
-    //          'message' => "Client account created successfully",
-    //          'data' => [
-    //              'id' => $client->id,
-    //              'username' => $client->username,
-    //              'phone' => $client->phone,
-    //              'email' => $client->email,
-    //              'name' => $client->name,
-    //              'photo' => $photoPath ? asset($photoPath) : null, // Use ImageService result
-    //              'company_name' => $client->company_name,
-    //              'website' => $client->website,
-    //              'address' => $client->address,
-    //              'city' => $client->city,
-    //              'country' => $client->country,
-    //          ],
-    //      ], 200);
-    //  }
-
-    // In your RegisterController
-
+    
     public function register(Request $request)
     {
         // Validate client data
@@ -235,56 +170,56 @@ class ClientAuthController extends Controller
 
 
     public function updateProfile(Request $request)
-{
-    $client = auth()->user();  // Get the currently authenticated user
+    {
+        $client = auth()->user();  // Get the currently authenticated user
 
-    // Validation rules (with unique checks)
-    $request->validate([
-        'username' => 'sometimes|required|string|max:255|unique:clients,username,' . $client->id,
-        'email' => 'sometimes|required|email|max:255|unique:clients,email,' . $client->id,
-        'phone' => 'sometimes|required|string|max:255|unique:clients,phone,' . $client->id,
-        'name' => 'sometimes|required|string|max:255',
-        'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'company_name' => 'nullable|string|max:255',
-        'website' => 'nullable|url|max:255',
-        'address' => 'nullable|string|max:255',
-        'city' => 'nullable|string|max:255',
-        'country' => 'nullable|string|max:255',
-    ]);
+        // Validation rules (with unique checks)
+        $request->validate([
+            'username' => 'sometimes|required|string|max:255|unique:clients,username,' . $client->id,
+            'email' => 'sometimes|required|email|max:255|unique:clients,email,' . $client->id,
+            'phone' => 'sometimes|required|string|max:255|unique:clients,phone,' . $client->id,
+            'name' => 'sometimes|required|string|max:255',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'company_name' => 'nullable|string|max:255',
+            'website' => 'nullable|url|max:255',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+        ]);
 
-    // If there's a photo, handle the upload
-    $photoPath = null;
-    if ($request->hasFile('photo')) {
-        $photoPath = (new ImageService())->upload($request->file('photo'), 'clients');
-    }
+        // If there's a photo, handle the upload
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = (new ImageService())->upload($request->file('photo'), 'clients');
+        }
 
-    // Update profile fields
-    $updated = $client->update([
-        'username' => $request->username ?? $client->username,
-        'name' => $request->name ?? $client->name,
-        'email' => $request->email ?? $client->email,
-        'phone' => $request->phone ?? $client->phone,
-        'photo' => isset($photoPath) ? asset( $photoPath) : $client->photo,
-        'company_name' => $request->company_name ?? $client->company_name,
-        'website' => $request->website ?? $client->website,
-        'address' => $request->address ?? $client->address,
-        'city' => $request->city ?? $client->city,
-        'country' => $request->country ?? $client->country,
-    ]);
+        // Update profile fields
+        $updated = $client->update([
+            'username' => $request->username ?? $client->username,
+            'name' => $request->name ?? $client->name,
+            'email' => $request->email ?? $client->email,
+            'phone' => $request->phone ?? $client->phone,
+            'photo' => isset($photoPath) ? asset( $photoPath) : $client->photo,
+            'company_name' => $request->company_name ?? $client->company_name,
+            'website' => $request->website ?? $client->website,
+            'address' => $request->address ?? $client->address,
+            'city' => $request->city ?? $client->city,
+            'country' => $request->country ?? $client->country,
+        ]);
 
-    if ($updated) {
+        if ($updated) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Profile updated successfully.',
+                'data' => $client->makeHidden(['remember_token'])
+            ]);
+        }
+
         return response()->json([
-            'status' => true,
-            'message' => 'Profile updated successfully.',
-            'data' => $client->makeHidden(['remember_token'])
+            'status' => false,
+            'message' => 'Failed to update profile.',
         ]);
     }
-
-    return response()->json([
-        'status' => false,
-        'message' => 'Failed to update profile.',
-    ]);
-}
 
     
 
@@ -362,10 +297,6 @@ class ClientAuthController extends Controller
              'message' => __('The phone/username does not exist'),
          ], 404);
      }
-
-
-
-
 
     public function logout()
     {
@@ -484,7 +415,7 @@ class ClientAuthController extends Controller
         // Validate password and phone number
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
-            'password' => 'required|min:6|confirmed',  // Password confirmation
+            'password' => 'required|min:6|confirmed',  
         ]);
 
         if ($validator->fails()) {
@@ -531,4 +462,142 @@ class ClientAuthController extends Controller
             'data' => null
         ], 200);
     }
+
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'new_password' => 'required|min:6|confirmed', // Must match new_password_confirmation
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+                'data' => null
+            ], 402);
+        }
+
+        // Get the authenticated client
+        $client = auth('client')->user();
+
+        if (!$client) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized. Client not found.',
+                'data' => null
+            ], 401);
+        }
+
+        // Update the password
+        $client->password = Hash::make($request->new_password);
+        $client->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password changed successfully.',
+            'data' => null
+        ], 200);
+    }
+
+
+    public function changePhoneRequest(Request $request)
+    {
+        // Validate the new phone number
+        $validator = Validator::make($request->all(), [
+            'new_phone' => 'required|unique:clients,phone', // Ensure it's unique in the clients table
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+                'data' => null
+            ], 402);
+        }
+
+        // Get the authenticated client
+        $client = auth('client')->user();
+
+        if (!$client) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized. Client not found.',
+                'data' => null
+            ], 401);
+        }
+
+        // Generate OTP
+        $otp = 1234; // Generate a 4-digit OTP
+
+        // Store the OTP and new phone in cache (with a unique key, e.g., phone + client ID)
+        Cache::put('otp_change_phone_' . $client->id, [
+            'otp' => $otp,
+            'new_phone' => $request->new_phone,
+        ], now()->addMinutes(10)); // OTP valid for 10 minutes
+
+        // Simulate sending the OTP (you can integrate an SMS service here)
+        // Log::info("OTP for phone {$request->new_phone}: {$otp}"); // For debugging only
+        // Send SMS or notification here
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP sent to the new phone number.',
+            'data' => null,
+        ], 200);
+    }
+
+    public function verifyChangePhone(Request $request)
+    {
+        // Validate the OTP
+        $validator = Validator::make($request->all(), [
+            'otp' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+                'data' => null
+            ], 402);
+        }
+
+        // Get the authenticated client
+        $client = auth('client')->user();
+
+        if (!$client) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized. Client not found.',
+                'data' => null
+            ], 401);
+        }
+
+        // Retrieve the OTP and new phone from cache
+        $cachedData = Cache::get('otp_change_phone_' . $client->id);
+
+        if (!$cachedData || $cachedData['otp'] != $request->otp) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid or expired OTP.',
+                'data' => null,
+            ], 402);
+        }
+
+        // Update the phone number
+        $client->phone = $cachedData['new_phone'];
+        $client->save();
+
+        // Remove the cached OTP after successful verification
+        Cache::forget('otp_change_phone_' . $client->id);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Phone number updated successfully.',
+            'data' => [
+                'phone' => $client->phone,
+            ],
+        ], 200);
+    }
+
+    
 }
