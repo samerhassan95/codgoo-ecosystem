@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('milestone_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('project_id')->constrained()->cascadeOnDelete();
+            $table->enum('status', ['paid', 'unpaid'])->default('unpaid');
+            $table->enum('payment_method', ['bank_transfer', 'online'])->nullable();
+            $table->string('payment_proof')->nullable(); // For bank transfer proof
+            $table->date('due_date');
             $table->timestamps();
         });
     }

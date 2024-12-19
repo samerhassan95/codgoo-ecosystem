@@ -32,4 +32,18 @@ class Milestone extends Model
                 ->addDays($this->attributes['period'])->toDateString();
         }
     }
+
+    public static function booted()
+    {
+        static::updated(function ($milestone) {
+            if ($milestone->status === 'completed') {
+                \App\Models\Invoice::create([
+                    'milestone_id' => $milestone->id,
+                    'project_id' => $milestone->project_id,
+                    'status' => 'unpaid',
+                    'due_date' => now()->addDays(30), // Example due date
+                ]);
+            }
+        });
+    }
 }

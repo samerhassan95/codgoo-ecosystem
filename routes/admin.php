@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\MilestoneController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductMediaController;
@@ -47,5 +49,7 @@ Route::middleware('auth:admin')->group(function () {
             'destroy' => 'admin.tasks.destroy'
         ]);
         Route::apiResource('sliders', SliderController::class);
+        Route::apiResource('invoices', InvoiceController::class);
+        Route::post('run-migrations', [MigrationController::class, 'runMigrations']);
 
 });

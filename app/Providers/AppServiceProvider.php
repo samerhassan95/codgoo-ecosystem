@@ -25,6 +25,10 @@ use App\Repositories\TaskRepositoryInterface;
 use App\Repositories\TaskRepository;
 use App\Repositories\SliderRepository;
 use App\Repositories\SliderRepositoryInterface;
+use App\Repositories\InvoiceRepositoryInterface;
+use App\Repositories\InvoiceRepository;
+
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -44,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TaskRepositoryInterface::class, TaskRepository::class);
         $this->app->bind(ProjectAddonRepositoryInterface::class, ProjectAddonRepository::class);
         $this->app->bind(SliderRepositoryInterface::class, SliderRepository::class); 
+        $this->app->bind(InvoiceRepositoryInterface::class, InvoiceRepository::class);
 
     }
 
