@@ -47,38 +47,38 @@ class AddonController extends BaseController
         return new AddonResource($addon);
     }
 
-    // public function update(Request $request, $id)
-    // {
-    //     $addon = $this->repository->find($id);
+    public function updateaddons(Request $request, $id)
+    {
+        $addon = $this->repository->find($id);
     
-    //     if (!$addon) {
-    //         return response()->json(['message' => 'Addon not found.'], 404);
-    //     }
+        if (!$addon) {
+            return response()->json(['message' => 'Addon not found.'], 404);
+        }
     
-    //     $validator = Validator::make($request->all(), (new \App\Http\Requests\AddonRequest())->rules());
+        $validator = Validator::make($request->all(), (new \App\Http\Requests\AddonRequest())->rules());
     
-    //     if ($validator->fails()) {
-    //         return response()->json(['errors' => $validator->errors()->toArray()], 422);
-    //     }
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->toArray()], 422);
+        }
     
-    //     $validatedData = $validator->validated();
+        $validatedData = $validator->validated();
     
-    //     // Prepare files for update (icon in this case)
-    //     if ($request->hasFile('icon')) {
-    //         $validatedData['files'] = [
-    //             'icon' => [
-    //                 'file' => $request->file('icon'),
-    //                 'path' => $addon->icon, // Old icon path
-    //                 'directory' => 'product_media',
-    //             ],
-    //         ];
-    //     }
+        // Prepare files for update (icon in this case)
+        if ($request->hasFile('icon')) {
+            $validatedData['files'] = [
+                'icon' => [
+                    'file' => $request->file('icon'),
+                    'path' => $addon->icon, // Old icon path
+                    'directory' => 'addons',
+                ],
+            ];
+        }
     
-    //     // Call the common update method in the repository
-    //     $updatedAddon = $this->repository->update($id, $validatedData);
+        // Call the common update method in the repository
+        $updatedAddon = $this->repository->update($id, $validatedData);
     
-    //     return new AddonResource($updatedAddon);
-    // }
+        return new AddonResource($updatedAddon);
+    }
     
     
     
