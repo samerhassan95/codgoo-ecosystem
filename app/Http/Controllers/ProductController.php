@@ -57,5 +57,55 @@ class ProductController extends BaseController
         return response()->json(new ProductResource($product->load('attachments')), 201);
     }
 
-
+    public function update(Request $request, $id)
+    {
+        // Find the product
+        $product = Product::find($id);
+    
+        if (!$product) {
+            return response()->json(['message' => 'Product not found.'], 404);
+        }
+    
+        // Validate and prepare data
+        $validatedData = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric',
+            'note' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validate image
+            'attachments.*' => 'file|max:10240', // Max 10MB per file
+        ]);
+    
+        // Exclude the image and attachments to handle them separately
+        $productData = collect($validatedData)->except(['attachments', 'image'])->toArray();
+    
+        // Handle image update
+        if ($request->hasFile('image')) {
+            // Delete the old image if it exists
+            if ($product->image) {
+                ImageService::delete($product->image); // Assuming `ImageService` has a delete method
+            }
+    
+            // Upload the new image
+            $imagePath = ImageService::upload($request->file('image'), 'product_images');
+            $productData['image'] = $imagePath;
+        }
+    
+        // Update the product data
+        $product->update($productData);
+    
+        // Handle attachment updates (add new attachments if provided)
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = ImageService::upload($file, 'attachments');
+                $product->attachments()->create([
+                    'file_path' => $path,
+                ]);
+            }
+        }
+    
+        // Return the updated product using a resource, including attachments
+        return response()->json(new ProductResource($product->load('attachments')), 200);
+    }
+    
 }

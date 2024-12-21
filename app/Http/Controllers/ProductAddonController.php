@@ -17,19 +17,32 @@ class ProductAddonController extends BaseController
 
 
     public function store(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'product_id' => 'required|exists:products,id',
-        'addon_id' => 'required|exists:addons,id',
-    ]);
+    {
+        $validator = Validator::make($request->all(), [
+            'product_id' => 'required|exists:products,id',
+            'addon_id' => 'required|exists:addons,id',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json(['errors' => $validator->errors()], 422);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $productAddon = ProductAddons::create($validator->validated());
+
+        return response()->json($productAddon, 201);
     }
 
-    $productAddon = ProductAddons::create($validator->validated());
+    public function getAddonsByProject($projectId)
+    {
+        $product = Product::with('addons')->find($projectId);
 
-    return response()->json($productAddon, 201);
-}
+        if (!$product) {
+            return response()->json(['message' => 'Product not found.'], 404);
+        }
+
+        $addons = $product->addons;
+
+        return response()->json(['data' => $addons], 200);
+    }
 
 }

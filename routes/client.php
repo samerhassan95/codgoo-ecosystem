@@ -44,5 +44,6 @@ Route::middleware('auth:client')->group(function () {
     Route::post('change-password', [ClientAuthController::class, 'changePassword']);
     Route::post('verify-change-phone', [ClientAuthController::class, 'verifyChangePhone']);
     Route::post('change-phone-request', [ClientAuthController::class, 'changePhoneRequest']);
+    Route::get('products/{productId}/addons', [ProductAddonController::class, 'getAddonsByProject']);
 
 });
