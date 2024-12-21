@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Repositories\ProductAddonRepositoryInterface;
 use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
