@@ -10,7 +10,7 @@
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
-        "nesbot/carbon": "*",
+        "nesbot/carbon": "^3.8",
         "spatie/laravel-translatable": "^6.9",
         "tymon/jwt-auth": "^2.1"
     },
