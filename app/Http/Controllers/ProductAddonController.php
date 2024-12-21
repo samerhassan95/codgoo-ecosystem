@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Repositories\ProductAddonRepositoryInterface;
 use App\Http\Controllers\BaseController;
@@ -34,16 +35,22 @@ class ProductAddonController extends BaseController
     }
 
     public function getAddonsByProject($projectId)
-    {
-        $product = Product::with('addons')->find($projectId);
+{
+    // Find the product and its addons by project ID
+    $product = Product::with(['addons', 'attachments'])->find($projectId);
 
-        if (!$product) {
-            return response()->json(['message' => 'Product not found.'], 404);
-        }
-
-        $addons = $product->addons;
-
-        return response()->json(['data' => $addons], 200);
+    if (!$product) {
+        return response()->json(['message' => 'Product not found.'], 404);
     }
+
+    // Get addons and product details
+    $addons = $product->addons; // Full Addon objects
+
+    return response()->json([
+        'product' => new ProductResource($product), // Include full product details
+        'addons' => $addons, // Full Addon objects
+    ], 200);
+}
+
 
 }
