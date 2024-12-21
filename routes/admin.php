@@ -18,7 +18,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::apiResource('product-media', ProductMediaController::class);
     Route::get('specific-product-media/{productId}', [ProductMediaController::class, 'getAllMediaForProduct']);
     Route::apiResource('addons', AddonController::class);
-    Route::post('update-addons/{id}', [AddonController::class, 'updateaddons']);
+    // Route::post('update-addons/{id}', [AddonController::class, 'updateaddons']);
 
     // Admin specific route name for products
     Route::apiResource('products', ProductController::class)->names([

@@ -48,37 +48,43 @@ class AddonController extends BaseController
     }
 
     public function updateaddons(Request $request, $id)
-    {
-        $addon = $this->repository->find($id);
-    
-        if (!$addon) {
-            return response()->json(['message' => 'Addon not found.'], 404);
-        }
-    
-        $validator = Validator::make($request->all(), (new \App\Http\Requests\AddonRequest())->rules());
-    
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()->toArray()], 422);
-        }
-    
-        $validatedData = $validator->validated();
-    
-        // Prepare files for update (icon in this case)
-        if ($request->hasFile('icon')) {
-            $validatedData['files'] = [
-                'icon' => [
-                    'file' => $request->file('icon'),
-                    'path' => $addon->icon, // Old icon path
-                    'directory' => 'addons',
-                ],
-            ];
-        }
-    
-        // Call the common update method in the repository
-        $updatedAddon = $this->repository->update($id, $validatedData);
-    
-        return new AddonResource($updatedAddon);
+{
+    $addon = $this->repository->find($id);
+
+    if (!$addon) {
+        return response()->json(['message' => 'Addon not found.'], 404);
     }
+
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255',
+        'icon' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048', // Use 'image' validation for icons
+        'description' => 'nullable|string',
+        'price' => 'nullable|numeric|min:0',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()->toArray()], 422);
+    }
+
+    $validatedData = $validator->validated();
+
+    // Handle file uploads
+    if ($request->hasFile('icon')) {
+        // Delete the old icon if it exists
+        if ($addon->icon) {
+            ImageService::delete($addon->icon);
+        }
+
+        // Upload the new icon
+        $validatedData['icon'] = ImageService::upload($request->file('icon'), 'addons');
+    }
+
+    // Update the addon using the repository
+    $updatedAddon = $this->repository->update($id, $validatedData);
+
+    return new AddonResource($updatedAddon);
+}
+
     
     
     
