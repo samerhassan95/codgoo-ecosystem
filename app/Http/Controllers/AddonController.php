@@ -34,7 +34,7 @@ class AddonController extends BaseController
         // Handle image upload
         $iconPath = null;
         if ($request->hasFile('icon')) {
-            $iconPath = ImageService::upload($request->file('icon'), 'product_media');
+            $iconPath = ImageService::upload($request->file('icon'), 'addons');
         }
 
         // Add the uploaded icon path to the validated data
