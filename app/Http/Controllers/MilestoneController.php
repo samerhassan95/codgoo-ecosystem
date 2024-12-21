@@ -55,7 +55,7 @@ class MilestoneController  extends BaseController
         if (isset($validated['start_date']) && isset($validated['period'])) {
             $startDate = \Carbon\Carbon::parse($validated['start_date']);
             $dueDate = $startDate->addDays($validated['period']);
-            $validated['due_date'] = $dueDate->toDateString();  // Store the due date in the correct format
+            $validated['end_date'] = $dueDate->toDateString();  // Store the due date in the correct format
         }
     
         // Create the milestone using the repository
