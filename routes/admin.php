@@ -15,7 +15,15 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::middleware('auth:admin')->group(function () {
-    Route::apiResource('product-media', ProductMediaController::class);
+    
+    Route::apiResource('product-media', ProductMediaController::class)->names([
+        'index' => 'admin.product-media.index',
+        'show' => 'admin.product-media.show',
+        'store' => 'admin.product-media.store',
+        'update' => 'admin.product-media.update',
+        'destroy' => 'admin.product-media.destroy'
+    ]);
+    
     Route::get('specific-product-media/{productId}', [ProductMediaController::class, 'getAllMediaForProduct']);
     Route::apiResource('addons', AddonController::class);
     // Route::post('update-addons/{id}', [AddonController::class, 'updateaddons']);

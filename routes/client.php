@@ -47,4 +47,12 @@ Route::middleware('auth:client')->group(function () {
     Route::post('change-phone-request', [ClientAuthController::class, 'changePhoneRequest']);
     Route::get('products/{productId}/addons', [ProductAddonController::class, 'getAddonsByProject']);
 
+
+    Route::apiResource('product-media', ProductMediaController::class)->names([
+        'index' => 'client.product-media.index',
+        'show' => 'client.product-media.show',
+        'store' => 'client.product-media.store',
+        'update' => 'client.product-media.update',
+        'destroy' => 'client.product-media.destroy'
+    ]);
 });
