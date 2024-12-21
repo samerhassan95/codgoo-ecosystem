@@ -60,5 +60,6 @@ Route::middleware('auth:admin')->group(function () {
         Route::apiResource('sliders', SliderController::class);
         Route::apiResource('invoices', InvoiceController::class);
         Route::post('run-migrations', [MigrationController::class, 'runMigrations']);
+        Route::get('projects/{projectId}/invoices', [InvoiceController::class, 'getInvoicesForProject']);
 
 });

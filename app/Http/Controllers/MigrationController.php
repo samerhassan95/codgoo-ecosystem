@@ -14,7 +14,7 @@ class MigrationController extends Controller
     {
         try {
             // Run migrations
-            Artisan::call('migrate', ['--force' => true]);
+            Artisan::call('migrate');
 
             return response()->json([
                 'status' => true,
