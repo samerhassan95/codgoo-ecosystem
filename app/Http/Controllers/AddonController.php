@@ -47,7 +47,7 @@ class AddonController extends BaseController
         return new AddonResource($addon);
     }
 
-    public function updateaddons(Request $request, $id)
+    public function update(Request $request, $id)
 {
     $addon = $this->repository->find($id);
 
