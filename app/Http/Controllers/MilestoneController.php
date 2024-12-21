@@ -9,7 +9,7 @@ use App\Repositories\MilestoneRepositoryInterface;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use Carbon\Carbon; 
 class MilestoneController  extends BaseController
 {
     private $repository;
@@ -53,7 +53,7 @@ class MilestoneController  extends BaseController
     
         // Calculate the due date by adding the 'period' to the 'start_date'
         if (isset($validated['start_date']) && isset($validated['period'])) {
-            $startDate = \Carbon\Carbon::parse($validated['start_date']);
+            $startDate = Carbon::parse($validated['start_date']);
             $dueDate = $startDate->addDays($validated['period']);
             $validated['end_date'] = $dueDate->toDateString();  // Store the due date in the correct format
         }
