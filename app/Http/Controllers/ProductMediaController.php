@@ -73,4 +73,54 @@ class ProductMediaController extends BaseController
         // Return the media data as a resource
         return ProductMediaResource::collection($media);
     }
+
+    /**
+     * Update a specific media record.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        // Find the media record by ID
+        $media = ProductMedia::find($id);
+
+        // If media is not found, return a 404 response
+        if (!$media) {
+            return response()->json(['message' => 'Media not found.'], 404);
+        }
+
+        // Validate the incoming request
+        $validator = Validator::make($request->all(), [
+            'file_path' => 'nullable|file', // Optional file upload
+            'type' => 'nullable|string', // Optional type update
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->toArray()], 422);
+        }
+
+        // Prepare the data for update
+        $validatedData = $validator->validated();
+
+        // Handle file replacement if a new file is uploaded
+        if ($request->hasFile('file_path')) {
+            // Delete the old file if it exists
+            if ($media->file_path && \Storage::disk('public')->exists($media->file_path)) {
+                \Storage::disk('public')->delete($media->file_path);
+            }
+
+            // Store the new file
+            $validatedData['file_path'] = $request->file('file_path')->store('product_media', 'public');
+        }
+
+        // Update the media record
+        $media->update($validatedData);
+
+        // Return the updated media record as a resource
+        return new ProductMediaResource($media);
+    }
+
 }
