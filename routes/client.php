@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MilestoneController;
+use App\Http\Controllers\ProductAddonController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\Client\ClientAuthController;
 use App\Http\Controllers\ProjectAddonController;
