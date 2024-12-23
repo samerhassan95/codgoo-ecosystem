@@ -10,12 +10,13 @@ use App\Http\Controllers\ProductAddonController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SliderController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 
 
 
 Route::middleware('auth:admin')->group(function () {
-    
+
     Route::apiResource('product-media', ProductMediaController::class)->names([
         'index' => 'admin.product-media.index',
         'show' => 'admin.product-media.show',
@@ -23,7 +24,7 @@ Route::middleware('auth:admin')->group(function () {
         'update' => 'admin.product-media.update',
         'destroy' => 'admin.product-media.destroy'
     ]);
-    
+
     Route::get('specific-product-media/{productId}', [ProductMediaController::class, 'getAllMediaForProduct']);
     Route::apiResource('addons', AddonController::class);
     // Route::post('update-addons/{id}', [AddonController::class, 'updateaddons']);
@@ -61,5 +62,13 @@ Route::middleware('auth:admin')->group(function () {
         Route::apiResource('invoices', InvoiceController::class);
         Route::post('run-migrations', [MigrationController::class, 'runMigrations']);
         Route::get('projects/{projectId}/invoices', [InvoiceController::class, 'getInvoicesForProject']);
+
+        Route::apiResource('topic', TopicController::class)->names([
+            'index' => 'admin.topic.index',
+            'show' => 'admin.topic.show',
+            'store' => 'admin.topic.store',
+            'update' => 'admin.topic.update',
+            'destroy' => 'admin.topic.destroy'
+        ]);
 
 });

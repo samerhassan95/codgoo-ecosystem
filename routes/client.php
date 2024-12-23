@@ -7,6 +7,8 @@ use App\Http\Controllers\Client\ClientAuthController;
 use App\Http\Controllers\ProjectAddonController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\MeetingController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:client')->group(function () {
@@ -55,4 +57,14 @@ Route::middleware('auth:client')->group(function () {
         'update' => 'client.product-media.update',
         'destroy' => 'client.product-media.destroy'
     ]);
+
+
+    Route::post('meetings', [MeetingController::class, 'store']);
+    Route::get('available-slots/{slotId}/free-intervals', [MeetingController::class, 'getAvailableIntervals']);
+
+    Route::apiResource('topic', TopicController::class)->names([
+        'index' => 'client.topic.index',
+        'show' => 'client.topic.show',
+    ]);
+
 });

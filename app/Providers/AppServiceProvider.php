@@ -10,6 +10,10 @@ use App\Repositories\ProductRepository;
 use App\Repositories\ProductRepositoryInterface;
 use App\Repositories\ProjectAddonRepository;
 use App\Repositories\ProjectAddonRepositoryInterface;
+use App\Repositories\TopicGalleryRepository;
+use App\Repositories\TopicGalleryRepositoryInterface;
+use App\Repositories\TopicRepository;
+use App\Repositories\TopicRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\Admin\AdminRepositoryInterface;
 use App\Repositories\Admin\AdminRepository;
@@ -27,7 +31,8 @@ use App\Repositories\SliderRepository;
 use App\Repositories\SliderRepositoryInterface;
 use App\Repositories\InvoiceRepositoryInterface;
 use App\Repositories\InvoiceRepository;
-
+use App\Repositories\MeetingRepositoryInterface;
+use App\Repositories\MeetingRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -47,8 +52,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MilestoneRepositoryInterface::class, MilestoneRepository::class);
         $this->app->bind(TaskRepositoryInterface::class, TaskRepository::class);
         $this->app->bind(ProjectAddonRepositoryInterface::class, ProjectAddonRepository::class);
-        $this->app->bind(SliderRepositoryInterface::class, SliderRepository::class); 
+        $this->app->bind(SliderRepositoryInterface::class, SliderRepository::class);
         $this->app->bind(InvoiceRepositoryInterface::class, InvoiceRepository::class);
+        $this->app->bind(TopicRepositoryInterface::class, TopicRepository::class);
+        $this->app->bind(TopicGalleryRepositoryInterface::class, TopicGalleryRepository::class);
 
     }
 
