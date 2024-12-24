@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Repositories\Common\CommonRepositoryInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 
@@ -62,5 +63,22 @@ class BaseController extends Controller
     {
         return $this->repository->delete($id);
 
+    }
+
+       protected function successResponse($data, $message = 'Success', $status = 200): JsonResponse
+    {
+        return response()->json([
+            'status' => true,
+            'message' => $message,
+            'data' => $data,
+        ], $status);
+    }
+
+    protected function errorResponse($message = 'Error', $status = 400): JsonResponse
+    {
+        return response()->json([
+            'status' => false,
+            'message' => $message,
+        ], $status);
     }
 }

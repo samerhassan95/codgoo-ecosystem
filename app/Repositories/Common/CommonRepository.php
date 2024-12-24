@@ -133,7 +133,7 @@ class CommonRepository
     }
 
 
-
+    
     public function update(int $id, array $data)
 {
     $model = $this->getModel()->find($id);
@@ -145,14 +145,46 @@ class CommonRepository
         ], 404);
     }
 
-    // Update the model
-    $model->update($data);
+    DB::beginTransaction();
 
-    // Use the RESOURCE constant to return the updated model
+    try {
+        $model->update($data);
+        DB::commit();
+    } catch (\Illuminate\Database\QueryException $e) {
+        DB::rollBack();
+
+        // Log the error for debugging purposes
+        \Log::error('SQL Update Failed', [
+            'error' => $e->getMessage(),
+            'data' => $data,
+            'id' => $id
+        ]);
+
+        // Check if the error is a duplicate entry for a unique constraint violation
+        if (str_contains($e->getMessage(), 'Duplicate entry')) {
+            return response()->json([
+                'status' => false,
+                'message' => __('messages.unique_constraint_violation'),
+            ], 422); // Unprocessable Entity
+        }
+
+        // Return a general update failed message for other errors
+        return response()->json([
+            'status' => false,
+            'message' => __('messages.update_failed'),
+        ], 400); // or 422
+    }
+
     $resourceClass = static::RESOURCE;
 
-    return new $resourceClass($model->refresh());
+    return response()->json([
+        'status' => true,
+        'data' => new $resourceClass($model->refresh()),
+        'message' => __('messages.update_success'),
+    ], 200);
 }
+
+    
 
     
 

@@ -33,6 +33,12 @@ use App\Repositories\InvoiceRepositoryInterface;
 use App\Repositories\InvoiceRepository;
 use App\Repositories\MeetingRepositoryInterface;
 use App\Repositories\MeetingRepository;
+use App\Repositories\TicketRepository;
+use App\Repositories\TicketRepositoryInterface;
+use App\Repositories\TicketReplyRepository;
+use App\Repositories\TicketReplyRepositoryInterface;
+use App\Repositories\DepartmentRepositoryInterface;
+use App\Repositories\DepartmentRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -56,6 +62,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(InvoiceRepositoryInterface::class, InvoiceRepository::class);
         $this->app->bind(TopicRepositoryInterface::class, TopicRepository::class);
         $this->app->bind(TopicGalleryRepositoryInterface::class, TopicGalleryRepository::class);
+        $this->app->bind(TicketReplyRepositoryInterface::class, TicketReplyRepository::class);
+        $this->app->bind(TicketRepositoryInterface::class, TicketRepository::class);
+        $this->app->bind(DepartmentRepositoryInterface::class, DepartmentRepository::class);
 
     }
 
