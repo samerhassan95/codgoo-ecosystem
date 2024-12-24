@@ -29,22 +29,18 @@ class RouteServiceProvider extends ServiceProvider
     {
         parent::boot();
 
-        // Define API routes (common for both admin and client)
         Route::middleware('api')
             ->prefix('api')
             ->group(base_path('routes/api.php'));
 
-        // Load the admin-specific routes, with 'admin' prefix
         Route::middleware('api')
             ->prefix('api/admin')
             ->group(base_path('routes/admin.php'));
 
-        // Load the client-specific routes, with 'client' prefix
         Route::middleware('api')
             ->prefix('api/client')
             ->group(base_path('routes/client.php'));
 
-        // Define web routes (for things like authentication, etc.)
         Route::middleware('web')
             ->group(base_path('routes/web.php'));
     }

@@ -225,78 +225,78 @@ class ClientAuthController extends Controller
 
 
 
-     public function login(Request $request)
-     {
-         $validator = Validator::make($request->all(), [
-             'login' => 'required', // 'login' can be either phone or username
-             'password' => 'required',
-         ]);
+    //  public function login(Request $request)
+    //  {
+    //      $validator = Validator::make($request->all(), [
+    //          'login' => 'required', // 'login' can be either phone or username
+    //          'password' => 'required',
+    //      ]);
 
-         if ($validator->fails()) {
-             return response()->json([
-                 "status" => false,
-                 'code' => 402,
-                 'message' => $validator->errors()->first(),
-                 'data' => null,
-             ], 402);
-         }
+    //      if ($validator->fails()) {
+    //          return response()->json([
+    //              "status" => false,
+    //              'code' => 402,
+    //              'message' => $validator->errors()->first(),
+    //              'data' => null,
+    //          ], 402);
+    //      }
 
-         // Check if the login is a phone number or username
-         $client = Client::where('phone', $request->login) // Check if it's a phone number
-                        ->orWhere('username', $request->login) // Or if it's a username
-                        ->first();
+    //      // Check if the login is a phone number or username
+    //      $client = Client::where('phone', $request->login) // Check if it's a phone number
+    //                     ->orWhere('username', $request->login) // Or if it's a username
+    //                     ->first();
 
-         if ($client) {
-             // Set credentials for phone or username
-             $credentials = [
-                 'password' => $request->password,
-             ];
+    //      if ($client) {
+    //          // Set credentials for phone or username
+    //          $credentials = [
+    //              'password' => $request->password,
+    //          ];
 
-             if ($client->phone == $request->login) {
-                 // If login is phone, pass phone with password to JWTAuth attempt
-                 $credentials['phone'] = $request->login;
-             } else {
-                 // If login is username, pass username with password to JWTAuth attempt
-                 $credentials['username'] = $request->login;
-             }
+    //          if ($client->phone == $request->login) {
+    //              // If login is phone, pass phone with password to JWTAuth attempt
+    //              $credentials['phone'] = $request->login;
+    //          } else {
+    //              // If login is username, pass username with password to JWTAuth attempt
+    //              $credentials['username'] = $request->login;
+    //          }
 
-             try {
-                 // Authenticate the client with the client guard
-                 if (!$token = auth('client')->attempt($credentials)) {
-                     return response()->json([
-                         'status' => false,
-                         'code' => 401,
-                         'message' => __('The phone/username or password is incorrect'),
-                         'data' => null,
-                     ], 401);
-                 }
-             } catch (JWTException $e) {
-                 return response()->json([
-                     'status' => false,
-                     'code' => 500,
-                     'message' => __('Server error, please try again later'),
-                     'data' => null,
-                 ], 500);
-             }
+    //          try {
+    //              // Authenticate the client with the client guard
+    //              if (!$token = auth('client')->attempt($credentials)) {
+    //                  return response()->json([
+    //                      'status' => false,
+    //                      'code' => 401,
+    //                      'message' => __('The phone/username or password is incorrect'),
+    //                      'data' => null,
+    //                  ], 401);
+    //              }
+    //          } catch (JWTException $e) {
+    //              return response()->json([
+    //                  'status' => false,
+    //                  'code' => 500,
+    //                  'message' => __('Server error, please try again later'),
+    //                  'data' => null,
+    //              ], 500);
+    //          }
 
-             // If successful, return the client's data and token
-             $data = $client->toArray();  // Convert client model to array
-             $data['token'] = $token; // Assign the generated token to the data array
-             $data['type'] = 'client';
+    //          // If successful, return the client's data and token
+    //          $data = $client->toArray();  // Convert client model to array
+    //          $data['token'] = $token; // Assign the generated token to the data array
+    //          $data['type'] = 'client';
 
-             return response()->json([
-                 'status' => true,
-                 'code' => 200,
-                 'message' => __('Login successful'),
-                 'data' => $data,
-             ], 200);
-         }
+    //          return response()->json([
+    //              'status' => true,
+    //              'code' => 200,
+    //              'message' => __('Login successful'),
+    //              'data' => $data,
+    //          ], 200);
+    //      }
 
-         return response()->json([
-             'status' => false,
-             'message' => __('The phone/username does not exist'),
-         ], 404);
-     }
+    //      return response()->json([
+    //          'status' => false,
+    //          'message' => __('The phone/username does not exist'),
+    //      ], 404);
+    //  }
 
     public function logout()
     {
