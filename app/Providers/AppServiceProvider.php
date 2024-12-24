@@ -65,6 +65,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TicketReplyRepositoryInterface::class, TicketReplyRepository::class);
         $this->app->bind(TicketRepositoryInterface::class, TicketRepository::class);
         $this->app->bind(DepartmentRepositoryInterface::class, DepartmentRepository::class);
+        $this->app->bind(MeetingRepositoryInterface::class, MeetingRepository::class);
 
     }
 

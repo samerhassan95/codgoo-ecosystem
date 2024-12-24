@@ -333,7 +333,7 @@ class AdminAuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'login' => 'required', // 'login' can be either phone or username
+            'login' => 'required', 
             'password' => 'required',
                 ]);
 
@@ -378,7 +378,7 @@ class AdminAuthController extends Controller
 
                 $data = $client->toArray();
                 $data['token'] = $token;
-                $data['type'] = 'client'; // Specify the type as 'client'
+                $data['type'] = 'client'; 
                 return response()->json([
                     'status' => true,
                     'code' => 200,
@@ -396,13 +396,11 @@ class AdminAuthController extends Controller
             }
         }
 
-        // Check if the login is a phone number or username for Admin
         $admin = Admin::where('phone', $request->login)
                       ->orWhere('username', $request->login)
                       ->first();
 
         if ($admin) {
-            // Set credentials for phone or username
             $credentials = [
                 'password' => $request->password,
             ];
@@ -414,7 +412,6 @@ class AdminAuthController extends Controller
             }
 
             try {
-                // Authenticate the admin with the 'admin' guard
                 if (!$token = auth('admin')->attempt($credentials)) {
                     return response()->json([
                         'status' => false,
@@ -423,11 +420,9 @@ class AdminAuthController extends Controller
                         'data' => null,
                     ], 401);
                 }
-
-                // Return admin data and token
                 $data = $admin->toArray();
                 $data['token'] = $token;
-                $data['type'] = 'admin'; // Specify the type as 'admin'
+                $data['type'] = 'admin'; 
                 return response()->json([
                     'status' => true,
                     'code' => 200,
@@ -445,7 +440,6 @@ class AdminAuthController extends Controller
             }
         }
 
-        // If no client or admin found, return an error
         return response()->json([
             'status' => false,
             'message' => __('The phone/username does not exist'),
@@ -454,7 +448,6 @@ class AdminAuthController extends Controller
 
 
 
-    // Admin Logout
     public function logout()
     {
         Auth::guard('admin')->logout();
@@ -467,7 +460,6 @@ class AdminAuthController extends Controller
 
 
 
-    // Update Admin Profile
     public function changeProfile(Request $request)
     {
         $auth = Auth::guard('admin')->user();

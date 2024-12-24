@@ -336,7 +336,6 @@ class ClientAuthController extends Controller
 
     public function forgotPasswordRequest(Request $request)
     {
-        // Validate phone number
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
         ]);
@@ -351,11 +350,9 @@ class ClientAuthController extends Controller
 
         $phone = $request->phone;
 
-        // Generate OTP (4 digits)
         $otp = 1234;
 
-        // Store OTP in cache for 5 minutes
-        Cache::put('otp', $otp,  now()->addMinutes(10));  // Store OTP in cache for 5 minutes
+        Cache::put('otp', $otp,  now()->addMinutes(10));  
 
         // Simulate sending OTP (you can integrate an SMS service here)
         // For now, we'll just log the OTP (In production, send via SMS)
