@@ -4,12 +4,16 @@ namespace App\Providers;
 
 use App\Repositories\AddonRepository;
 use App\Repositories\AddonRepositoryInterface;
+use App\Repositories\Employee\EmployeeRepository;
+use App\Repositories\Employee\EmployeeRepositoryInterface;
 use App\Repositories\ProductAddonRepository;
 use App\Repositories\ProductAddonRepositoryInterface;
 use App\Repositories\ProductRepository;
 use App\Repositories\ProductRepositoryInterface;
 use App\Repositories\ProjectAddonRepository;
 use App\Repositories\ProjectAddonRepositoryInterface;
+use App\Repositories\SkillRepository;
+use App\Repositories\SkillRepositoryInterface;
 use App\Repositories\TopicGalleryRepository;
 use App\Repositories\TopicGalleryRepositoryInterface;
 use App\Repositories\TopicRepository;
@@ -66,6 +70,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TicketRepositoryInterface::class, TicketRepository::class);
         $this->app->bind(DepartmentRepositoryInterface::class, DepartmentRepository::class);
         $this->app->bind(MeetingRepositoryInterface::class, MeetingRepository::class);
+        $this->app->bind(EmployeeRepositoryInterface::class, EmployeeRepository::class);
+        $this->app->bind(SkillRepositoryInterface::class, SkillRepository::class);
 
     }
 

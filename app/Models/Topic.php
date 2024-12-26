@@ -16,6 +16,6 @@ class Topic extends Model
     
     public function galleries()
     {
-        return $this->hasMany(TopicGallery::class);
+        return $this->morphMany(Gallery::class, 'galleriable');
     }
 }

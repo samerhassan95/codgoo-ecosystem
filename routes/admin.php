@@ -15,6 +15,7 @@ use App\Http\Controllers\{
     TicketController,
     DepartmentController,
     TicketReplyController,
+    SkillController,
 };
 use Illuminate\Support\Facades\Route;
 
@@ -82,5 +83,13 @@ Route::middleware('auth:admin')->group(function () {
     ]);
 
     Route::apiResource('ticket-reply', TicketReplyController::class)->except(['edit', 'create']);
+    Route::apiResource('skills', SkillController::class);
+
+
+
+Route::controller(SkillController::class)->prefix('skills')->group(function () {
+    Route::post('/assign/{employeeId}', 'assignSkillsToEmployee');
+    Route::delete('/remove/{employeeId}/{skillId}', 'removeSkillFromEmployee');
+});
 
 });

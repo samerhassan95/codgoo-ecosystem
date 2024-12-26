@@ -2,24 +2,24 @@
 
 namespace App\Repositories;
 
-use App\Http\Requests\TicketReplyRequest;
-use App\Http\Resources\TicketReplyResource;
+use App\Http\Requests\TicketRequest;
+use App\Http\Resources\TicketResource;
+use App\Models\Ticket;
 use App\Models\TicketReply;
-use App\Models\TicketReplyReply;
 use App\Repositories\Common\CommonRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\ImageService;
 
-class TicketReplyRepository extends CommonRepository implements TicketReplyRepositoryInterface
+class TicketRepository extends CommonRepository implements TicketRepositoryInterface
 {
 
-    protected const REQUEST = TicketReplyRequest::class;
-    protected const RESOURCE = TicketReplyResource::class;
+    protected const REQUEST = TicketRequest::class;
+    protected const RESOURCE = TicketResource::class;
 
     public function model(): string
     {
-        return TicketReply::class;
+        return Ticket::class;
     }
 
 }
