@@ -9,7 +9,7 @@ class Gallery extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['galleriable_id', 'galleriable_type', 'file_path'];
+    protected $fillable = ['galleriable_id', 'galleriable_type', 'image_path'];
 
     public function galleriable()
     {

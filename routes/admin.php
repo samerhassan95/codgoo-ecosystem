@@ -16,6 +16,8 @@ use App\Http\Controllers\{
     DepartmentController,
     TicketReplyController,
     SkillController,
+    GalleryController,
+    
 };
 use Illuminate\Support\Facades\Route;
 
@@ -91,5 +93,6 @@ Route::controller(SkillController::class)->prefix('skills')->group(function () {
     Route::post('/assign/{employeeId}', 'assignSkillsToEmployee');
     Route::delete('/remove/{employeeId}/{skillId}', 'removeSkillFromEmployee');
 });
+Route::post('galleries', [GalleryController::class, 'store']);
 
 });

@@ -43,7 +43,8 @@ use App\Repositories\TicketReplyRepository;
 use App\Repositories\TicketReplyRepositoryInterface;
 use App\Repositories\DepartmentRepositoryInterface;
 use App\Repositories\DepartmentRepository;
-
+use App\Repositories\GalleryRepositoryInterface;
+use App\Repositories\GalleryRepository;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -72,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MeetingRepositoryInterface::class, MeetingRepository::class);
         $this->app->bind(EmployeeRepositoryInterface::class, EmployeeRepository::class);
         $this->app->bind(SkillRepositoryInterface::class, SkillRepository::class);
+        $this->app->bind(GalleryRepositoryInterface::class, GalleryRepository::class);
 
     }
 
