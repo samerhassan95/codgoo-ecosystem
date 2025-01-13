@@ -30,19 +30,21 @@ class CommonRepository
         $this->model = $this->model();
 
     }
-    protected function getModel(): Model
-    {
-        if (is_string($this->model)) {
-            $this->model = app($this->model());
-        }
+  
+    
+   protected function getModel(): Model
+   {
+       return app($this->model());
+   }
 
-        return $this->model;
-    }
-
-    public function model()
-    {
-        throw new \RuntimeException("Model method not implemented in repository.");
-    }
+   /**
+    * Define the model class.
+    */
+   public function model()
+   {
+       // Must be overridden in the child repository
+       throw new \Exception("The model method is not implemented.");
+   }
 
     public function getFilters()
     {
