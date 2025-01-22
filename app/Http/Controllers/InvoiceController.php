@@ -67,6 +67,7 @@ class InvoiceController extends BaseController
             'payment_method' => $invoice->payment_method,
             'created_at' => $invoice->created_at->toDateTimeString(),
             'due_date' => $invoice->due_date,
+            'amount' => $invoice->amount,
             'project_name' => $project->name,
             'client_name' => $creatorName, // Include the name/username
         ];

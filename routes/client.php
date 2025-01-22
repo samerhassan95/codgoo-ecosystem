@@ -59,6 +59,7 @@ Route::middleware('auth:client')->group(function () {
         'update' => 'client.product-media.update',
         'destroy' => 'client.product-media.destroy',
     ]);
+    Route::get('specific-product-media/{productId}', [ProductMediaController::class, 'getAllMediaForProduct']);
 
     Route::post('meetings', [MeetingController::class, 'store']);
     Route::get('available-slots/{slotId}/free-intervals', [MeetingController::class, 'getAvailableIntervals']);
@@ -90,5 +91,6 @@ Route::middleware('auth:client')->group(function () {
     Route::get('project/{projectId}/tasks-summary', [ProjectController::class, 'getTaskSummaryForProject']);
     Route::post('project/{projectId}/attachments', [ProjectController::class, 'uploadAttachment']);
     Route::get('project/{projectId}/attachments', [ProjectController::class, 'getAllAttachments']);
-    
+    Route::get('projects/{projectId}/invoices', [InvoiceController::class, 'getInvoicesForProject']);
+
 });
