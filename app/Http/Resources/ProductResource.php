@@ -10,8 +10,10 @@ class ProductResource extends JsonResource
         $addons = $this->addons->map(function ($addon) {
             return [
                 'id' => $addon->id,
-                'name' => $addon->addon->name,
-                'price' => $addon->addon->price,
+                'name' => $addon->name,
+                'price' => $addon->price,
+                'icon' => $addon->icon ? asset( $addon->icon) : null,
+                'description' => $addon->description,
             ];
         });
 

@@ -30,7 +30,10 @@ class Client extends Authenticatable implements JWTSubject
             'type' => 'client',
         ];
     }
-
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'uploadedBy');
+    }
     public function projects()
     {
         return $this->morphMany(Project::class, 'created_by');

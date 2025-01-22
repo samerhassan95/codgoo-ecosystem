@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
             $table->enum('status', ['paid', 'unpaid'])->default('unpaid');
             $table->enum('payment_method', ['bank_transfer', 'online'])->nullable();
-            $table->string('payment_proof')->nullable(); // For bank transfer proof
+            $table->string('payment_proof')->nullable();
             $table->date('due_date');
             $table->timestamps();
         });

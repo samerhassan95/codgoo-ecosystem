@@ -29,7 +29,10 @@ class Admin extends Authenticatable implements JWTSubject
             'type' => 'admin',
         ];
     }
-
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'uploadedBy');
+    }
     public function projects()
     {
         return $this->morphMany(Project::class, 'created_by');

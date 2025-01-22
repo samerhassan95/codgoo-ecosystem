@@ -17,9 +17,9 @@ return new class extends Migration
             $table->unsignedBigInteger('department_id');
             $table-> enum('priority', ['High', 'Low', 'Medium'])->default('Low'); 
             $table->text('description');
-            $table->foreignId('created_by')->constrained('clients'); // Foreign key to clients
+            $table->foreignId('created_by')->constrained('clients'); 
             $table->enum('status', ['pending', 'open', 'closed', 'answered'])->default('pending');
-            $table->string('attachment')->nullable(); // Optional file attachment
+            $table->string('attachment')->nullable(); 
             $table->timestamps();
             $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
 

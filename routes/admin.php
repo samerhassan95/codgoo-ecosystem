@@ -63,6 +63,14 @@ Route::middleware('auth:admin')->group(function () {
     ]);
 
     Route::apiResource('sliders', SliderController::class);
+
+    Route::apiResource('sliders', ProductMediaController::class)->names([
+        'index' => 'admin.sliders.index',
+        'show' => 'admin.sliders.show',
+        'store' => 'admin.sliders.store',
+        'update' => 'admin.sliders.update',
+        'destroy' => 'admin.sliders.destroy',
+    ]);
     Route::apiResource('invoices', InvoiceController::class);
     Route::post('run-migrations', [MigrationController::class, 'runMigrations']);
     Route::get('projects/{projectId}/invoices', [InvoiceController::class, 'getInvoicesForProject']);

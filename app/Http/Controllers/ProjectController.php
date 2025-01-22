@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProjectRequest;
 use App\Http\Resources\ProjectResource;
+use App\Models\Admin;
+use App\Models\Client;
 use App\Models\Project;
 use App\Repositories\ProjectRepositoryInterface;
 use Illuminate\Http\Request;
@@ -19,53 +21,51 @@ class ProjectController extends BaseController
         $this->repository = $repository;
     }
 
-
     public function store(Request $request)
     {
-        // Validate the incoming request
         $validatedData = $request->validate([
-            'product_id' => 'nullable|exists:products,id', // Ensure product exists if provided
+            'product_id' => 'nullable|exists:products,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
             'note' => 'nullable|string|max:1000',
-            'status' => 'string|in:approved,not_approved,canceled', // Enum validation
-            'attachments.*' => 'file|max:10240',  // Max 10MB
+            'status' => 'string|in:approved,not_approved,canceled',
+            'addons' => 'array',
+            'addons.*' => 'exists:addons,id',
+            'attachments.*' => 'file|max:10240',
         ]);
-    
-        // Determine the authenticated user and type
-        $user = auth()->user(); // Assuming you are using Laravel's default auth
+
+        $user = auth()->user();
         $type = $user instanceof \App\Models\Admin ? 'Admin' : 'Client';
-    
-        // Add creator details to the validated data
+
         $validatedData['created_by_id'] = $user->id;
         $validatedData['created_by_type'] = $type;
-    
-        // Ensure only Admin can set the price
+
         if ($type === 'Client' && isset($validatedData['price'])) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Admin can set the price.',
-            ], 403); // Forbidden
+            ], 403);
         }
-    
-        // Create the project without the attachments
-        $project = Project::create(collect($validatedData)->except('attachments')->toArray());
-    
-        // Handle attachments using ImageService
+
+        $project = Project::create(collect($validatedData)->except(['attachments', 'addons'])->toArray());
+
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = ImageService::upload($file, 'attachments'); // Use ImageService to save the file
+                $path = ImageService::upload($file, 'attachments');
                 $project->attachments()->create([
                     'file_path' => $path,
                 ]);
             }
         }
-    
-        // Return the created project using a resource
-        return response()->json(new ProjectResource($project), 201);
+
+        if (!empty($validatedData['addons'])) {
+            $project->addons()->attach($validatedData['addons']);
+        }
+
+        return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 201);
     }
-    
+
     public function update(Request $request, $id)
     {
         $project = Project::find($id);
@@ -81,7 +81,9 @@ class ProjectController extends BaseController
             'price' => 'nullable|numeric|min:0',
             'note' => 'nullable|string|max:1000',
             'status' => 'nullable|string|in:approved,not_approved,canceled',
-            'attachments.*' => 'file|max:10240', // Max 10MB
+            'addons' => 'array',
+            'addons.*' => 'exists:addons,id',
+            'attachments.*' => 'file|max:10240',
         ]);
 
         $user = auth()->user();
@@ -91,29 +93,308 @@ class ProjectController extends BaseController
             return response()->json([
                 'status' => false,
                 'message' => 'Only Admin can update the price.',
-            ], 403); // Forbidden
+            ], 403);
         }
 
-        $project->update(collect($validatedData)->except('attachments')->toArray());
+        $project->update(collect($validatedData)->except(['attachments', 'addons'])->toArray());
 
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                // Optionally, delete old attachments (not required unless explicitly needed)
-                $project->attachments()->delete();
-
-                // Upload the new attachment
                 $path = ImageService::upload($file, 'attachments');
-
-                // Add the new attachment
                 $project->attachments()->create([
                     'file_path' => $path,
                 ]);
             }
         }
 
-        // Return the updated project as a resource
-        return response()->json(new ProjectResource($project->load('attachments')), 200);
+        if (isset($validatedData['addons'])) {
+            $project->addons()->sync($validatedData['addons']);
+        }
+
+        return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 200);
     }
+
+
+    public function getStatusCounts()
+    {
+        $user = auth()->user();
+
+        if (!$user || $user instanceof \App\Models\Admin) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        $projects = Project::where('created_by_id', $user->id)
+            ->where('created_by_type', 'Client')
+            ->with('milestones') // Include milestones for status calculation
+            ->get();
+
+        $statusCounts = [
+            'completed' => 0,
+            'ongoing' => 0,
+            'pending' => 0, // Renamed from 'not_approved' to 'pending'
+        ];
+
+        foreach ($projects as $project) {
+            // Rename 'not_approved' to 'pending' dynamically
+            $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
+
+            // Increment static statuses
+            $statusCounts[$projectStatus] = ($statusCounts[$projectStatus] ?? 0) + 1;
+
+            // Determine dynamic status based on milestones
+            if ($project->milestones->isNotEmpty()) {
+                if ($project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
+                    $statusCounts['completed']++;
+                } else {
+                    $statusCounts['ongoing']++;
+                }
+            } else {
+                // If no milestones exist, treat as ongoing (or decide other default behavior)
+                $statusCounts['ongoing']++;
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $statusCounts,
+        ]);
+    }
+
+
+    public function filterProjectsByStatus($status)
+    {
+        // Map status numbers to status strings
+        $statusMapping = [
+            1 => 'completed',
+            2 => 'ongoing',
+            3 => 'pending',
+        ];
+
+        // Validate the input status
+        if (!array_key_exists($status, $statusMapping)) {
+            return response()->json(['message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (pending).'], 400);
+        }
+
+        $statusString = $statusMapping[$status];
+
+        $user = auth()->user();
+
+        if (!$user || $user instanceof \App\Models\Admin) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        // Fetch projects based on the user, along with milestones for status calculation
+        $projects = Project::where('created_by_id', $user->id)
+            ->where('created_by_type', 'Client')
+            ->with('milestones') // Include milestones for status calculation
+            ->get();
+
+        $filteredProjects = [];
+
+        foreach ($projects as $project) {
+            // Rename 'not_approved' to 'pending'
+            $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
+
+            // Filter based on dynamic status (milestones) and static status
+            if ($statusString === 'completed') {
+                if ($project->milestones->isNotEmpty() && $project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
+                    $filteredProjects[] = $project;
+                }
+            }
+
+            if ($statusString === 'ongoing') {
+                if ($project->milestones->isNotEmpty() && ($project->milestones->contains('in_progress') || $project->milestones->contains('not_started'))) {
+                    $filteredProjects[] = $project;
+                } elseif ($project->milestones->isEmpty()) {
+                    // If no milestones exist, consider as ongoing
+                    $filteredProjects[] = $project;
+                }
+            }
+
+            if ($statusString === 'pending') {
+                if ($projectStatus === 'pending') {
+                    $filteredProjects[] = $project;
+                }
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $filteredProjects,
+        ]);
+    }
+
+    public function getProjectDetails($projectId)
+    {
+        $user = auth()->user();
+
+        $project = Project::where('id', $projectId)
+            ->first();
+
+        if (!$project) {
+            return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
+        }
+
+        $completedMilestones = $project->milestones->where('status', 'completed')->count();
+        $totalMilestones = $project->milestones->count();
+        $progress = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100, 2) : 0;
+
+        // Task statistics
+        $openTasks = $project->milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
+        $totalTasks = $project->milestones->flatMap->tasks->count();
+
+        // Days left calculation
+        $deadline = $project->deadline;
+        $daysLeft = $deadline ? now()->diffInDays($deadline, false) : null;
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'project_id' => $project->id,
+                'project_name' => $project->name,
+                'start_date' => $project->start_date ? $project->start_date->toDateString() : null,
+                'deadline' => $deadline ? $deadline->toDateString() : null,
+                'billing_type' => $project->billing_type,
+                'total_rate' => $project->total_rate,
+                // 'logged_time' => $project->logged_time ?? '00:00',
+                'progress' => $progress . '%',
+                'tasks' => [
+                    'open_tasks' => "{$openTasks}/{$totalTasks}",
+                ],
+                'days_left' => $daysLeft,
+            ],
+        ]);
+    }
+
+    public function getTaskSummaryForProject($projectId)
+    {
+        $user = auth()->user();
+
+        // Check if the user has access to the project
+        $project = Project::where('id', $projectId)
+            ->where('created_by_id', $user->id)
+            ->where('created_by_type', 'Client')
+            ->with(['milestones.tasks'])
+            ->first();
+
+        if (!$project) {
+            return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
+        }
+
+        // Get all tasks from the project's milestones
+        $tasks = $project->milestones->flatMap->tasks;
+
+        // Count tasks by status
+        $statusCounts = $tasks->groupBy('status')->map(function ($group) {
+            return $group->count();
+        });
+
+        // Include counts for all statuses
+        $allStatuses = ['not_started', 'in_progress', 'completed', 'awaiting_feedback', 'canceled'];
+        foreach ($allStatuses as $status) {
+            if (!isset($statusCounts[$status])) {
+                $statusCounts[$status] = 0;
+            }
+        }
+
+        // Total tasks and other task details
+        $taskDetails = $tasks->map(function ($task) {
+            return [
+                'id' => $task->id,
+                'name' => $task->label,
+                'description' => $task->description,
+                'status' => $task->status,
+                'start_date' => $task->start_date ? $task->start_date : null,
+                'due_date' => $task->due_date ? $task->due_date: null,
+                'priority' => $task->priority,
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'total_tasks' => $tasks->count(),
+                'status_counts' => $statusCounts,
+                'task_details' => $taskDetails,
+            ],
+        ]);
+    }
+
+    public function getAllAttachments($projectId)
+    {
+        $project = Project::with('attachments')->find($projectId);
+
+        if (!$project) {
+            return response()->json(['status' => false, 'message' => 'Project not found.'], 404);
+        }
+
+        $attachments = $project->attachments->map(function ($attachment) {
+            // Fetch the user based on uploaded_by_id
+            $uploadedBy = null;
+            if ($attachment->uploaded_by_id) {
+                // First check for Client
+                $uploadedBy = Client::find($attachment->uploaded_by_id);
+
+                // If not found, check for Admin
+                if (!$uploadedBy) {
+                    $uploadedBy = Admin::find($attachment->uploaded_by_id);
+                }
+            }
+            $filePath =  $attachment->file_path;
+            $fileType = file_exists($filePath) ? mime_content_type($filePath) : 'unknown';
     
+            return [
+                'id' => $attachment->id,
+                'file_path' => asset($attachment->file_path),
+                'file_type' => $fileType,
+                'uploaded_by_id' => $attachment->uploaded_by_id,
+                'date_uploaded' => $attachment->created_at->toDateTimeString(),
+                'last_activity' => $attachment->updated_at ? $attachment->updated_at->diffForHumans() : null,
+                'uploaded_by' => $uploadedBy ? [
+                    'id' => $uploadedBy->id,
+                    'name' => $uploadedBy->name ?? 'Unknown',
+                    'image' => $uploadedBy->image ?? null,
+                    'type' => class_basename($uploadedBy),
+                ] : null,
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => $attachments,
+        ]);
+    }
+
+
+
+    public function uploadAttachment(Request $request, $projectId)
+    {
+        $validatedData = $request->validate([
+            'attachments.*' => 'required|file|max:10240', // Max size: 10MB per file
+        ]);
+
+        $project = Project::find($projectId);
+
+        if (!$project) {
+            return response()->json(['status' => false, 'message' => 'Project not found.'], 404);
+        }
+        $user = auth()->user();
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = ImageService::upload($file, 'attachments');
+                $project->attachments()->create([
+                    'file_path' => $path,
+                    'uploaded_by_id' => $user->id,
+                ]);
+            }
+        }
+
+        return response()->json(['status' => true, 'message' => 'Attachments uploaded successfully.'], 201);
+    }
+
+
 
 }
+
+
+

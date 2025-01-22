@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\{Client\ClientAuthController,
     DepartmentController,
+    InvoiceController,
     MeetingController,
     MilestoneController,
     ProductAddonController,
@@ -9,7 +10,9 @@ use App\Http\Controllers\{Client\ClientAuthController,
     ProductMediaController,
     ProjectAddonController,
     ProjectController,
+    SliderController,
     TaskController,
+    TicketController,
     TopicController};
 use Illuminate\Support\Facades\Route;
 
@@ -72,5 +75,20 @@ Route::middleware('auth:client')->group(function () {
 
 
     Route::apiResource('tickets', TicketController::class)->except(['edit', 'create']);
+    Route::apiResource('sliders', SliderController::class)->names([
+        'index' => 'client.sliders.index',
+        'show' => 'client.sliders.show',
+        'store' => 'client.sliders.store',
+        'update' => 'client.sliders.update',
+        'destroy' => 'client.sliders.destroy',
+    ]);
 
+    Route::get('project/status-count', [ProjectController::class, 'getStatusCounts']);
+    Route::get('project/filter/{status}', [ProjectController::class, 'filterProjectsByStatus']);
+    Route::get('project/{project_id}/details', [ProjectController::class, 'getProjectDetails']);
+    Route::get('invoice/status/count', [InvoiceController::class, 'getInvoiceStatusCounts']);
+    Route::get('project/{projectId}/tasks-summary', [ProjectController::class, 'getTaskSummaryForProject']);
+    Route::post('project/{projectId}/attachments', [ProjectController::class, 'uploadAttachment']);
+    Route::get('project/{projectId}/attachments', [ProjectController::class, 'getAllAttachments']);
+    
 });

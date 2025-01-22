@@ -18,8 +18,9 @@ class Product extends Model
     
     public function addons()
     {
-        return $this->hasMany(ProductAddons::class);
+        return $this->belongsToMany(Addon::class, 'product_addons');
     }
+
     public function attachments()
     {
         return $this->morphMany(attachment::class, 'attachable');
