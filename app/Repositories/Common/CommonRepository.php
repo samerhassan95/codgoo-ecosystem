@@ -102,7 +102,7 @@ class CommonRepository
 
     // Create the custom pagination structure
     $customPagination = [
-        'data'     => $data,
+        'data'     => $data,  // This is now directly under "data"
         'from'     => $paginated->firstItem(),
         'per_page' => $paginated->perPage(),
         'to'       => $paginated->lastItem(),
@@ -112,6 +112,7 @@ class CommonRepository
 
     return ResponseHelper::success($customPagination, __('messages.list_success'));
 }
+
 
     
 
@@ -228,22 +229,26 @@ class CommonRepository
 
 
     public function show(int $id, array $relations = [])
-    {
-        $model = $this->getModel()->with($relations)->find($id);
-        if(!$model){
-            return response()->json([
-                'status' => false,
-                'message' =>  __('messages.not_found'),
-            ]);
-        }
-
-
+{
+    $model = $this->getModel()->with($relations)->find($id);
+    if (!$model) {
         return response()->json([
-            'message' => null,
-            'success' => true,
-            new (static::RESOURCE)($model)
-        ], 200);
+            'status' => false,
+            'message' => __('messages.not_found'),
+        ]);
     }
+
+    // Use the resource class defined in the repository
+    $resourceClass = static::RESOURCE;
+
+    // Return the model wrapped in the resource class under "data" key
+    return response()->json([
+        'status' => true,
+        'message' => null,
+        'data' => new $resourceClass($model), // Wrap model in resource and return under "data"
+    ], 200);
+}
+
     // public function show(int $id, array $relations = []): JsonResource
     // {
     //     $model = $this->getModel()->with($relations)->find($id);
