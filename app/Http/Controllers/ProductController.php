@@ -103,5 +103,58 @@ class ProductController extends BaseController
         return response()->json(new ProductResource($product->load(['attachments', 'addons'])), 200);
     }
 
+
+    public function show($id)
+    {
+        // Retrieve the product with its related media, attachments, and addons
+        $product = Product::with(['media', 'attachments', 'addons'])->find($id);
+
+        // Check if the product exists
+        if (!$product) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Product not found.',
+            ], 404);
+        }
+
+        // Manually format the data
+        $data = [
+            'id' => $product->id,
+            'name' => $product->name,
+            'description' => $product->description,
+            'price' => $product->price,
+            'note' => $product->note,
+            'created_at' => $product->created_at,
+            'updated_at' => $product->updated_at,
+            'media' => $product->media->map(function ($media) {
+                return [
+                    'id' => $media->id,
+                    'file_path' => $media->file_path,
+                    'type' => $media->type,
+                ];
+            }),
+            'attachments' => $product->attachments->map(function ($attachment) {
+                return [
+                    'id' => $attachment->id,
+                    'file_path' => $attachment->file_path,
+                ];
+            }),
+            'addons' => $product->addons->map(function ($addon) {
+                return [
+                    'id' => $addon->id,
+                    'name' => $addon->name,
+                    'price' => $addon->price,
+                ];
+            }),
+        ];
+
+        // Return the response
+        return response()->json([
+            'status' => true,
+            'data' => $data,
+        ], 200);
+    }
+
+
     
 }
