@@ -13,8 +13,10 @@ use App\Http\Controllers\{Client\ClientAuthController,
     SliderController,
     TaskController,
     TicketController,
-    TopicController};
+    TopicController,
+    AvailableSlotController};
 use Illuminate\Support\Facades\Route;
+
 
 Route::middleware('auth:client')->group(function () {
     Route::apiResource('projects', ProjectController::class);
@@ -61,8 +63,8 @@ Route::middleware('auth:client')->group(function () {
     ]);
     Route::get('specific-product-media/{productId}', [ProductMediaController::class, 'getAllMediaForProduct']);
 
-    Route::post('meetings', [MeetingController::class, 'store']);
-    Route::get('available-slots/{slotId}/free-intervals', [MeetingController::class, 'getAvailableIntervals']);
+    // Route::post('meetings', [MeetingController::class, 'store']);
+    // Route::get('available-slots/{slotId}/free-intervals', [MeetingController::class, 'getAvailableIntervals']);
 
     Route::apiResource('topic', TopicController::class)->names([
         'index' => 'client.topic.index',
@@ -92,5 +94,15 @@ Route::middleware('auth:client')->group(function () {
     Route::post('project/{projectId}/attachments', [ProjectController::class, 'uploadAttachment']);
     Route::get('project/{projectId}/attachments', [ProjectController::class, 'getAllAttachments']);
     Route::get('projects/{projectId}/invoices', [InvoiceController::class, 'getInvoicesForProject']);
+
+
+
+Route::prefix('meetings')->group(function () {
+    Route::post('/', [MeetingController::class, 'store']);
+    Route::get('/{slotId}/available-intervals', [MeetingController::class, 'getAvailableIntervals']);
+});
+
+
+Route::get('/available-slots', [AvailableSlotController::class, 'getAvailableSlotsGroupedByDate']);
 
 });

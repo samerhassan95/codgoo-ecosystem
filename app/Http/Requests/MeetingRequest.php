@@ -12,7 +12,9 @@ class MeetingRequest extends FormRequest
             'client_id' => 'required|exists:clients,id',
             'slot_id' => 'required|exists:available_slots,id',
             'start_time' => 'required|date_format:H:i',
-            'duration' => 'required|integer|min:1|max:60', // Max 1 hour
+            // 'duration' => 'required|integer|min:1|max:60', 
+            // 'status' => 'required|in:Request Sent,Confirmed,Completed,Canceled',
+            'project_id' => 'nullable|exists:projects,id',
         ];
     }
 }
