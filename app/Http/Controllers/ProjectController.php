@@ -257,9 +257,10 @@ class ProjectController extends BaseController
                 'billing_type' => $project->billing_type,
                 'total_rate' => $project->total_rate,
                 // 'logged_time' => $project->logged_time ?? '00:00',
-                'progress' => $progress . '%',
+                'progress' => $progress,
                 'tasks' => [
-                    'open_tasks' => "{$openTasks}/{$totalTasks}",
+                    'open_tasks' => $openTasks,
+                    'total_tasks' =>$totalTasks
                 ],
                 'days_left' => $daysLeft,
             ],
