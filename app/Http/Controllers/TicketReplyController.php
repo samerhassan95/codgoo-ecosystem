@@ -18,4 +18,21 @@ class TicketReplyController extends BaseController
         $this->repository = $repository;
     }
 
+    public function store(Request $request)
+    {
+        $creator = $request->user();
+        $validated = $request->validate([
+            'ticket_id' => 'required|exists:tickets,id', 
+            'reply' => 'required|string', 
+        ]);
+
+        $ticketReply = new TicketReply();
+        $ticketReply->ticket_id = $validated['ticket_id'];  
+        $ticketReply->reply = $validated['reply'];  
+        $ticketReply->creator_id = $creator->id;  
+        $ticketReply->creator_type = get_class($creator);  
+        $ticketReply->save(); 
+
+        return new TicketReplyResource($ticketReply);
+    }
 }

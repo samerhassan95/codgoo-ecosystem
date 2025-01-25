@@ -92,7 +92,14 @@ Route::middleware('auth:admin')->group(function () {
         'destroy' => 'admin.departments.destroy',
     ]);
 
-    Route::apiResource('ticket-reply', TicketReplyController::class)->except(['edit', 'create']);
+    Route::apiResource('ticket-reply', DepartmentController::class)->names([
+        'index' => 'admin.ticket-reply.index',
+        'store' => 'admin.ticket-reply.store',
+        'show' => 'admin.ticket-reply.show',
+        'update' => 'admin.ticket-reply.update',
+        'destroy' => 'admin.ticket-reply.destroy',
+    ]);
+
     Route::apiResource('skills', SkillController::class);
 
 

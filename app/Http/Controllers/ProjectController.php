@@ -225,47 +225,62 @@ class ProjectController extends BaseController
     }
 
     public function getProjectDetails($projectId)
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        $project = Project::where('id', $projectId)
-            ->first();
+    // Fetch the project by ID
+    $project = Project::where('id', $projectId)->first();
 
-        if (!$project) {
-            return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
-        }
-
-        $completedMilestones = $project->milestones->where('status', 'completed')->count();
-        $totalMilestones = $project->milestones->count();
-        $progress = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100, 2) : 0;
-
-        // Task statistics
-        $openTasks = $project->milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
-        $totalTasks = $project->milestones->flatMap->tasks->count();
-
-        // Days left calculation
-        $deadline = $project->deadline;
-        $daysLeft = $deadline ? now()->diffInDays($deadline, false) : null;
-
-        return response()->json([
-            'status' => true,
-            'data' => [
-                'project_id' => $project->id,
-                'project_name' => $project->name,
-                'start_date' => $project->start_date ? $project->start_date->toDateString() : null,
-                'deadline' => $deadline ? $deadline->toDateString() : null,
-                'billing_type' => $project->billing_type,
-                'total_rate' => $project->total_rate,
-                // 'logged_time' => $project->logged_time ?? '00:00',
-                'progress' => $progress,
-                'tasks' => [
-                    'open_tasks' => $openTasks,
-                    'total_tasks' =>$totalTasks
-                ],
-                'days_left' => $daysLeft,
-            ],
-        ]);
+    // Return error response if the project is not found
+    if (!$project) {
+        return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
     }
+
+    // Calculate completed milestones and project progress
+    $completedMilestones = $project->milestones->where('status', 'completed')->count();
+    $totalMilestones = $project->milestones->count();
+    $progress = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100, 2) : 0;
+
+    // Task statistics (open tasks and total tasks)
+    $openTasks = $project->milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
+    $totalTasks = $project->milestones->flatMap->tasks->count();
+
+    // Days calculations (total and remaining)
+    $startDate = $project->start_date;
+    $deadline = $project->deadline;
+
+    $totalDays = null;
+    $daysLeft = null;
+
+    if ($startDate && $deadline) {
+        // Calculate total days in the project
+        $totalDays = $startDate->diffInDays($deadline);
+        
+        // Calculate days left
+        $daysLeft = now()->diffInDays($deadline, false);
+    }
+
+    // Return project details with total days and days left
+    return response()->json([
+        'status' => true,
+        'data' => [
+            'project_id' => $project->id,
+            'project_name' => $project->name,
+            'start_date' => $startDate ? $startDate->toDateString() : null,
+            'deadline' => $deadline ? $deadline->toDateString() : null,
+            'billing_type' => $project->billing_type,
+            'total_rate' => $project->total_rate,
+            'progress' => $progress,
+            'tasks' => [
+                'open_tasks' => $openTasks,
+                'total_tasks' => $totalTasks
+            ],
+            'total_days' => $totalDays, // Total days from start to deadline
+            'days_left' => $daysLeft, // Remaining days from today to deadline
+        ],
+    ]);
+}
+
 
     public function getTaskSummaryForProject($projectId)
     {

@@ -76,8 +76,40 @@ class TicketController extends BaseController
 
         return response()->json(new TicketResource($ticket), 200);
     }
+    public function getTicketsForClient(Request $request)
+    {
+        $client = $request->user();  
 
+        $Tickets = Ticket::where('created_by', $client->id)->get();
 
+        return TicketResource::collection($Tickets);
+    }
+
+    public function getTicketsAndSummary(Request $request)
+    {
+        $client = $request->user(); 
+
+        $openCount = Ticket::where('created_by', $client->id)->where('status', 'open')->count();
+        $closedCount = Ticket::where('created_by', $client->id)->where('status', 'closed')->count();
+        $answeredCount = Ticket::where('created_by', $client->id)->where('status', 'answered')->count();
+        $inProgressCount = Ticket::where('created_by', $client->id)->where('status', 'pending')->count();  
+
+        $tickets = Ticket::where('created_by', $client->id)->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Tickets and summary retrieved successfully.',
+            'data' => [
+                'summary' => [
+                    'open' => $openCount,
+                    'closed' => $closedCount,
+                    'answered' => $answeredCount,
+                    'in_progress' => $inProgressCount,
+                ],
+                'tickets' => TicketResource::collection($tickets) 
+            ]
+        ]);
+    }
     
     // public function reply(Request $request, int $ticketId)
     // {

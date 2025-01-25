@@ -104,5 +104,16 @@ Route::prefix('meetings')->group(function () {
 
 
 Route::get('/available-slots', [AvailableSlotController::class, 'getAvailableSlotsGroupedByDate']);
+Route::get('client-meetings', [MeetingController::class, 'getMeetingsForClient']);
+Route::get('meetings/filter', [MeetingController::class, 'filterMeetingsByStatus']);
+Route::get('meeting/{id}', [MeetingController::class, 'getMeetingById']);
+Route::get('client-tickets', [TicketController::class, 'getTicketsForClient']);
+Route::apiResource('ticket-reply', DepartmentController::class)->names([
+    'index' => 'client.ticket-reply.index',
+    'store' => 'client.ticket-reply.store',
+    'show' => 'client.ticket-reply.show',
+    'update' => 'client.ticket-reply.update',
+    'destroy' => 'client.ticket-reply.destroy',
+]);Route::get('ticket-summary', [TicketController::class, 'getTicketsAndSummary']);
 
 });

@@ -14,6 +14,10 @@ class MeetingResource extends JsonResource
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'jitsi_url' => $this->jitsi_url,
+            'status' => $this->status,
+            'project' => $this->project,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

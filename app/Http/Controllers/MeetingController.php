@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MeetingRequest;
 use App\Http\Resources\MeetingResource;
 use App\Models\AvailableSlot;
+use App\Models\Meeting;
 use App\Repositories\MeetingRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -83,11 +84,11 @@ class MeetingController extends Controller
     {
         $validated = $request->validated();
 
-        $duration = $validated['duration'] ?? 60; 
+        $duration = $validated['duration'] ?? 60;
 
-    $slot = AvailableSlot::findOrFail($validated['slot_id']);
-    $requestedStart = Carbon::parse($validated['start_time']);
-    $requestedEnd = $requestedStart->copy()->addMinutes($duration);  
+        $slot = AvailableSlot::findOrFail($validated['slot_id']);
+        $requestedStart = Carbon::parse($validated['start_time']);
+        $requestedEnd = $requestedStart->copy()->addMinutes($duration);
 
 
         // تحقق من التداخل
@@ -111,7 +112,7 @@ class MeetingController extends Controller
 
         // توليد رابط Jitsi إذا كانت الحالة Confirmed
         $jitsiUrl = null;
-       
+
             $jitsiRoom = 'meeting-' . uniqid();
             $jitsiUrl = config('services.jitsi.base_url') . '/' . $jitsiRoom;
 
@@ -126,5 +127,56 @@ class MeetingController extends Controller
         ]);
 
         return response()->json(new MeetingResource($meeting), 201);
+    }
+
+
+    public function getMeetingsForClient(Request $request)
+    {
+        $client = $request->user();  
+
+        $meetings = Meeting::where('client_id', $client->id)->get();
+
+        return MeetingResource::collection($meetings);
+    }
+
+    public function filterMeetingsByStatus(Request $request)
+    {
+        $client = $request->user();  
+
+        $statusMapping = [
+            1 => 'Request Sent',
+            2 => 'Confirmed',
+            3 => 'Completed',
+            4 => 'Canceled',
+        ];
+
+        $status = $request->query('status');
+
+        if ($status && isset($statusMapping[$status])) {
+            $meetings = Meeting::where('client_id', $client->id)
+                ->where('status', $statusMapping[$status])
+                ->get();
+        } else {
+            $meetings = Meeting::where('client_id', $client->id)->get();
+        }
+
+        return MeetingResource::collection($meetings);
+    }
+
+
+    public function getMeetingById($id, Request $request)
+    {
+        $client = $request->user(); 
+
+        $meeting = Meeting::where('client_id', $client->id)->find($id);
+
+        if (!$meeting) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Meeting not found or does not belong to the logged-in client.',
+            ], 404);
+        }
+
+        return new MeetingResource($meeting);
     }
 }

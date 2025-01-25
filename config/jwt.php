@@ -101,7 +101,7 @@ return [
     |
     */
 
-    'ttl' => (int) env('JWT_TTL', 60),  // Ensure explicit casting
+    'ttl' => (int) env('JWT_TTL', 43,200),  // Ensure explicit casting
 
     /*
     |--------------------------------------------------------------------------

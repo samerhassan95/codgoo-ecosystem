@@ -21,9 +21,14 @@ class TicketReply extends Model
         return $this->belongsTo(Ticket::class);
     }
 
-    // Relationship with Admin
-    public function admin()
+    // // Relationship with Admin
+    // public function admin()
+    // {
+    //     return $this->belongsTo(Admin::class);
+    // }
+
+    public function creator()
     {
-        return $this->belongsTo(Admin::class);
+        return $this->morphTo();
     }
 }
