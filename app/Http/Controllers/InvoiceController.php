@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\InvoiceRequest;
 use App\Http\Resources\InvoiceResource;
+use App\Models\Admin;
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Project;
 use App\Repositories\InvoiceRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Spatie\QueryBuilder\QueryBuilder;
 
 
 class InvoiceController extends BaseController
@@ -39,8 +42,8 @@ class InvoiceController extends BaseController
             ->where('project_id', $projectId)
             ->with('milestone')
             ->allowedFilters([
-                'status', 
-                'payment_method', 
+                'status',
+                'payment_method',
                 'due_date',
             ])
             ->get();
@@ -81,7 +84,7 @@ class InvoiceController extends BaseController
         ], 200);
     }
 
-    
+
 
 
 
@@ -95,7 +98,7 @@ class InvoiceController extends BaseController
 
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
-            ->with('invoices') 
+            ->with('invoices')
             ->get();
 
         $invoiceCounts = [
