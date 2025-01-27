@@ -306,7 +306,7 @@ class ProjectController extends BaseController
         });
 
         // Include counts for all statuses
-        $allStatuses = ['not_started', 'in_progress', 'completed', 'awaiting_feedback', 'canceled'];
+        $allStatuses = ['not_started', 'in_progress', 'completed', 'awaiting_feedback', 'canceled','testing'];
         foreach ($allStatuses as $status) {
             if (!isset($statusCounts[$status])) {
                 $statusCounts[$status] = 0;
@@ -410,26 +410,22 @@ class ProjectController extends BaseController
 
     public function index(Request $request)
     {
-        // Retrieve the logged-in user (client)
         $user = auth()->user();
     
-        // Check if the user is a client; only clients should be able to view their projects
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
     
-        // Paginate the projects created by the logged-in client
         $projects = Project::where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client') // Ensure that the projects are created by the client
-            ->with(['milestones', 'addons', 'attachments']) // Include related data
-            ->paginate(10); // Adjust the number of projects per page as needed
+            ->where('created_by_type', 'Client') 
+            ->with(['milestones', 'addons', 'attachments']) 
+            ->paginate(10);
     
-        // Return the projects as a collection of ProjectResource, along with pagination details
         return response()->json([
             'status' => true,
-            'message' => 'messages.list_success', // Customize the message as needed
+            'message' => 'messages.list_success', 
             'data' => [
-                'data' => ProjectResource::collection($projects), // Return the paginated projects as resources
+                'data' => ProjectResource::collection($projects),
                 'from' => $projects->firstItem(),
                 'per_page' => $projects->perPage(),
                 'to' => $projects->lastItem(),
