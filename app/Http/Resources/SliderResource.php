@@ -10,13 +10,8 @@ class SliderResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'products' => $this->products->map(function ($product) {
-                return [
-                    'product' => $product,
-                    'image' => asset($product->pivot->image),
-                ];
-            }),
+            'product' => new ProductResource($this->product), 
+            'image' => asset($this->image),
         ];
     }
 }

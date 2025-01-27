@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Slider extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = [
+        'product_id', 'image'
+    ];
 
-    public function products()
+    public function product()
     {
-        return $this->belongsToMany(Product::class, 'slider_projects')
-                    ->withPivot('image')
-                    ->withTimestamps();
+        return $this->belongsTo(Product::class);
     }
 }

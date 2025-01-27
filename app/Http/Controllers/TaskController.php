@@ -8,6 +8,7 @@ use App\Repositories\TaskRepositoryInterface;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class TaskController extends BaseController
 {
@@ -19,7 +20,6 @@ class TaskController extends BaseController
         $this->repository = $repository;
     }
 
-      // Get tasks by milestone
       public function getTasksByMilestone($milestone_id)
       {
           $tasks = Task::where('milestone_id', $milestone_id)->get();
@@ -31,17 +31,23 @@ class TaskController extends BaseController
           ], 200);
       }
 
-       // Get tasks by project
-    public function getTasksByProject($project_id)
-    {
-        $tasks = Task::whereHas('milestone', function ($query) use ($project_id) {
-            $query->where('project_id', $project_id);
-        })->get();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Tasks fetched successfully for the project.',
-            'data' => $tasks
-        ], 200);
-    }
+      public function getTasksByProject($project_id, Request $request)
+      {
+          $tasks = QueryBuilder::for(Task::class)
+              ->whereHas('milestone', function ($query) use ($project_id) {
+                  $query->where('project_id', $project_id);
+              })
+              ->allowedFilters([
+                'label',
+                'status',
+                'priority',
+                ])
+              ->get();
+  
+          return response()->json([
+              'status' => true,
+              'message' => 'Tasks fetched successfully for the project.',
+              'data' => $tasks
+          ], 200);
+      }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MeetingRequest;
 use App\Http\Resources\MeetingResource;
+use App\Http\Resources\ProjectResource;
 use App\Models\AvailableSlot;
 use App\Models\Meeting;
 use App\Repositories\MeetingRepositoryInterface;
@@ -91,7 +92,6 @@ class MeetingController extends Controller
         $requestedEnd = $requestedStart->copy()->addMinutes($duration);
 
 
-        // تحقق من التداخل
         $existingMeetings = $slot->meetings()
             ->where(function ($query) use ($requestedStart, $requestedEnd) {
                 $query->whereBetween('start_time', [$requestedStart->toTimeString(), $requestedEnd->toTimeString()])
@@ -110,13 +110,11 @@ class MeetingController extends Controller
             ], 400);
         }
 
-        // توليد رابط Jitsi إذا كانت الحالة Confirmed
         $jitsiUrl = null;
 
             $jitsiRoom = 'meeting-' . uniqid();
             $jitsiUrl = config('services.jitsi.base_url') . '/' . $jitsiRoom;
 
-        // إنشاء الاجتماع
         $meeting = $this->repository->create([
             'slot_id' => $validated['slot_id'],
             'client_id' => $validated['client_id'],
@@ -132,7 +130,7 @@ class MeetingController extends Controller
 
     public function getMeetingsForClient(Request $request)
     {
-        $client = $request->user();  
+        $client = $request->user();
 
         $meetings = Meeting::where('client_id', $client->id)->get();
 
@@ -141,7 +139,7 @@ class MeetingController extends Controller
 
     public function filterMeetingsByStatus(Request $request)
     {
-        $client = $request->user();  
+        $client = $request->user();
 
         $statusMapping = [
             1 => 'Request Sent',
@@ -166,9 +164,9 @@ class MeetingController extends Controller
 
     public function getMeetingById($id, Request $request)
     {
-        $client = $request->user(); 
+        $client = $request->user();
 
-        $meeting = Meeting::where('client_id', $client->id)->find($id);
+        $meeting = Meeting::where('client_id', $client->id)->with('project')->find($id);
 
         if (!$meeting) {
             return response()->json([
@@ -177,6 +175,13 @@ class MeetingController extends Controller
             ], 404);
         }
 
-        return new MeetingResource($meeting);
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'meeting' => new MeetingResource($meeting),
+                'project' => new ProjectResource($meeting->project),
+            ],
+        ]);
     }
+
 }

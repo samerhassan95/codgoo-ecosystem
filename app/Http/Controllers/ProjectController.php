@@ -125,23 +125,20 @@ class ProjectController extends BaseController
 
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
-            ->with('milestones') // Include milestones for status calculation
+            ->with('milestones') 
             ->get();
 
         $statusCounts = [
             'completed' => 0,
             'ongoing' => 0,
-            'pending' => 0, // Renamed from 'not_approved' to 'pending'
+            'pending' => 0,
         ];
 
         foreach ($projects as $project) {
-            // Rename 'not_approved' to 'pending' dynamically
             $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
 
-            // Increment static statuses
             $statusCounts[$projectStatus] = ($statusCounts[$projectStatus] ?? 0) + 1;
 
-            // Determine dynamic status based on milestones
             if ($project->milestones->isNotEmpty()) {
                 if ($project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
                     $statusCounts['completed']++;
@@ -149,7 +146,6 @@ class ProjectController extends BaseController
                     $statusCounts['ongoing']++;
                 }
             } else {
-                // If no milestones exist, treat as ongoing (or decide other default behavior)
                 $statusCounts['ongoing']++;
             }
         }
@@ -163,14 +159,12 @@ class ProjectController extends BaseController
 
     public function filterProjectsByStatus($status)
     {
-        // Map status numbers to status strings
         $statusMapping = [
             1 => 'completed',
             2 => 'ongoing',
             3 => 'pending',
         ];
 
-        // Validate the input status
         if (!array_key_exists($status, $statusMapping)) {
             return response()->json(['message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (pending).'], 400);
         }
@@ -183,19 +177,16 @@ class ProjectController extends BaseController
             return response()->json(['message' => 'Access denied.'], 403);
         }
 
-        // Fetch projects based on the user, along with milestones for status calculation
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
-            ->with('milestones') // Include milestones for status calculation
+            ->with('milestones') 
             ->get();
 
         $filteredProjects = [];
 
         foreach ($projects as $project) {
-            // Rename 'not_approved' to 'pending'
             $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
 
-            // Filter based on dynamic status (milestones) and static status
             if ($statusString === 'completed') {
                 if ($project->milestones->isNotEmpty() && $project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
                     $filteredProjects[] = $project;
@@ -206,7 +197,6 @@ class ProjectController extends BaseController
                 if ($project->milestones->isNotEmpty() && ($project->milestones->contains('in_progress') || $project->milestones->contains('not_started'))) {
                     $filteredProjects[] = $project;
                 } elseif ($project->milestones->isEmpty()) {
-                    // If no milestones exist, consider as ongoing
                     $filteredProjects[] = $project;
                 }
             }
@@ -275,8 +265,8 @@ class ProjectController extends BaseController
                 'open_tasks' => $openTasks,
                 'total_tasks' => $totalTasks
             ],
-            'total_days' => $totalDays, // Total days from start to deadline
-            'days_left' => $daysLeft, // Remaining days from today to deadline
+            'total_days' => $totalDays, 
+            'days_left' => $daysLeft, 
         ],
     ]);
 }

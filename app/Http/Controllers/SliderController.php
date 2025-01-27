@@ -7,6 +7,7 @@ use App\Http\Resources\SliderResource;
 use App\Models\Slider;
 use App\Repositories\SliderRepositoryInterface;
 use App\Services\ImageService;
+use Illuminate\Http\Request;
 
 class SliderController extends Controller
 {
@@ -17,59 +18,66 @@ class SliderController extends Controller
         $this->sliderRepository = $sliderRepository;
     }
 
+    /**
+     * Get all sliders.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function index()
     {
         $sliders = $this->sliderRepository->all();
         return SliderResource::collection($sliders);
     }
 
+    /**
+     * Store a new slider.
+     *
+     * @param SliderRequest $request
+     * @return \Illuminate\Http\Response
+     */
     public function store(SliderRequest $request)
     {
-        $slider = $this->sliderRepository->create([
-            'name' => $request->name,
+        // Create a new slider entry with product_id and image
+        $slider = Slider::create([
+            'product_id' => $request->product_id,  // Product ID
+            'image' => ImageService::upload($request->image, 'slider_products')  // Upload image and store its path
         ]);
-    
-        // Attach Products
-        $attachments = [];
-        foreach ($request->products as $product) {
-            $imagePath = ImageService::upload($product['image'], 'slider_products');
-            $attachments[$product['id']] = ['image' => $imagePath];
-        }
-    
-        $slider->products()->attach($attachments);
     
         return new SliderResource($slider);
     }
-    
 
+    /**
+     * Show a specific slider with its product and image.
+     *
+     * @param Slider $slider
+     * @return \Illuminate\Http\Response
+     */
     public function show(Slider $slider)
     {
-        // Load products with pivot image
-        $slider->load(['products' => function ($query) {
-            $query->withPivot('image'); // Include pivot image
-        }]);
-
-        // Map the products with ProductResource and pivot image
-        $productsWithImages = $slider->products->map(function ($product) {
-            return [
-                'product' => new ProductResource($product), // Wrap each product in ProductResource
-                'slider_image' => $product->pivot ? asset($product->pivot->image) : null, // Include pivot image
-            ];
-        });
+        // Map the product and image data from the slider
+        $productWithImage = [
+            'product' => new ProductResource($slider->product), // Assuming relationship exists
+            'slider_image' => asset($slider->image), // The image related to the slider
+        ];
 
         return response()->json([
             'status' => true,
             'message' => 'Slider retrieved successfully.',
             'data' => [
                 'id' => $slider->id,
-                'name' => $slider->name,
-                'products' => $productsWithImages,
+                'product_id' => $slider->product_id,
+                'image' => $productWithImage['slider_image'],
+                'product' => $productWithImage['product'],
             ],
         ]);
     }
 
-    
-
+    /**
+     * Delete a slider.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\Response
+     */
     public function destroy($id)
     {
         $this->sliderRepository->delete($id);
