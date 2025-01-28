@@ -20,4 +20,16 @@ class TopicController extends BaseController
         $this->repository = $repository;
     }
 
+
+    public function getTopicsBySection(TopicRequest $request)
+    {
+        $validated = $request->validated();
+
+        $topics = Topic::where('section_id', $validated['section_id'])->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $topics,
+        ]);
+    }
 }

@@ -70,4 +70,19 @@ class Project extends Model
     //     // Default status if no milestones exist
     //     return 'not_started';
     // }
+
+
+
+    public function getTotalAddonsAmount()
+{
+    $projectAddonsTotal = $this->addons()->with('addon')->get()->sum(function ($projectAddon) {
+        return $projectAddon->addon->price ?? 0;
+    });
+
+    $productAddonsTotal = $this->product ? $this->product->addons()->with('addon')->get()->sum(function ($productAddon) {
+        return $productAddon->addon->price ?? 0;
+    }) : 0;
+
+    return $projectAddonsTotal + $productAddonsTotal;
+}
 }

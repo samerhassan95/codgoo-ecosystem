@@ -116,4 +116,5 @@ Route::apiResource('ticket-reply', DepartmentController::class)->names([
     'destroy' => 'client.ticket-reply.destroy',
 ]);Route::get('ticket-summary', [TicketController::class, 'getTicketsAndSummary']);
 
+
 });
