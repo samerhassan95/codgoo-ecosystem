@@ -33,7 +33,7 @@ class Project extends Model
         return $this->morphMany(attachment::class, 'attachable');
     }
 
-    public function addons()
+    public function addon()
     {
         return $this->belongsToMany(Addon::class, 'project_addons');
     }
