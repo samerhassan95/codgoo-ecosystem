@@ -76,14 +76,14 @@ class Project extends Model
 
     public function getTotalAddonsAmount()
 {
-    $projectAddonsTotal = $this->addons()->with('addon')->get()->sum(function ($projectAddon) {
-        return $projectAddon->addon->price ?? 0;
-    });
+    // Sum the prices of addons directly
+    $projectAddonsTotal = $this->addons()->sum('price');
 
-    $productAddonsTotal = $this->product ? $this->product->addons()->with('addon')->get()->sum(function ($productAddon) {
-        return $productAddon->addon->price ?? 0;
-    }) : 0;
+    $productAddonsTotal = $this->product
+        ? $this->product->addons()->sum('price')
+        : 0;
 
     return $projectAddonsTotal + $productAddonsTotal;
 }
+
 }
