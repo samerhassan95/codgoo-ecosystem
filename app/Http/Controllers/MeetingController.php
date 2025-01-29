@@ -20,67 +20,6 @@ class MeetingController extends Controller
         $this->repository = $repository;
     }
 
-    // public function store(MeetingRequest $request)
-    // {
-    //     $validated = $request->validated();
-
-    //     $slot = AvailableSlot::find($validated['slot_id']);
-    //     $requestedStart = Carbon::parse($validated['start_time']);
-    //     $requestedEnd = $requestedStart->copy()->addMinutes($validated['duration']);
-
-    //     $freeIntervals = $slot->freeIntervals();
-    //     $isAvailable = false;
-
-    //     foreach ($freeIntervals as $interval) {
-    //         $intervalStart = Carbon::parse($interval['start_time']);
-    //         $intervalEnd = Carbon::parse($interval['end_time']);
-
-    //         if ($requestedStart >= $intervalStart && $requestedEnd <= $intervalEnd) {
-    //             $isAvailable = true;
-    //             break;
-    //         }
-    //     }
-
-    //     if (!$isAvailable) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'No available time for this meeting.',
-    //         ], 400);
-    //     }
-
-    //     $jitsiRoom = 'meeting-' . uniqid();
-    //     $jitsiUrl = config('services.jitsi.base_url') . '/' . $jitsiRoom;
-
-    //     $meeting = $this->repository->create([
-    //         'slot_id' => $validated['slot_id'],
-    //         'client_id' => $validated['client_id'],
-    //         'start_time' => $requestedStart->toTimeString(),
-    //         'end_time' => $requestedEnd->toTimeString(),
-    //         'jitsi_url' => $jitsiUrl,
-    //     ]);
-
-    //     return response()->json(new MeetingResource($meeting), 201);
-    // }
-
-    // public function getAvailableIntervals($slotId)
-    // {
-    //     $slot = AvailableSlot::find($slotId);
-
-    //     if (!$slot) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Slot not found.',
-    //         ], 404);
-    //     }
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Free intervals retrieved successfully.',
-    //         'data' => $slot->freeIntervals(),
-    //     ]);
-    // }
-
-
     public function store(MeetingRequest $request)
     {
         $validated = $request->validated();
@@ -90,7 +29,6 @@ class MeetingController extends Controller
         $slot = AvailableSlot::findOrFail($validated['slot_id']);
         $requestedStart = Carbon::parse($validated['start_time']);
         $requestedEnd = $requestedStart->copy()->addMinutes($duration);
-
 
         $existingMeetings = $slot->meetings()
             ->where(function ($query) use ($requestedStart, $requestedEnd) {
@@ -111,22 +49,21 @@ class MeetingController extends Controller
         }
 
         $jitsiUrl = null;
-
-            $jitsiRoom = 'meeting-' . uniqid();
-            $jitsiUrl = config('services.jitsi.base_url') . '/' . $jitsiRoom;
+        $jitsiRoom = 'meeting-' . uniqid();
+        $jitsiUrl = config('services.jitsi.base_url') . '/' . $jitsiRoom;
 
         $meeting = $this->repository->create([
             'slot_id' => $validated['slot_id'],
             'client_id' => $validated['client_id'],
+            'meeting_name' => $validated['meeting_name'],
             'start_time' => $requestedStart->toTimeString(),
             'end_time' => $requestedEnd->toTimeString(),
-            'project_id' => $validated['project_id'],  // تحديد المشروع
+            'project_id' => $validated['project_id'],
             'jitsi_url' => $jitsiUrl,
         ]);
 
         return response()->json(new MeetingResource($meeting), 201);
     }
-
 
     public function getMeetingsForClient(Request $request)
     {
@@ -161,7 +98,6 @@ class MeetingController extends Controller
         return MeetingResource::collection($meetings);
     }
 
-
     public function getMeetingById($id, Request $request)
     {
         $client = $request->user();
@@ -183,5 +119,4 @@ class MeetingController extends Controller
             ],
         ]);
     }
-
 }
