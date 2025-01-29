@@ -215,61 +215,58 @@ class ProjectController extends BaseController
     }
 
     public function getProjectDetails($projectId)
-{
-    $user = auth()->user();
-
-    // Fetch the project by ID
-    $project = Project::where('id', $projectId)->first();
-
-    // Return error response if the project is not found
-    if (!$project) {
-        return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
-    }
-
-    // Calculate completed milestones and project progress
-    $completedMilestones = $project->milestones->where('status', 'completed')->count();
-    $totalMilestones = $project->milestones->count();
-    $progress = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100, 2) : 0;
-
-    // Task statistics (open tasks and total tasks)
-    $openTasks = $project->milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
-    $totalTasks = $project->milestones->flatMap->tasks->count();
-
-    // Days calculations (total and remaining)
-    $startDate = $project->start_date;
-    $deadline = $project->deadline;
-
-    $totalDays = null;
-    $daysLeft = null;
-
-    if ($startDate && $deadline) {
-        // Calculate total days in the project
-        $totalDays = $startDate->diffInDays($deadline);
-        
-        // Calculate days left
-        $daysLeft = now()->diffInDays($deadline, false);
-    }
-
-    // Return project details with total days and days left
-    return response()->json([
-        'status' => true,
-        'data' => [
-            'project_id' => $project->id,
-            'project_name' => $project->name,
-            'start_date' => $startDate ? $startDate->toDateString() : null,
-            'deadline' => $deadline ? $deadline->toDateString() : null,
-            'billing_type' => $project->billing_type,
-            'total_rate' => $project->total_rate,
-            'progress' => $progress,
-            'tasks' => [
-                'open_tasks' => $openTasks,
-                'total_tasks' => $totalTasks
+    {
+        $user = auth()->user();
+    
+        // Fetch the project by ID
+        $project = Project::where('id', $projectId)->first();
+    
+        // Return error response if the project is not found
+        if (!$project) {
+            return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
+        }
+    
+        // Retrieve milestones
+        $milestones = $project->milestones;
+    
+        // Find the earliest and latest milestone dates
+        $startDate = $milestones->min('start_date');
+        $deadline = $milestones->max('end_date');
+    
+        // Calculate total days and days left
+        $totalDays = $startDate && $deadline ? Carbon::parse($startDate)->diffInDays(Carbon::parse($deadline)) : null;
+        $daysLeft = $deadline ? now()->diffInDays(Carbon::parse($deadline), false) : null;
+    
+        // Calculate completed milestones and project progress
+        $completedMilestones = $milestones->where('status', 'completed')->count();
+        $totalMilestones = $milestones->count();
+        $progress = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100, 2) : 0;
+    
+        // Task statistics (open tasks and total tasks)
+        $openTasks = $milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
+        $totalTasks = $milestones->flatMap->tasks->count();
+    
+        // Return project details
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'project_id' => $project->id,
+                'project_name' => $project->name,
+                'start_date' => $startDate ? Carbon::parse($startDate)->toDateString() : null,
+                'deadline' => $deadline ? Carbon::parse($deadline)->toDateString() : null,
+                'billing_type' => $project->billing_type,
+                'total_rate' => $project->total_rate,
+                'progress' => $progress,
+                'tasks' => [
+                    'open_tasks' => $openTasks,
+                    'total_tasks' => $totalTasks
+                ],
+                'total_days' => $totalDays,
+                'days_left' => $daysLeft,
             ],
-            'total_days' => $totalDays, 
-            'days_left' => $daysLeft, 
-        ],
-    ]);
-}
+        ]);
+    }
+    
 
 
     public function getTaskSummaryForProject($projectId)
