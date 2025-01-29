@@ -246,7 +246,16 @@ class ProjectController extends BaseController
         // Task statistics (open tasks and total tasks)
         $openTasks = $milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
         $totalTasks = $milestones->flatMap->tasks->count();
-
+        $addons = $project->addons->map(function ($addon) {
+            return [
+                'id' => $addon->id,
+                'name' => $addon->name,
+                'price' => $addon->price,
+            ];
+        });
+    
+        // Calculate total price including addons
+        $totalRate = $project->price + $addons->sum('price');
         // Return project details
         return response()->json([
             'status' => true,
@@ -256,7 +265,7 @@ class ProjectController extends BaseController
                 'start_date' => $startDate ? Carbon::parse($startDate)->toDateString() : null,
                 'deadline' => $deadline ? Carbon::parse($deadline)->toDateString() : null,
                 'billing_type' => $project->billing_type,
-                'total_rate' => $project->total_rate,
+                'total_rate' => $totalRate,
                 'progress' => $progress,
                 'tasks' => [
                     'open_tasks' => $openTasks,
