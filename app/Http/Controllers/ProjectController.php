@@ -8,6 +8,7 @@ use App\Models\Admin;
 use App\Models\Client;
 use App\Models\Project;
 use App\Repositories\ProjectRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Services\ImageService;
 
@@ -125,7 +126,7 @@ class ProjectController extends BaseController
 
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
-            ->with('milestones') 
+            ->with('milestones')
             ->get();
 
         $statusCounts = [
@@ -179,7 +180,7 @@ class ProjectController extends BaseController
 
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
-            ->with('milestones') 
+            ->with('milestones')
             ->get();
 
         $filteredProjects = [];
@@ -217,35 +218,35 @@ class ProjectController extends BaseController
     public function getProjectDetails($projectId)
     {
         $user = auth()->user();
-    
+
         // Fetch the project by ID
         $project = Project::where('id', $projectId)->first();
-    
+
         // Return error response if the project is not found
         if (!$project) {
             return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
         }
-    
+
         // Retrieve milestones
         $milestones = $project->milestones;
-    
+
         // Find the earliest and latest milestone dates
         $startDate = $milestones->min('start_date');
         $deadline = $milestones->max('end_date');
-    
+
         // Calculate total days and days left
         $totalDays = $startDate && $deadline ? Carbon::parse($startDate)->diffInDays(Carbon::parse($deadline)) : null;
         $daysLeft = $deadline ? now()->diffInDays(Carbon::parse($deadline), false) : null;
-    
+
         // Calculate completed milestones and project progress
         $completedMilestones = $milestones->where('status', 'completed')->count();
         $totalMilestones = $milestones->count();
         $progress = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100, 2) : 0;
-    
+
         // Task statistics (open tasks and total tasks)
         $openTasks = $milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
         $totalTasks = $milestones->flatMap->tasks->count();
-    
+
         // Return project details
         return response()->json([
             'status' => true,
@@ -266,7 +267,7 @@ class ProjectController extends BaseController
             ],
         ]);
     }
-    
+
 
 
     public function getTaskSummaryForProject($projectId)
@@ -345,7 +346,7 @@ class ProjectController extends BaseController
             }
             $filePath =  $attachment->file_path;
             $fileType = file_exists($filePath) ? mime_content_type($filePath) : 'unknown';
-    
+
             return [
                 'id' => $attachment->id,
                 'file_path' => asset($attachment->file_path),
@@ -398,19 +399,19 @@ class ProjectController extends BaseController
     public function index(Request $request)
     {
         $user = auth()->user();
-    
+
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-    
+
         $projects = Project::where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client') 
-            ->with(['milestones', 'addons', 'attachments']) 
+            ->where('created_by_type', 'Client')
+            ->with(['milestones', 'addons', 'attachments'])
             ->paginate(10);
-    
+
         return response()->json([
             'status' => true,
-            'message' => 'messages.list_success', 
+            'message' => 'messages.list_success',
             'data' => [
                 'data' => ProjectResource::collection($projects),
                 'from' => $projects->firstItem(),
@@ -421,7 +422,7 @@ class ProjectController extends BaseController
             ],
         ]);
     }
-    
+
 
 }
 
