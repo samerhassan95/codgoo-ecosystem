@@ -60,8 +60,10 @@ class MeetingController extends Controller
             'end_time' => $requestedEnd->toTimeString(),
             'project_id' => $validated['project_id'],
             'jitsi_url' => $jitsiUrl,
+            'status' => 'Request Sent', 
+            
+        
         ]);
-
         return response()->json(new MeetingResource($meeting), 201);
     }
 
