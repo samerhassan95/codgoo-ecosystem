@@ -16,7 +16,7 @@ class AvailableSlotController extends Controller
         $date = $validated['date'];
 
         $slots = AvailableSlot::where('date', $date)
-            ->orderBy('date')
+            ->orderBy('time') 
             ->get()
             ->groupBy('date');
 
@@ -31,7 +31,9 @@ class AvailableSlotController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Available slots for the given date',
-            'data' => $slots->mapWithKeys(fn($value, $key) => ['available' => $value]),
+            'data' => $slots->mapWithKeys(fn($value, $key) => [
+                'available' => $value->sortBy('time')->values(), 
+            ]),
         ]);
     }
 
