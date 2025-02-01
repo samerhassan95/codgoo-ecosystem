@@ -79,6 +79,7 @@ class MeetingController extends Controller
         $client = $request->user();
 
         $statusMapping = [
+            0 => 'all',            
             1 => 'Request Sent',
             2 => 'Confirmed',
             3 => 'Completed',
@@ -88,15 +89,20 @@ class MeetingController extends Controller
         $status = $request->query('status');
 
         if ($status && isset($statusMapping[$status])) {
-            $meetings = Meeting::where('client_id', $client->id)
-                ->where('status', $statusMapping[$status])
-                ->get();
+            if ($status == 0) {
+                $meetings = Meeting::where('client_id', $client->id)->get();
+            } else {
+                $meetings = Meeting::where('client_id', $client->id)
+                    ->where('status', $statusMapping[$status])
+                    ->get();
+            }
         } else {
             $meetings = Meeting::where('client_id', $client->id)->get();
         }
 
         return MeetingResource::collection($meetings);
     }
+
 
     public function getMeetingById($id, Request $request)
     {
