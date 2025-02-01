@@ -4,10 +4,9 @@ namespace App\Enum;
 
 class SectionEnum
 {
-    public const DOCUMENTATION = 1;
-    public const TUTORIALS     = 2;
-    public const FAQ           = 3;
-    public const ANNOUNCEMENTS = 4;
+    public const EnvironmentInstallation = 1;
+    public const SetupCodgoo     = 2;
+    public const Privacy           = 3;
 
     /**
      * Get the list of all sections with their labels.
@@ -17,10 +16,9 @@ class SectionEnum
     public static function getList(): array
     {
         return [
-            self::DOCUMENTATION => 'Documentation',
-            self::TUTORIALS     => 'Tutorials',
-            self::FAQ           => 'FAQs',
-            self::ANNOUNCEMENTS => 'Announcements',
+            self::EnvironmentInstallation => 'EnvironmentInstallation',
+            self::SetupCodgoo     => 'SetupCodgoo',
+            self::Privacy           => 'Privacy',
         ];
     }
 
