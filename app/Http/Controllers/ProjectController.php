@@ -161,89 +161,90 @@ class ProjectController extends BaseController
     public function filterProjectsByStatus($status)
     {
         $statusMapping = [
+            0 => 'all',          
             1 => 'completed',
             2 => 'ongoing',
             3 => 'pending',
         ];
-
+    
         if (!array_key_exists($status, $statusMapping)) {
             return response()->json(['message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (pending).'], 400);
         }
-
+    
         $statusString = $statusMapping[$status];
-
+    
         $user = auth()->user();
-
+    
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-
+    
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
-            ->with('milestones')
+            ->with('milestones') 
             ->get();
-
+    
+        if ($statusString === 'all') {
+            return response()->json([
+                'status' => true,
+                'data' => $projects,
+            ]);
+        }
+    
         $filteredProjects = [];
-
+    
         foreach ($projects as $project) {
             $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
-
+    
             if ($statusString === 'completed') {
                 if ($project->milestones->isNotEmpty() && $project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
                     $filteredProjects[] = $project;
                 }
             }
-
+    
             if ($statusString === 'ongoing') {
                 if ($project->milestones->isNotEmpty() && ($project->milestones->contains('in_progress') || $project->milestones->contains('not_started'))) {
                     $filteredProjects[] = $project;
-                } elseif ($project->milestones->isEmpty()) {
-                    $filteredProjects[] = $project;
                 }
             }
-
+    
             if ($statusString === 'pending') {
-                if ($projectStatus === 'pending') {
+                if ($project->milestones->isEmpty() || $projectStatus === 'pending') {
                     $filteredProjects[] = $project;
                 }
             }
         }
-
+    
         return response()->json([
             'status' => true,
             'data' => $filteredProjects,
         ]);
     }
+    
+
 
     public function getProjectDetails($projectId)
     {
         $user = auth()->user();
 
-        // Fetch the project by ID
         $project = Project::where('id', $projectId)->first();
 
-        // Return error response if the project is not found
         if (!$project) {
             return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
         }
 
-        // Retrieve milestones
         $milestones = $project->milestones;
 
-        // Find the earliest and latest milestone dates
         $startDate = $milestones->min('start_date');
         $deadline = $milestones->max('end_date');
 
-        // Calculate total days and days left
         $totalDays = $startDate && $deadline ? Carbon::parse($startDate)->diffInDays(Carbon::parse($deadline)) : null;
         $daysLeft = $deadline ? now()->diffInDays(Carbon::parse($deadline), false) : null;
 
-        // Calculate completed milestones and project progress
         $completedMilestones = $milestones->where('status', 'completed')->count();
         $totalMilestones = $milestones->count();
         $progress = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100, 2) : 0;
 
-        // Task statistics (open tasks and total tasks)
         $openTasks = $milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
         $totalTasks = $milestones->flatMap->tasks->count();
         $addons = $project->addons->map(function ($addon) {
@@ -254,9 +255,8 @@ class ProjectController extends BaseController
             ];
         });
     
-        // Calculate total price including addons
         $totalRate = $project->price + $addons->sum('price');
-        // Return project details
+
         return response()->json([
             'status' => true,
             'data' => [
@@ -283,7 +283,6 @@ class ProjectController extends BaseController
     {
         $user = auth()->user();
 
-        // Check if the user has access to the project
         $project = Project::where('id', $projectId)
             ->where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
@@ -294,15 +293,12 @@ class ProjectController extends BaseController
             return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
         }
 
-        // Get all tasks from the project's milestones
         $tasks = $project->milestones->flatMap->tasks;
 
-        // Count tasks by status
         $statusCounts = $tasks->groupBy('status')->map(function ($group) {
             return $group->count();
         });
 
-        // Include counts for all statuses
         $allStatuses = ['not_started', 'in_progress', 'completed', 'awaiting_feedback', 'canceled','testing'];
         foreach ($allStatuses as $status) {
             if (!isset($statusCounts[$status])) {
@@ -310,7 +306,6 @@ class ProjectController extends BaseController
             }
         }
 
-        // Total tasks and other task details
         $taskDetails = $tasks->map(function ($task) {
             return [
                 'id' => $task->id,
@@ -342,13 +337,11 @@ class ProjectController extends BaseController
         }
 
         $attachments = $project->attachments->map(function ($attachment) {
-            // Fetch the user based on uploaded_by_id
+
             $uploadedBy = null;
             if ($attachment->uploaded_by_id) {
-                // First check for Client
                 $uploadedBy = Client::find($attachment->uploaded_by_id);
 
-                // If not found, check for Admin
                 if (!$uploadedBy) {
                     $uploadedBy = Admin::find($attachment->uploaded_by_id);
                 }
@@ -383,7 +376,7 @@ class ProjectController extends BaseController
     public function uploadAttachment(Request $request, $projectId)
     {
         $validatedData = $request->validate([
-            'attachments.*' => 'required|file|max:10240', // Max size: 10MB per file
+            'attachments.*' => 'required|file|max:10240', 
         ]);
 
         $project = Project::find($projectId);
