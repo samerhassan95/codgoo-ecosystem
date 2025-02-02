@@ -78,12 +78,40 @@ class TicketController extends BaseController
     }
     public function getTicketsForClient(Request $request)
     {
-        $client = $request->user();  
-
-        $Tickets = Ticket::where('created_by', $client->id)->get();
-
-        return TicketResource::collection($Tickets);
+        $client = $request->user();  // Get the logged-in client
+    
+        // Status mapping: Numeric values to actual status labels
+        $statusMapping = [
+            0 => 'all',              // All statuses
+            1 => 'open',             // Open status
+            2 => 'closed',           // Closed status
+            3 => 'answered',         // Answered status
+            4 => 'pending',          // Pending status
+        ];
+    
+        // Get the status from the query parameters (optional)
+        $status = $request->query('status');  
+    
+        // Start the query to get the tickets created by the logged-in client
+        $ticketsQuery = Ticket::where('created_by', $client->id);
+    
+        // If status is provided, check if it's valid and filter tickets accordingly
+        if ($status && isset($statusMapping[$status])) {
+            $statusString = $statusMapping[$status];
+    
+            // If 'all', don't filter by status
+            if ($statusString !== 'all') {
+                $ticketsQuery->where('status', $statusString);
+            }
+        }
+    
+        // Execute the query and get the results
+        $tickets = $ticketsQuery->get();
+    
+        // Return the tickets wrapped in TicketResource
+        return TicketResource::collection($tickets);
     }
+    
 
     public function getTicketsAndSummary(Request $request)
     {
