@@ -78,37 +78,30 @@ class TicketController extends BaseController
     }
     public function getTicketsForClient(Request $request)
     {
-        $client = $request->user();  // Get the logged-in client
+        $client = $request->user();  
     
-        // Status mapping: Numeric values to actual status labels
         $statusMapping = [
-            0 => 'all',              // All statuses
-            1 => 'open',             // Open status
-            2 => 'closed',           // Closed status
-            3 => 'answered',         // Answered status
-            4 => 'pending',          // Pending status
+            0 => 'all',              
+            1 => 'open',             
+            2 => 'closed',           
+            3 => 'answered',        
+            4 => 'pending',          
         ];
     
-        // Get the status from the query parameters (optional)
         $status = $request->query('status');  
     
-        // Start the query to get the tickets created by the logged-in client
         $ticketsQuery = Ticket::where('created_by', $client->id);
     
-        // If status is provided, check if it's valid and filter tickets accordingly
         if ($status && isset($statusMapping[$status])) {
             $statusString = $statusMapping[$status];
     
-            // If 'all', don't filter by status
             if ($statusString !== 'all') {
                 $ticketsQuery->where('status', $statusString);
             }
         }
     
-        // Execute the query and get the results
         $tickets = $ticketsQuery->get();
     
-        // Return the tickets wrapped in TicketResource
         return TicketResource::collection($tickets);
     }
     
@@ -116,14 +109,14 @@ class TicketController extends BaseController
     public function getTicketsAndSummary(Request $request)
     {
         $client = $request->user(); 
-
+    
         $openCount = Ticket::where('created_by', $client->id)->where('status', 'open')->count();
         $closedCount = Ticket::where('created_by', $client->id)->where('status', 'closed')->count();
         $answeredCount = Ticket::where('created_by', $client->id)->where('status', 'answered')->count();
         $inProgressCount = Ticket::where('created_by', $client->id)->where('status', 'pending')->count();  
-
-        $tickets = Ticket::where('created_by', $client->id)->get();
-
+    
+        $tickets = Ticket::where('created_by', $client->id)->paginate(10);  
+    
         return response()->json([
             'status' => true,
             'message' => 'Tickets and summary retrieved successfully.',
@@ -134,42 +127,17 @@ class TicketController extends BaseController
                     'answered' => $answeredCount,
                     'in_progress' => $inProgressCount,
                 ],
-                'tickets' => TicketResource::collection($tickets) 
+                'tickets' => TicketResource::collection($tickets),
+               
+                'from' => $tickets->firstItem(),
+                'per_page' => $tickets->perPage(),
+                'to' => $tickets->lastItem(),
+                'total' => $tickets->total(),
+                'count' => $tickets->count(),
+                
             ]
         ]);
     }
     
-    // public function reply(Request $request, int $ticketId)
-    // {
-    //     $ticket = Ticket::findOrFail($ticketId);
-
-    //     $reply = TicketReply::create([
-    //         'ticket_id' => $ticket->id,
-    //         'reply' => $request->reply,
-    //         'admin_id' => $request->admin_id,
-    //     ]);
-
-    //     $ticket->update(['status' => 'answered']);
-
-    //     return $reply;
-    // }
-
-    // public function updateStatus(Request $request, int $ticketId)
-    // {
-    //     $ticket = Ticket::findOrFail($ticketId);
-    //     $ticket->update(['status' => $request->status]);
-
-    //     return $ticket;
-    // }
-
-    // public function getAllForAdmin()
-    // {
-    //     return Ticket::with('replies.admin')->get();
-    // }
-
-    // public function getAllForClient(int $clientId)
-    // {
-    //     return Ticket::where('created_by', $clientId)->with('replies.admin')->get();
-    // }
-
+  
 }
