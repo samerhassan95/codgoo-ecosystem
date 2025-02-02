@@ -12,10 +12,12 @@ class TicketReplyResource extends JsonResource
         return [
             'id' => $this->id,
             'reply' => $this->reply,
-            'admin' => [
-                'id' => $this->admin->id,
-                'name' => $this->admin->username,
+            'creator' => [
+                'id' => $this->creator->id,
+                'name' => $this->creator instanceof \App\Models\Admin ? $this->creator->username : $this->creator->name,
+                'type' => class_basename($this->creator), // To differentiate between Client or Admin
             ],
+            
             'created_at' => $this->created_at->toDateTimeString(),
         ];
     }

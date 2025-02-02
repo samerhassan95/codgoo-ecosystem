@@ -13,6 +13,7 @@ use App\Http\Controllers\{Client\ClientAuthController,
     SliderController,
     TaskController,
     TicketController,
+    TicketReplyController,
     TopicController,
     AvailableSlotController};
 use Illuminate\Support\Facades\Route;
@@ -108,13 +109,16 @@ Route::get('client-meetings', [MeetingController::class, 'getMeetingsForClient']
 Route::get('meetings/filter', [MeetingController::class, 'filterMeetingsByStatus']);
 Route::get('meeting/{id}', [MeetingController::class, 'getMeetingById']);
 Route::get('client-tickets', [TicketController::class, 'getTicketsForClient']);
-Route::apiResource('ticket-reply', DepartmentController::class)->names([
+Route::apiResource('ticket-reply', TicketReplyController::class)->names([
     'index' => 'client.ticket-reply.index',
     'store' => 'client.ticket-reply.store',
     'show' => 'client.ticket-reply.show',
     'update' => 'client.ticket-reply.update',
     'destroy' => 'client.ticket-reply.destroy',
-]);Route::get('ticket-summary', [TicketController::class, 'getTicketsAndSummary']);
+]);
+Route::get('ticket-summary', [TicketController::class, 'getTicketsAndSummary']);
+
+Route::get('topics', [TopicController::class, 'getTopicsBySection']);
 
 
 });

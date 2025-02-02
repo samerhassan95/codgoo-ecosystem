@@ -12,7 +12,7 @@ class TopicRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -26,7 +26,7 @@ class TopicRequest extends FormRequest
             'section_id' => 'required|integer|in:' . implode(',', array_keys(SectionEnum::getList())),
             'header' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'gallery' => 'array', // Make sure gallery is an array of images
+            'gallery' => 'array', 
             'gallery.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }

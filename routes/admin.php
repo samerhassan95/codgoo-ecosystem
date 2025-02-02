@@ -92,7 +92,7 @@ Route::middleware('auth:admin')->group(function () {
         'destroy' => 'admin.departments.destroy',
     ]);
 
-    Route::apiResource('ticket-reply', DepartmentController::class)->names([
+    Route::apiResource('ticket-reply', TicketReplyController::class)->names([
         'index' => 'admin.ticket-reply.index',
         'store' => 'admin.ticket-reply.store',
         'show' => 'admin.ticket-reply.show',

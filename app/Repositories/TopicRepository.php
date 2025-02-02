@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Topic;
-use App\Models\TopicGallery;
+use App\Models\Gallery;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\Common\CommonRepository;
 use Illuminate\Http\Request;
@@ -11,7 +11,7 @@ use App\Repositories\TopicRepositoryInterface;
 use App\Http\Requests\TopicRequest;
 use App\Http\Resources\TopicResource;
 use Illuminate\Support\Facades\Validator;
-use App\Services\ImageService; // Add ImageService import
+use App\Services\ImageService; 
 
 class TopicRepository extends CommonRepository implements TopicRepositoryInterface
 {
@@ -24,101 +24,90 @@ class TopicRepository extends CommonRepository implements TopicRepositoryInterfa
     }
 
     public function store(Request $request)
-    {
-        // Manually create an instance of TopicRequest for validation
-        $topicRequest = new TopicRequest();
+{
+    $topicRequest = new TopicRequest();
 
-        // Manually validate the request using the TopicRequest rules
-        $validator = Validator::make($request->all(), $topicRequest->rules());
+    $validator = Validator::make($request->all(), $topicRequest->rules());
 
-        // If validation fails, return error response
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed.',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        // Begin a transaction to ensure both the topic and gallery are saved together
-        DB::beginTransaction();
-
-        try {
-            // Create the topic using validated data
-            $topic = Topic::create($validator->validated());
-
-            // If there are gallery images, handle the file upload and save them
-            if ($request->has('gallery') && is_array($request->gallery)) {
-                $galleryData = [];
-
-                foreach ($request->gallery as $image) {
-                    // Use ImageService to upload the image
-                    $imagePath = ImageService::upload($image, 'galleries'); // Adjust the folder name if needed
-                    $galleryData[] = [
-                        'topic_id' => $topic->id,
-                        'image_path' => $imagePath,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-
-                // Insert gallery data into the database
-                TopicGallery::insert($galleryData);
-            }
-
-            // Commit the transaction
-            DB::commit();
-
-            // Return a success response with the topic and its galleries
-            return response()->json([
-                'message' => 'Topic and gallery created successfully.',
-                'data' => new TopicResource($topic),
-            ], 201);
-
-        } catch (\Exception $e) {
-            // If an error occurs, roll back the transaction
-            DB::rollBack();
-
-            // Return error response
-            return response()->json([
-                'message' => 'Something went wrong.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed.',
+            'errors' => $validator->errors(),
+        ], 422);
     }
 
-    public function update(Request $request, $id)
+    DB::beginTransaction();
+
+    try {
+        // Create the topic
+        $topic = Topic::create($validator->validated());
+
+        // Handle gallery if images are provided
+        if ($request->has('gallery') && is_array($request->gallery)) {
+            $galleryData = [];
+
+            foreach ($request->gallery as $image) {
+                // Upload image
+                $imagePath = ImageService::upload($image, 'galleries');
+
+                // Adjust the gallery data to use polymorphic fields
+                $galleryData[] = [
+                    'galleriable_id' => $topic->id, // Use the topic ID for galleriable_id
+                    'galleriable_type' => Topic::class, // The model type for polymorphic relation
+                    'image_path' => $imagePath,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            // Insert gallery data into the galleries table
+            Gallery::insert($galleryData);
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Topic and gallery created successfully.',
+            'data' => new TopicResource($topic),
+        ], 201);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'message' => 'Something went wrong.',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+    public function update(int $id, array $data)
     {
-        // Manually create an instance of TopicRequest for validation
         $topicRequest = new TopicRequest();
-
-        // Manually validate the request using the TopicRequest rules
-        $validator = Validator::make($request->all(), $topicRequest->rules());
-
-        // If validation fails, return error response
+    
+        $validator = Validator::make($data, $topicRequest->rules());
+    
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed.',
                 'errors' => $validator->errors(),
             ], 422);
         }
-
-        // Begin a transaction to ensure both the topic and gallery are updated together
+    
         DB::beginTransaction();
-
+    
         try {
-            // Find the topic by ID
             $topic = Topic::findOrFail($id);
-            $topic->update($validator->validated()); // Update the topic
-
-            // Update galleries if new images are provided
-            if ($request->has('gallery') && is_array($request->gallery)) {
-                // Delete existing galleries
+            $topic->update($validator->validated());
+    
+            if (isset($data['gallery']) && is_array($data['gallery'])) {
                 $topic->galleries()->delete();
-
+    
                 $galleryData = [];
-
-                foreach ($request->gallery as $image) {
-                    $imagePath = $image->store('public/galleries'); // Store image
+    
+                foreach ($data['gallery'] as $image) {
+                    $imagePath = ImageService::upload($image, 'galleries');
                     $galleryData[] = [
                         'topic_id' => $topic->id,
                         'image_path' => $imagePath,
@@ -126,29 +115,25 @@ class TopicRepository extends CommonRepository implements TopicRepositoryInterfa
                         'updated_at' => now(),
                     ];
                 }
-
-                // Insert new gallery data
-                TopicGallery::insert($galleryData);
+    
+                Gallery::insert($galleryData);
             }
-
-            // Commit the transaction
+    
             DB::commit();
-
-            // Return a success response with the updated topic
+    
             return response()->json([
                 'message' => 'Topic and gallery updated successfully.',
                 'data' => new TopicResource($topic),
             ], 200);
-
+    
         } catch (\Exception $e) {
-            // Rollback transaction in case of error
             DB::rollBack();
-
-            // Return error response
+    
             return response()->json([
                 'message' => 'Something went wrong.',
                 'error' => $e->getMessage(),
             ], 500);
         }
     }
+    
 }
