@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProjectRequest;
 use App\Http\Resources\ProjectResource;
+use App\Http\Resources\SliderResource;
 use App\Models\Admin;
 use App\Models\Client;
 use App\Models\Project;
 use App\Repositories\ProjectRepositoryInterface;
+use App\Repositories\SliderRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Services\ImageService;
@@ -15,11 +17,13 @@ use App\Services\ImageService;
 class ProjectController extends BaseController
 {
     private $repository;
+    private $sliderRepository;
 
-    public function __construct(ProjectRepositoryInterface $repository)
+    public function __construct(ProjectRepositoryInterface $repository, SliderRepositoryInterface $sliderRepository)
     {
-        parent::__construct($repository);
-        $this->repository = $repository;
+        parent::__construct($repository); // Initialize the parent constructor
+        $this->repository = $repository; // Set the repository property
+        $this->sliderRepository = $sliderRepository; // Set the slider repository property
     }
 
     public function store(Request $request)
@@ -161,66 +165,66 @@ class ProjectController extends BaseController
     public function filterProjectsByStatus($status)
     {
         $statusMapping = [
-            0 => 'all',          
+            0 => 'all',
             1 => 'completed',
             2 => 'ongoing',
             3 => 'pending',
         ];
-    
+
         if (!array_key_exists($status, $statusMapping)) {
             return response()->json(['message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (pending).'], 400);
         }
-    
+
         $statusString = $statusMapping[$status];
-    
+
         $user = auth()->user();
-    
+
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-    
+
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
-            ->with('milestones') 
+            ->with('milestones')
             ->get();
-    
+
         if ($statusString === 'all') {
             return response()->json([
                 'status' => true,
                 'data' => $projects,
             ]);
         }
-    
+
         $filteredProjects = [];
-    
+
         foreach ($projects as $project) {
             $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
-    
+
             if ($statusString === 'completed') {
                 if ($project->milestones->isNotEmpty() && $project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
                     $filteredProjects[] = $project;
                 }
             }
-    
+
             if ($statusString === 'ongoing') {
                 if ($project->milestones->isNotEmpty() && ($project->milestones->contains('in_progress') || $project->milestones->contains('not_started'))) {
                     $filteredProjects[] = $project;
                 }
             }
-    
+
             if ($statusString === 'pending') {
                 if ($project->milestones->isEmpty() || $projectStatus === 'pending') {
                     $filteredProjects[] = $project;
                 }
             }
         }
-    
+
         return response()->json([
             'status' => true,
             'data' => $filteredProjects,
         ]);
     }
-    
+
 
 
     public function getProjectDetails($projectId)
@@ -254,7 +258,7 @@ class ProjectController extends BaseController
                 'price' => $addon->price,
             ];
         });
-    
+
         $totalRate = $project->price + $addons->sum('price');
 
         return response()->json([
@@ -376,7 +380,7 @@ class ProjectController extends BaseController
     public function uploadAttachment(Request $request, $projectId)
     {
         $validatedData = $request->validate([
-            'attachments.*' => 'required|file|max:10240', 
+            'attachments.*' => 'required|file|max:10240',
         ]);
 
         $project = Project::find($projectId);
@@ -425,6 +429,78 @@ class ProjectController extends BaseController
         ]);
     }
 
+    public function getDashboardSummary(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user || $user instanceof \App\Models\Admin) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+        // Get slider data
+        $sliders = $this->sliderRepository->all();
+        $slidersData = SliderResource::collection($sliders);
+
+        // Get status counts for projects
+        $projects = Project::where('created_by_id', $user->id)
+            ->where('created_by_type', 'Client')
+            ->with('milestones')
+            ->get();
+
+        $statusCounts = [
+            'completed' => 0,
+            'ongoing' => 0,
+            'pending' => 0,
+        ];
+
+        foreach ($projects as $project) {
+            $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
+            $statusCounts[$projectStatus] = ($statusCounts[$projectStatus] ?? 0) + 1;
+
+            if ($project->milestones->isNotEmpty()) {
+                if ($project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
+                    $statusCounts['completed']++;
+                } else {
+                    $statusCounts['ongoing']++;
+                }
+            } else {
+                $statusCounts['ongoing']++;
+            }
+        }
+
+        // Get invoice status counts
+        $invoiceCounts = [
+            'paid' => 0,
+            'unpaid' => 0,
+            'overdue' => 0,
+            'total' => 0,
+        ];
+
+        foreach ($projects as $project) {
+            foreach ($project->invoices as $invoice) {
+                $invoiceCounts['total']++;
+
+                if ($invoice->status === 'paid') {
+                    $invoiceCounts['paid']++;
+                } elseif ($invoice->status === 'unpaid') {
+                    if (Carbon::parse($invoice->due_date)->isPast()) {
+                        $invoiceCounts['overdue']++;
+                    } else {
+                        $invoiceCounts['unpaid']++;
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'sliders' => $slidersData,
+                'project_status_counts' => $statusCounts,
+                'invoice_status_counts' => $invoiceCounts,
+            ]
+        ]);
+    }
 
 }
 

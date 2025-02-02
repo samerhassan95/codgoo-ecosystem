@@ -119,6 +119,7 @@ Route::apiResource('ticket-reply', TicketReplyController::class)->names([
 Route::get('ticket-summary', [TicketController::class, 'getTicketsAndSummary']);
 
 Route::get('topics', [TopicController::class, 'getTopicsBySection']);
+Route::get('home-page', [ProjectController::class, 'getDashboardSummary']);
 
 
 });
