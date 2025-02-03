@@ -62,6 +62,7 @@ class ProjectController extends BaseController
                 $path = ImageService::upload($file, 'attachments');
                 $project->attachments()->create([
                     'file_path' => $path,
+                    'uploaded_by_id' => $user->id,
                 ]);
             }
         }

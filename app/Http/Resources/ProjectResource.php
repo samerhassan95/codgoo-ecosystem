@@ -46,7 +46,7 @@ class ProjectResource extends JsonResource
             'created_by_type' => $this->created_by_type,
             'addons' => $addons,
             'total_price' => $totalPrice,
-            'category' => $this->$category,
+            'category' => $this->category,
             'attachments' => $this->attachments->map(function ($attachment) {
                 return [
                     'file_path' => asset($attachment->file_path),
