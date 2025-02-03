@@ -45,6 +45,8 @@ use App\Repositories\DepartmentRepositoryInterface;
 use App\Repositories\DepartmentRepository;
 use App\Repositories\GalleryRepositoryInterface;
 use App\Repositories\GalleryRepository;
+use App\Repositories\CategoryRepositoryInterface;
+use App\Repositories\CategoryRepository;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -74,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(EmployeeRepositoryInterface::class, EmployeeRepository::class);
         $this->app->bind(SkillRepositoryInterface::class, SkillRepository::class);
         $this->app->bind(GalleryRepositoryInterface::class, GalleryRepository::class);
+        $this->app->bind(CategoryRepositoryInterface::class, CategoryRepository::class);
 
     }
 

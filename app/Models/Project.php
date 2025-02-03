@@ -73,7 +73,10 @@ class Project extends Model
     // }
 
 
-
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
     public function getTotalAddonsAmount()
 {
     // Sum the prices of addons directly

@@ -38,7 +38,9 @@ class ProjectController extends BaseController
             'addons' => 'array',
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
+            'category_id' => 'nullable|exists:categories,id', 
         ]);
+
 
         $user = auth()->user();
         $type = $user instanceof \App\Models\Admin ? 'Admin' : 'Client';
@@ -71,6 +73,7 @@ class ProjectController extends BaseController
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 201);
     }
 
+
     public function update(Request $request, $id)
     {
         $project = Project::find($id);
@@ -89,6 +92,7 @@ class ProjectController extends BaseController
             'addons' => 'array',
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
+            'category_id' => 'nullable|exists:categories,id', 
         ]);
 
         $user = auth()->user();
@@ -118,6 +122,7 @@ class ProjectController extends BaseController
 
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 200);
     }
+
 
 
     public function getStatusCounts()
@@ -437,11 +442,9 @@ class ProjectController extends BaseController
             return response()->json(['message' => 'Access denied.'], 403);
         }
 
-        // Get slider data
         $sliders = $this->sliderRepository->all();
         $slidersData = SliderResource::collection($sliders);
 
-        // Get status counts for projects
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
             ->with('milestones')
@@ -468,7 +471,6 @@ class ProjectController extends BaseController
             }
         }
 
-        // Get invoice status counts
         $invoiceCounts = [
             'paid' => 0,
             'unpaid' => 0,

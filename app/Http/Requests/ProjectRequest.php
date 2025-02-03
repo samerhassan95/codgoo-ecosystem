@@ -42,6 +42,8 @@ class ProjectRequest extends FormRequest
                 },
             ],
             'created_by_type' => 'required|string|in:Admin,Client',
+            'category_id' => 'nullable|exists:categories,id', 
+
         ];
 
         // Additional rules for edit

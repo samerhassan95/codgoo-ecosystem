@@ -8,14 +8,12 @@ class ProjectResource extends JsonResource
 {
     public function toArray($request)
     {
-        // Calculate completion percentage
         $totalMilestones = $this->milestones->count();
         $completedMilestones = $this->milestones->where('status', 'completed')->count();
 
         $completionPercentage = $totalMilestones > 0 ? ($completedMilestones / $totalMilestones) * 100 : 0;
 
-        // Determine project status based on milestones
-        $projectStatus = 'pending'; // Default to pending if no milestones exist
+        $projectStatus = 'pending'; 
         if ($totalMilestones > 0) {
             if ($this->milestones->every(fn ($milestone) => $milestone->status === 'completed')) {
                 $projectStatus = 'completed';
@@ -24,7 +22,6 @@ class ProjectResource extends JsonResource
             }
         }
 
-        // Prepare addons data
         $addons = $this->addons->map(function ($addon) {
             return [
                 'id' => $addon->id,
@@ -33,22 +30,23 @@ class ProjectResource extends JsonResource
             ];
         });
 
-        // Calculate total price including addons
         $totalPrice = $this->price + $addons->sum('price');
 
-        return [
+        return
+        [
             'id' => $this->id,
             'product_id' => $this->product_id,
             'name' => $this->name,
             'description' => $this->description,
             'price' => $this->price,
             'note' => $this->note,
-            'status' => $projectStatus,  // Project status based on milestones
-            'completion_percentage' => $completionPercentage, // Completion percentage
+            'status' => $projectStatus,  
+            'completion_percentage' => $completionPercentage, 
             'created_by_id' => $this->created_by_id,
             'created_by_type' => $this->created_by_type,
             'addons' => $addons,
             'total_price' => $totalPrice,
+            'category' => $this->$category,
             'attachments' => $this->attachments->map(function ($attachment) {
                 return [
                     'file_path' => asset($attachment->file_path),

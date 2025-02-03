@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\{Client\ClientAuthController,
+use App\Http\Controllers\{CategoryController,
+    Client\ClientAuthController,
     DepartmentController,
     InvoiceController,
     MeetingController,
@@ -122,5 +123,11 @@ Route::get('topics', [TopicController::class, 'getTopicsBySection']);
 Route::get('home-page', [ProjectController::class, 'getDashboardSummary']);
 
 Route::get('tickets/{ticket_id}/replies', [TicketController::class, 'getRepliesForTicket']);
-
+Route::apiResource('category', CategoryController::class)->names([
+    'index' => 'client.category.index',
+    'store' => 'client.category.store',
+    'show' => 'client.category.show',
+    'update' => 'client.category.update',
+    'destroy' => 'client.category.destroy',
+]);
 });

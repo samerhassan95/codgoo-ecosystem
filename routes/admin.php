@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\{
-    AddonController,
+use App\Http\Controllers\{AddonController,
+    CategoryController,
     InvoiceController,
     MigrationController,
     MilestoneController,
@@ -16,9 +16,7 @@ use App\Http\Controllers\{
     DepartmentController,
     TicketReplyController,
     SkillController,
-    GalleryController,
-    
-};
+    GalleryController};
 use Illuminate\Support\Facades\Route;
 
 
@@ -109,5 +107,11 @@ Route::controller(SkillController::class)->prefix('skills')->group(function () {
     Route::delete('/remove/{employeeId}/{skillId}', 'removeSkillFromEmployee');
 });
 Route::post('galleries', [GalleryController::class, 'store']);
-
+Route::apiResource('category', CategoryController::class)->names([
+    'index' => 'admin.category.index',
+    'store' => 'admin.category.store',
+    'show' => 'admin.category.show',
+    'update' => 'admin.category.update',
+    'destroy' => 'admin.category.destroy',
+]);
 });
