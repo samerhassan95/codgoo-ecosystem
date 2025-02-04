@@ -23,19 +23,20 @@ class TopicController extends BaseController
   
 
     public function getTopicsBySection(Request $request)
-    {
-        $validated = $request->validate([
-            'section_id' => 'required|integer|in:' . implode(',', array_keys(\App\Enum\SectionEnum::getList())), 
-        ]);
-    
-        $topics = Topic::where('section_id', $validated['section_id'])->get();
-    
-        return response()->json([
-            'success' => true,
-            'data' => TopicResource::collection($topics),
-        ]);
-    }
-    
+{
+    $validated = $request->validate([
+        'section_id' => 'required|integer|in:0,' . implode(',', array_keys(\App\Enum\SectionEnum::getList())), 
+    ]);
+
+    $topics = $validated['section_id'] == 0
+        ? Topic::all() 
+        : Topic::where('section_id', $validated['section_id'])->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => TopicResource::collection($topics),
+    ]);
+}
     
 
 }

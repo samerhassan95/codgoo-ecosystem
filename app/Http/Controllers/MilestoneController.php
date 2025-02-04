@@ -30,7 +30,6 @@ class MilestoneController  extends BaseController
             ], 400);
         }
 
-        // Get the project from the request
         $project = Project::findOrFail($request->project_id);
 
         // Calculate the total price including addons and already existing milestones

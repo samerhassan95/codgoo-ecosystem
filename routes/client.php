@@ -6,6 +6,7 @@ use App\Http\Controllers\{CategoryController,
     InvoiceController,
     MeetingController,
     MilestoneController,
+    PrivacyPolicyController,
     ProductAddonController,
     ProductController,
     ProductMediaController,
@@ -130,4 +131,8 @@ Route::apiResource('category', CategoryController::class)->names([
     'update' => 'client.category.update',
     'destroy' => 'client.category.destroy',
 ]);
+
+Route::get('privacy-policy', [PrivacyPolicyController::class, 'index']);
+Route::post('privacy-policy', [PrivacyPolicyController::class, 'store']);
+
 });

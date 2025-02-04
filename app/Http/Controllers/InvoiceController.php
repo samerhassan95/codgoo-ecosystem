@@ -27,9 +27,8 @@ class InvoiceController extends BaseController
 
     public function getInvoicesForProject($projectId, Request $request)
     {
-
         $project = Project::find($projectId);
-
+    
         if (!$project) {
             return response()->json([
                 'status' => false,
@@ -37,17 +36,22 @@ class InvoiceController extends BaseController
                 'data' => null
             ], 404);
         }
-
-        $invoices = QueryBuilder::for(Invoice::class)
+    
+        // Apply the filters and only include allowed ones
+        $invoicesQuery = QueryBuilder::for(Invoice::class)
             ->where('project_id', $projectId)
-            ->with('milestone')
-            ->allowedFilters([
-                'status',
-                'payment_method',
-                'due_date',
-            ])
-            ->get();
-
+            ->with('milestone');
+    
+        // Apply status filter if it's provided in the query string
+        $invoicesQuery->allowedFilters([
+            'status', // status can be 'paid', 'unpaid', etc.
+            'payment_method',
+            'due_date',
+        ]);
+    
+        // Get the invoices
+        $invoices = $invoicesQuery->get();
+    
         if ($invoices->isEmpty()) {
             return response()->json([
                 'status' => true,
@@ -55,7 +59,7 @@ class InvoiceController extends BaseController
                 'data' => []
             ], 200);
         }
-
+    
         $creatorName = 'Unknown';
         if ($project->created_by_type == 'App\Models\Client') {
             $creator = Client::find($project->created_by_id);
@@ -64,7 +68,8 @@ class InvoiceController extends BaseController
             $creator = Admin::find($project->created_by_id);
             $creatorName = $creator ? $creator->username : 'Unknown';
         }
-
+    
+        // Transform invoice data for response
         $invoiceData = $invoices->map(function ($invoice) use ($project, $creatorName) {
             return [
                 'status' => $invoice->status,
@@ -76,14 +81,14 @@ class InvoiceController extends BaseController
                 'client_name' => $creatorName,
             ];
         });
-
+    
         return response()->json([
             'status' => true,
             'message' => 'Invoices retrieved successfully.',
             'data' => $invoiceData
         ], 200);
     }
-
+    
 
 
 
