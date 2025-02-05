@@ -21,7 +21,7 @@ class TopicResource extends JsonResource
             'section_label' => $this->section_label,
             'header' => $this->header,
             'description' => $this->description,
-            'created_at' => $this->created_at->toDateTimeString(),
+            'created_at' => $this->created_at,
             'galleries' => $this->galleries->map(function ($gallery) {
                 // Ensure to return the full URL of the image
                 return asset($gallery->image_path);  // Adjust field name if necessary
