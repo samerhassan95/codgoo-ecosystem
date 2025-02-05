@@ -15,17 +15,20 @@ class TopicResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+        return 
+        [
             'id' => $this->id,
             'section_id' => $this->section_id,
             'section_label' => $this->section_label,
             'header' => $this->header,
             'description' => $this->description,
             'created_at' => $this->created_at,
-            'galleries' => $this->galleries->map(function ($gallery) {
-                // Ensure to return the full URL of the image
-                return asset($gallery->image_path);  // Adjust field name if necessary
-            }),        ];
+            'galleries' => $this->galleries->map(function ($gallery) 
+            {
+                return asset($gallery->image_path); 
+            }
+        ),
+        ];
 
     }
 }

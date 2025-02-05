@@ -78,15 +78,21 @@ class Project extends Model
         return $this->belongsTo(Category::class);
     }
     public function getTotalAddonsAmount()
-{
-    // Sum the prices of addons directly
-    $projectAddonsTotal = $this->addons()->sum('price');
+    {
+        $projectAddonsTotal = $this->addons()->sum('price');
 
-    $productAddonsTotal = $this->product
-        ? $this->product->addons()->sum('price')
-        : 0;
+        $productAddonsTotal = $this->product
+            ? $this->product->addons()->sum('price')
+            : 0;
 
-    return $projectAddonsTotal + $productAddonsTotal;
-}
+        return $projectAddonsTotal + $productAddonsTotal;
+    }
 
+
+    public function updateProjectStatusIfNeeded()
+    {
+        if ($this->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
+            $this->update(['status' => 'completed']);
+        }
+    }
 }

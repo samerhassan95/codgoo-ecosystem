@@ -33,9 +33,13 @@ class Milestone extends Model
         }
     }
 
-    public static function booted()
+    protected static function booted()
     {
         static::updated(function ($milestone) {
+            if ($milestone->isDirty('status') && $milestone->status === 'completed') {
+                $milestone->project->updateProjectStatusIfNeeded();
+            }
+
             if ($milestone->status === 'completed') {
                 \App\Models\Invoice::create([
                     'milestone_id' => $milestone->id,
