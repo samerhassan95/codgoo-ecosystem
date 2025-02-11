@@ -16,6 +16,7 @@ class MeetingResource extends JsonResource
             'jitsi_url' => $this->jitsi_url,
             'status' => $this->status,
             'project' => $this->project,
+            'description' => $this->description,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -135,6 +135,27 @@ class InvoiceController extends BaseController
         ]);
     }
 
+  
+    public function getInvoicesForClient(Request $request)
+    {
+        $client = auth()->user();
 
+        // if (!$client || $client->type !== 'Client') {
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Unauthorized access.'
+        //     ], 403);
+        // }
+
+        $invoices = Invoice::whereHas('project', function ($query) use ($client) {
+            $query->where('created_by_id', $client->id);
+        })->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Invoices retrieved successfully.',
+            'data' => $invoices
+        ], 200);
+    }
 
 }

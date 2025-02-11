@@ -56,9 +56,10 @@ class MeetingController extends Controller
             'slot_id' => $validated['slot_id'],
             'client_id' => $validated['client_id'],
             'meeting_name' => $validated['meeting_name'],
+            'description' => $validated['description'] ?? null, 
             'start_time' => $requestedStart->toTimeString(),
             'end_time' => $requestedEnd->toTimeString(),
-            'project_id' => $validated['project_id'],
+            'project_id' => $validated['project_id']?? null,
             'jitsi_url' => $jitsiUrl,
             'status' => 'Request Sent', 
             

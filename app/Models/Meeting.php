@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Meeting extends Model
 {
-    protected $fillable = ['slot_id', 'client_id', 'start_time', 'end_time', 'jitsi_url', 'meeting_name', 'project_id','status'];
+    protected $fillable = ['slot_id', 'client_id', 'start_time', 'end_time', 'jitsi_url', 'meeting_name', 'project_id','status', 'description'];
 
     public function slot()
     {
