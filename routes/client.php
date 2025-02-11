@@ -135,5 +135,6 @@ Route::middleware('client')->group(function ()  {
     Route::get('privacy-policy', [PrivacyPolicyController::class, 'index']);
     Route::post('privacy-policy', [PrivacyPolicyController::class, 'store']);
     Route::get('client-invoices', [InvoiceController::class, 'getInvoicesForClient']);
+    Route::get('invoice-details/{invoiceId}', [InvoiceController::class, 'getInvoiceDetails']);
 
 });

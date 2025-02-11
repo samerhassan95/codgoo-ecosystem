@@ -170,6 +170,47 @@ class InvoiceController extends BaseController
         ], 200);
     }
     
-
+    public function getInvoiceDetails($invoiceId)
+    {
+        $invoice = Invoice::with([
+            'milestone.tasks', 
+            'project' 
+        ])->find($invoiceId);
+    
+        if (!$invoice) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invoice not found.',
+                'data' => []
+            ], 404);
+        }
+    
+        $formattedInvoice = [
+            'id' => $invoice->id,
+            'invoice_id' => 'INV-' . $invoice->id,
+            'status' => ucfirst($invoice->status),
+            'created_at' => $invoice->created_at->format('d-m-Y'),
+            'due_date' => $invoice->due_date ? $invoice->due_date: null,
+            'payment_type' => $invoice->payment_method ?? 'N/A',
+            'amount' => number_format($invoice->amount, 2),
+            'tasks' => $invoice->milestone
+                ? $invoice->milestone->tasks->map(function ($task) {
+                    return [
+                        'task_id' => $task->id,
+                        'task_name' => $task->label,
+                        'status' => ucfirst($task->status),
+                        'created_at' => $task->created_at,
+                    ];
+                })
+                : []
+        ];
+    
+        return response()->json([
+            'status' => true,
+            'message' => 'Invoice details retrieved successfully.',
+            'data' => $formattedInvoice
+        ], 200);
+    }
+    
 
 }
