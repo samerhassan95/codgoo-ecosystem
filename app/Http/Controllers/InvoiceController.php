@@ -139,23 +139,37 @@ class InvoiceController extends BaseController
     public function getInvoicesForClient(Request $request)
     {
         $client = auth()->user();
-
-        // if (!$client || $client->type !== 'Client') {
-        //     return response()->json([
-        //         'status' => false,
-        //         'message' => 'Unauthorized access.'
-        //     ], 403);
-        // }
-
         $invoices = Invoice::whereHas('project', function ($query) use ($client) {
             $query->where('created_by_id', $client->id);
-        })->get();
+        })->with('project.creator')->get();
+    
+        if ($invoices->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No invoices found.',
+                'data' => []
+            ], 404);
+        }
+    
+        $formattedInvoices = $invoices->map(function ($invoice) {
+            return [
 
+                'id' => $invoice->id,
+                'invoice_id' => 'INV-' . $invoice->id,
+                'client_name' => auth()->user()->name,
+                'created_at' => $invoice->created_at->format('d-m-Y'),
+                'amount' => number_format($invoice->amount, 2),
+                'status' => ucfirst($invoice->status),
+            ];
+        });
+    
         return response()->json([
             'status' => true,
             'message' => 'Invoices retrieved successfully.',
-            'data' => $invoices
+            'data' => $formattedInvoices
         ], 200);
     }
+    
+
 
 }
