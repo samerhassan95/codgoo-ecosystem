@@ -38,5 +38,8 @@ return [
     'base_url' => env('JITSI_BASE_URL', 'https://meet.jit.si'),
     ],
 
+'firebase' => [
+    'credentials' => env('FIREBASE_CREDENTIALS'),
+],
 
 ];

@@ -21,7 +21,7 @@ use App\Http\Controllers\{CategoryController,
 use Illuminate\Support\Facades\Route;
 
 
-Route::middleware('auth:client')->group(function () {
+Route::middleware('client')->group(function ()  {
     Route::apiResource('projects', ProjectController::class);
 
     Route::apiResource('products', ProductController::class)->only(['index', 'show'])->names([
@@ -100,39 +100,40 @@ Route::middleware('auth:client')->group(function () {
 
 
 
-Route::prefix('meetings')->group(function () {
-    Route::post('/', [MeetingController::class, 'store']);
-    Route::get('/{slotId}/available-intervals', [MeetingController::class, 'getAvailableIntervals']);
-});
+    Route::prefix('meetings')->group(function () {
+        Route::post('/', [MeetingController::class, 'store']);
+        Route::get('/{slotId}/available-intervals', [MeetingController::class, 'getAvailableIntervals']);
+    });
 
 
-Route::get('/available-slots', [AvailableSlotController::class, 'getAvailableSlotsGroupedByDate']);
-Route::get('client-meetings', [MeetingController::class, 'getMeetingsForClient']);
-Route::get('meetings/filter', [MeetingController::class, 'filterMeetingsByStatus']);
-Route::get('meeting/{id}', [MeetingController::class, 'getMeetingById']);
-Route::get('client-tickets', [TicketController::class, 'getTicketsForClient']);
-Route::apiResource('ticket-reply', TicketReplyController::class)->names([
-    'index' => 'client.ticket-reply.index',
-    'store' => 'client.ticket-reply.store',
-    'show' => 'client.ticket-reply.show',
-    'update' => 'client.ticket-reply.update',
-    'destroy' => 'client.ticket-reply.destroy',
-]);
-Route::get('ticket-summary', [TicketController::class, 'getTicketsAndSummary']);
+    Route::get('/available-slots', [AvailableSlotController::class, 'getAvailableSlotsGroupedByDate']);
+    Route::get('client-meetings', [MeetingController::class, 'getMeetingsForClient']);
+    Route::get('meetings/filter', [MeetingController::class, 'filterMeetingsByStatus']);
+    Route::get('meeting/{id}', [MeetingController::class, 'getMeetingById']);
+    Route::get('client-tickets', [TicketController::class, 'getTicketsForClient']);
+    Route::apiResource('ticket-reply', TicketReplyController::class)->names([
+        'index' => 'client.ticket-reply.index',
+        'store' => 'client.ticket-reply.store',
+        'show' => 'client.ticket-reply.show',
+        'update' => 'client.ticket-reply.update',
+        'destroy' => 'client.ticket-reply.destroy',
+    ]);
+    Route::get('ticket-summary', [TicketController::class, 'getTicketsAndSummary']);
 
-Route::get('topics', [TopicController::class, 'getTopicsBySection']);
-Route::get('home-page', [ProjectController::class, 'getDashboardSummary']);
+    Route::get('topics', [TopicController::class, 'getTopicsBySection']);
+    Route::get('home-page', [ProjectController::class, 'getDashboardSummary']);
 
-Route::get('tickets/{ticket_id}/replies', [TicketController::class, 'getRepliesForTicket']);
-Route::apiResource('category', CategoryController::class)->names([
-    'index' => 'client.category.index',
-    'store' => 'client.category.store',
-    'show' => 'client.category.show',
-    'update' => 'client.category.update',
-    'destroy' => 'client.category.destroy',
-]);
+    Route::get('tickets/{ticket_id}/replies', [TicketController::class, 'getRepliesForTicket']);
+    Route::apiResource('category', CategoryController::class)->names([
+        'index' => 'client.category.index',
+        'store' => 'client.category.store',
+        'show' => 'client.category.show',
+        'update' => 'client.category.update',
+        'destroy' => 'client.category.destroy',
+    ]);
 
-Route::get('privacy-policy', [PrivacyPolicyController::class, 'index']);
-Route::post('privacy-policy', [PrivacyPolicyController::class, 'store']);
+    Route::get('privacy-policy', [PrivacyPolicyController::class, 'index']);
+    Route::post('privacy-policy', [PrivacyPolicyController::class, 'store']);
+    Route::get('client-invoices', [InvoiceController::class, 'getInvoicesForClient']);
 
 });
