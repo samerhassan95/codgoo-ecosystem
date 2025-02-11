@@ -14,53 +14,65 @@ class Admin
 {
     public function handle(Request $request, Closure $next)
     {
+
+
+       
+        $apiPassword = $request->header('API-Password');
+        $API_PASSWORD="Nf:upZTg^7A?Hj";
+
+        if ($apiPassword==null) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You are not allowed',
+            ], 403);
+        }
+        elseif (trim($apiPassword) !== $API_PASSWORD)  {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid API password',
+            ], 403);
+        }
         try {
-            // Ensure the admin guard is set for this request
             config(['auth.defaults.guard' => 'admin']);
             
-            // Authenticate the user via the token
             $user = JWTAuth::parseToken()->authenticate();
 
-            // Get token and payload
             $token = JWTAuth::getToken();
             $payload = JWTAuth::getPayload($token)->toArray();
 
-            // Ensure that the user is an admin
             if ($payload['type'] !== 'admin') {
                 return response()->json([
                     'status' => false,
                     'message' => 'Not authorized',
-                ], 403); // Use 403 Forbidden status
+                ], 403); 
             }
 
-            // Check if the user's status is disabled
             if ($user->status == SettingStatus::getDisabled()) {
                 return response()->json([
                     'status' => false,
                     'message' => __('site.Contact with Adminstration Your are Block'),
-                ], 403); // Use 403 Forbidden status
+                ], 403); 
             }
 
         } catch (Exception $e) {
-            // Handle different exceptions from JWT
             if ($e instanceof TokenInvalidException) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Token is Invalid',
-                ], 401); // Use 401 Unauthorized status
+                ], 401);
             } else if ($e instanceof TokenExpiredException) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Token is Expired',
-                ], 401); // Use 401 Unauthorized status
+                ], 401); 
             } else {
                 return response()->json([
                     'status' => false,
                     'message' => 'Authorization Token not found',
-                ], 401); // Use 401 Unauthorized status
+                ], 401); 
             }
         }
 
-        return $next($request); // Proceed to the next middleware or controller
+        return $next($request);
     }
 }
