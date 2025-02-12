@@ -98,7 +98,7 @@ class AvailableSlotController extends Controller
                 'date' => $slot->date,
                 'start_time' => $currentStart->toTimeString(),
                 'end_time' => $nextHour->toTimeString(),
-                'status' => $meetingExists ? 'Booked' : 'Available',
+                'status' => $meetingExists ? false : true,
             ];
 
             $currentStart = $nextHour;
