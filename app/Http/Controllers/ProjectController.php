@@ -126,46 +126,43 @@ class ProjectController extends BaseController
 
 
 
-    public function getStatusCounts()
-    {
-        $user = auth()->user();
+   public function getStatusCounts()
+{
+    $user = auth()->user();
 
-        if (!$user || $user instanceof \App\Models\Admin) {
-            return response()->json(['message' => 'Access denied.'], 403);
-        }
-
-        $projects = Project::where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client')
-            ->with('milestones')
-            ->get();
-
-        $statusCounts = [
-            'completed' => 0,
-            'ongoing' => 0,
-            'pending' => 0,
-        ];
-
-        foreach ($projects as $project) {
-            $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
-
-            $statusCounts[$projectStatus] = ($statusCounts[$projectStatus] ?? 0) + 1;
-
-            if ($project->milestones->isNotEmpty()) {
-                if ($project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
-                    $statusCounts['completed']++;
-                } else {
-                    $statusCounts['ongoing']++;
-                }
-            } else {
-                $statusCounts['ongoing']++;
-            }
-        }
-
-        return response()->json([
-            'status' => true,
-            'data' => $statusCounts,
-        ]);
+    if (!$user || $user instanceof \App\Models\Admin) {
+        return response()->json(['message' => 'Access denied.'], 403);
     }
+
+    // Fetch all projects created by the authenticated client
+    $projects = Project::where('created_by_id', $user->id)
+        ->where('created_by_type', 'Client')
+        ->get();
+
+    // Initialize status counts based on the enum values
+    $statusCounts = [
+        'requested' => 0,
+        'ongoing' => 0,
+        'completed' => 0,
+        'reject' => 0,
+    ];
+
+    // Count projects by status
+    foreach ($projects as $project) {
+        $status = $project->status;
+
+        // Ensure only valid statuses are counted
+        if (isset($statusCounts[$status])) {
+            $statusCounts[$status]++;
+        }
+    }
+
+    return response()->json([
+        'status' => true,
+        'data' => $statusCounts,
+    ]);
+}
+
 
 
     public function filterProjectsByStatus($status)
@@ -174,62 +171,65 @@ class ProjectController extends BaseController
             0 => 'all',
             1 => 'completed',
             2 => 'ongoing',
-            3 => 'pending',
+            3 => 'requested',
+            4 => 'reject',
         ];
-
+    
         if (!array_key_exists($status, $statusMapping)) {
-            return response()->json(['message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (pending).'], 400);
+            return response()->json([
+                'message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (requested), 4 (reject).'
+            ], 400);
         }
-
+    
         $statusString = $statusMapping[$status];
-
+    
         $user = auth()->user();
-
+    
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-
+    
+        // Fetch all projects created by the authenticated client
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
             ->with('milestones')
             ->get();
-
+    
+        // Return all projects if "all" is selected
         if ($statusString === 'all') {
             return response()->json([
                 'status' => true,
                 'data' => $projects,
             ]);
         }
-
-        $filteredProjects = [];
-
-        foreach ($projects as $project) {
-            $projectStatus = $project->status === 'not_approved' ? 'pending' : $project->status;
-
+    
+        // Filter projects based on the new statuses
+        $filteredProjects = $projects->filter(function ($project) use ($statusString) {
             if ($statusString === 'completed') {
-                if ($project->milestones->isNotEmpty() && $project->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
-                    $filteredProjects[] = $project;
-                }
+                return $project->status === 'completed';
             }
-
+    
             if ($statusString === 'ongoing') {
-                if ($project->milestones->isNotEmpty() && ($project->milestones->contains('in_progress') || $project->milestones->contains('not_started'))) {
-                    $filteredProjects[] = $project;
-                }
+                return $project->status === 'ongoing';
             }
-
-            if ($statusString === 'pending') {
-                if ($project->milestones->isEmpty() || $projectStatus === 'pending') {
-                    $filteredProjects[] = $project;
-                }
+    
+            if ($statusString === 'requested') {
+                return $project->status === 'requested';
             }
-        }
-
+    
+            if ($statusString === 'reject') {
+                return $project->status === 'reject';
+            }
+    
+            return false;
+        });
+    
         return response()->json([
             'status' => true,
-            'data' => $filteredProjects,
+            'data' => $filteredProjects->values(),
         ]);
     }
+    
 
 
 
