@@ -23,35 +23,33 @@ class MeetingController extends Controller
     public function store(MeetingRequest $request)
     {
         $validated = $request->validated();
-
+    
         $duration = $validated['duration'] ?? 60;
-
+        
         $slot = AvailableSlot::findOrFail($validated['slot_id']);
         $requestedStart = Carbon::parse($validated['start_time']);
         $requestedEnd = $requestedStart->copy()->addMinutes($duration);
-
+    
+        // التحقق من أن الفترة المطلوبة غير محجوزة
         $existingMeetings = $slot->meetings()
             ->where(function ($query) use ($requestedStart, $requestedEnd) {
-                $query->whereBetween('start_time', [$requestedStart->toTimeString(), $requestedEnd->toTimeString()])
-                      ->orWhereBetween('end_time', [$requestedStart->toTimeString(), $requestedEnd->toTimeString()])
-                      ->orWhere(function ($q) use ($requestedStart, $requestedEnd) {
-                          $q->where('start_time', '<=', $requestedStart->toTimeString())
-                            ->where('end_time', '>=', $requestedEnd->toTimeString());
-                      });
+                $query->where('start_time', '<', $requestedEnd->toTimeString())
+                      ->where('end_time', '>', $requestedStart->toTimeString());
             })
             ->exists();
-
+    
         if ($existingMeetings) {
             return response()->json([
                 'status' => false,
                 'message' => 'This time slot is already occupied.',
             ], 400);
         }
-
-        $jitsiUrl = null;
+    
+        // إنشاء رابط Jitsi عشوائي للاجتماع
         $jitsiRoom = 'meeting-' . uniqid();
         $jitsiUrl = config('services.jitsi.base_url') . '/' . $jitsiRoom;
-
+    
+        // إنشاء الاجتماع
         $meeting = $this->repository->create([
             'slot_id' => $validated['slot_id'],
             'client_id' => $validated['client_id'],
@@ -59,14 +57,19 @@ class MeetingController extends Controller
             'description' => $validated['description'] ?? null, 
             'start_time' => $requestedStart->toTimeString(),
             'end_time' => $requestedEnd->toTimeString(),
-            'project_id' => $validated['project_id']?? null,
+            'project_id' => $validated['project_id'] ?? null,
             'jitsi_url' => $jitsiUrl,
-            'status' => 'Request Sent', 
-            
-        
+            'status' => 'Request Sent',
         ]);
+    
+        // تحديث حالة الفترات المحجوزة فقط
+        $slot->meetings()->update([
+            'status' => true
+        ]);
+    
         return response()->json(new MeetingResource($meeting), 201);
     }
+    
 
     public function getMeetingsForClient(Request $request)
     {
