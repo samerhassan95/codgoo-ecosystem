@@ -30,7 +30,6 @@ class MeetingController extends Controller
         $requestedStart = Carbon::parse($validated['start_time']);
         $requestedEnd = $requestedStart->copy()->addMinutes($duration);
     
-        // التحقق من أن الفترة المطلوبة غير محجوزة
         $existingMeetings = $slot->meetings()
             ->where(function ($query) use ($requestedStart, $requestedEnd) {
                 $query->where('start_time', '<', $requestedEnd->toTimeString())
@@ -45,11 +44,9 @@ class MeetingController extends Controller
             ], 400);
         }
     
-        // إنشاء رابط Jitsi عشوائي للاجتماع
         $jitsiRoom = 'meeting-' . uniqid();
         $jitsiUrl = config('services.jitsi.base_url') . '/' . $jitsiRoom;
     
-        // إنشاء الاجتماع
         $meeting = $this->repository->create([
             'slot_id' => $validated['slot_id'],
             'client_id' => $validated['client_id'],
@@ -62,7 +59,6 @@ class MeetingController extends Controller
             'status' => 'Request Sent',
         ]);
     
-        // تحديث حالة الفترات المحجوزة فقط
         $slot->meetings()->update([
             'status' => true
         ]);
@@ -112,14 +108,13 @@ class MeetingController extends Controller
 
     public function getMeetingById($id, Request $request)
     {
-        $client = $request->user();
-
-        $meeting = Meeting::where('client_id', $client->id)->with('project')->find($id);
+        $user = $request->user();
+        $meeting = Meeting::with('project')->find($id);
 
         if (!$meeting) {
             return response()->json([
                 'status' => false,
-                'message' => 'Meeting not found or does not belong to the logged-in client.',
+                'message' => 'Meeting not found.',
             ], 404);
         }
 
@@ -131,4 +126,87 @@ class MeetingController extends Controller
             ],
         ]);
     }
+
+
+    public function getMeetingsWithProject(Request $request)
+    {
+        $perPage = $request->query('per_page', 10);
+        $meetings = $this->repository->getMeetingsWithProject($perPage);
+
+        $filteredMeetings = $meetings->map(function ($meeting) {
+            return [
+                'meeting_name' => $meeting->meeting_name,
+                'meeting_date' => $meeting->slot ? $meeting->slot->date : null,
+                'name' => $meeting->project ? $meeting->project->name : null, 
+                'start_time' => $meeting->start_time,
+                'end_time' => $meeting->end_time,
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => $filteredMeetings->values(),
+            'total' => $meetings->total(),
+            'per_page' => $meetings->perPage(),
+            'from' => $meetings->firstItem(),
+            'to' => $meetings->lastItem(),
+            'count' => $meetings->count(),
+            
+        ]);
+    }
+
+    public function update(MeetingRequest $request, $id)
+    {
+        $meeting = Meeting::find($id);
+
+        if (!$meeting) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Meeting not found.',
+            ], 404);
+        }
+
+
+        // التحقق من تداخل الوقت إذا كان هناك تحديث للوقت أو الـ Slot
+        if ($request->has('slot_id') || $request->has('start_time')) {
+            $slot = AvailableSlot::findOrFail($request->slot_id ?? $meeting->slot_id);
+            $requestedStart = Carbon::parse($request->start_time ?? $meeting->start_time);
+            $requestedEnd = $requestedStart->copy()->addMinutes($request->duration ?? 60);
+
+            $existingMeetings = $slot->meetings()
+                ->where('id', '!=', $meeting->id) // تجاهل الاجتماع الحالي
+                ->where(function ($query) use ($requestedStart, $requestedEnd) {
+                    $query->where('start_time', '<', $requestedEnd->toTimeString())
+                        ->where('end_time', '>', $requestedStart->toTimeString());
+                })
+                ->exists();
+
+            if ($existingMeetings) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'This time slot is already occupied.',
+                ], 400);
+            }
+        }
+
+        // تحديث البيانات
+        $meeting->update([
+            'slot_id' => $request->slot_id ?? $meeting->slot_id,
+            'meeting_name' => $request->meeting_name ?? $meeting->meeting_name,
+            'description' => $request->description ?? $meeting->description,
+            'start_time' => $request->start_time ?? $meeting->start_time,
+            'end_time' => isset($request->start_time) ? $requestedEnd->toTimeString() : $meeting->end_time,
+            'project_id' => $request->project_id ?? $meeting->project_id,
+            'jitsi_url' => $request->jitsi_url ?? $meeting->jitsi_url,
+            'status' => $request->status ?? $meeting->status,
+            'project_id' => $request->project_id ?? $meeting->project_id,
+        ]);
+        return response()->json([
+            'status' => true,
+            'message' => 'Meeting updated successfully.',
+            'data' => new MeetingResource($meeting),
+        ]);
+    }
+
+    
 }

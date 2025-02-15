@@ -3,6 +3,7 @@
 use App\Http\Controllers\{AddonController,
     CategoryController,
     InvoiceController,
+    MeetingController,
     MigrationController,
     MilestoneController,
     ProductController,
@@ -102,16 +103,32 @@ Route::middleware('admin')->group(function () {
 
 
 
-Route::controller(SkillController::class)->prefix('skills')->group(function () {
-    Route::post('/assign/{employeeId}', 'assignSkillsToEmployee');
-    Route::delete('/remove/{employeeId}/{skillId}', 'removeSkillFromEmployee');
-});
-Route::post('galleries', [GalleryController::class, 'store']);
-Route::apiResource('category', CategoryController::class)->names([
-    'index' => 'admin.category.index',
-    'store' => 'admin.category.store',
-    'show' => 'admin.category.show',
-    'update' => 'admin.category.update',
-    'destroy' => 'admin.category.destroy',
-]);
+    Route::controller(SkillController::class)->prefix('skills')->group(function () {
+        Route::post('/assign/{employeeId}', 'assignSkillsToEmployee');
+        Route::delete('/remove/{employeeId}/{skillId}', 'removeSkillFromEmployee');
+    });
+    Route::post('galleries', [GalleryController::class, 'store']);
+    Route::apiResource('category', CategoryController::class)->names([
+        'index' => 'admin.category.index',
+        'store' => 'admin.category.store',
+        'show' => 'admin.category.show',
+        'update' => 'admin.category.update',
+        'destroy' => 'admin.category.destroy',
+    ]);
+
+    Route::get('meetings/with-project', [MeetingController::class, 'getMeetingsWithProject']);
+    Route::get('meeting/{id}', [MeetingController::class, 'getMeetingById']);
+    Route::put('meetings/{id}', [MeetingController::class, 'update']); 
+    Route::apiResource('projects', ProjectController::class)->names([
+        'index' => 'admin.projects.index',
+        'show' => 'admin.projects.show',
+        'store' => 'admin.projects.store',
+        'update' => 'admin.projects.update',
+        'destroy' => 'admin.projects.destroy',
+    ]);
+    Route::get('projects/{projectId}/milestones', [MilestoneController::class, 'getMilestonesForProject'])
+    ->name('admin.projects.milestones');
+
+    Route::get('milestones/{milestone_id}/tasks', [TaskController::class, 'getTasksByMilestone']);
+
 });

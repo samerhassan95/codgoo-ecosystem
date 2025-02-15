@@ -8,8 +8,9 @@ class ProjectResource extends JsonResource
 {
     public function toArray($request)
     {
-        $totalMilestones = $this->milestones->count();
-        $completedMilestones = $this->milestones->where('status', 'completed')->count();
+        $totalMilestones = $this->milestones ? $this->milestones->count() : 0;
+        $completedMilestones = $this->milestones ? $this->milestones->where('status', 'completed')->count() : 0;
+        
 
         $completionPercentage = $totalMilestones > 0 ? ($completedMilestones / $totalMilestones) * 100 : 0;
 

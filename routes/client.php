@@ -22,8 +22,13 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::middleware('client')->group(function ()  {
-    Route::apiResource('projects', ProjectController::class);
-
+    Route::apiResource('projects', ProjectController::class)->names([
+        'index' => 'client.projects.index',
+        'show' => 'client.projects.show',
+        'store' => 'client.projects.store',
+        'update' => 'client.projects.update',
+        'destroy' => 'client.projects.destroy',
+    ]);
     Route::apiResource('products', ProductController::class)->only(['index', 'show'])->names([
         'index' => 'client.products.index',
         'show' => 'client.products.show',

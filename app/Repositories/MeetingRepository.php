@@ -6,19 +6,16 @@ use App\Models\Meeting;
 
 class MeetingRepository implements MeetingRepositoryInterface
 {
-    // public function create(array $data)
-    // {
-    //     return Meeting::create($data);
-    // }
+    public function getMeetingsWithProject($perPage = 10)
+    {
+        return Meeting::whereNotNull('project_id')->paginate($perPage);
+    }
+    
 
-    // public function getBySlot($slotId)
-    // {
-    //     return Meeting::where('slot_id', $slotId)->get();
-    // }
-
-
-
-
+    public function getRequestedMeetingsByProject()
+    {
+        return Meeting::whereNotNull('project_id')->get();
+    }
 
     public function create(array $data)
     {
