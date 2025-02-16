@@ -139,6 +139,7 @@ class MeetingController extends Controller
                 'meeting_name' => $meeting->meeting_name,
                 'meeting_date' => $meeting->slot ? $meeting->slot->date : null,
                 'name' => $meeting->project ? $meeting->project->name : null, 
+                'status' => $meeting->project ? $meeting->project->status : null, 
                 'start_time' => $meeting->start_time,
                 'end_time' => $meeting->end_time,
             ];
