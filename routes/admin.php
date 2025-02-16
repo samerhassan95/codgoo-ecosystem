@@ -131,4 +131,7 @@ Route::middleware('admin')->group(function () {
 
     Route::get('milestones/{milestone_id}/tasks', [TaskController::class, 'getTasksByMilestone']);
 
+    Route::delete('projects/attachments/{attachmentId}', [ProjectController::class, 'deleteAttachment']);
+
+
 });

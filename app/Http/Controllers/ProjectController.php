@@ -6,6 +6,7 @@ use App\Http\Requests\ProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\SliderResource;
 use App\Models\Admin;
+use App\Models\attachment;
 use App\Models\Client;
 use App\Models\Project;
 use App\Repositories\ProjectRepositoryInterface;
@@ -21,9 +22,9 @@ class ProjectController extends BaseController
 
     public function __construct(ProjectRepositoryInterface $repository, SliderRepositoryInterface $sliderRepository)
     {
-        parent::__construct($repository); 
-        $this->repository = $repository; 
-        $this->sliderRepository = $sliderRepository; 
+        parent::__construct($repository);
+        $this->repository = $repository;
+        $this->sliderRepository = $sliderRepository;
     }
 
     public function store(Request $request)
@@ -72,7 +73,7 @@ class ProjectController extends BaseController
 
             // Filter out addons that already exist in the product
             $newAddons = array_diff($validatedData['addons'], $productAddons);
-            
+
             if (!empty($newAddons)) {
                 $project->addons()->attach($newAddons);
             }
@@ -99,7 +100,7 @@ class ProjectController extends BaseController
             'addons' => 'array',
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
-            'category_id' => 'nullable|exists:categories,id', 
+            'category_id' => 'nullable|exists:categories,id',
         ]);
 
         $user = auth()->user();
@@ -172,27 +173,27 @@ class ProjectController extends BaseController
             3 => 'requested',
             4 => 'reject',
         ];
-    
+
         if (!array_key_exists($status, $statusMapping)) {
             return response()->json([
                 'message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (requested), 4 (reject).'
             ], 400);
         }
-    
+
         $statusString = $statusMapping[$status];
-    
+
         $user = auth()->user();
-    
+
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-    
+
         // Fetch all projects created by the authenticated client
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
             ->with('milestones')
             ->get();
-    
+
         // Return all projects if "all" is selected
         if ($statusString === 'all') {
             return response()->json([
@@ -200,34 +201,34 @@ class ProjectController extends BaseController
                 'data' => $projects,
             ]);
         }
-    
+
         // Filter projects based on the new statuses
         $filteredProjects = $projects->filter(function ($project) use ($statusString) {
             if ($statusString === 'completed') {
                 return $project->status === 'completed';
             }
-    
+
             if ($statusString === 'ongoing') {
                 return $project->status === 'ongoing';
             }
-    
+
             if ($statusString === 'requested') {
                 return $project->status === 'requested';
             }
-    
+
             if ($statusString === 'reject') {
                 return $project->status === 'reject';
             }
-    
+
             return false;
         });
-    
+
         return response()->json([
             'status' => true,
             'data' => $filteredProjects->values(),
         ]);
     }
-    
+
     public function getProjectDetails($projectId)
     {
         $user = auth()->user();
@@ -494,7 +495,23 @@ class ProjectController extends BaseController
                 'invoice_status_counts' => $invoiceCounts,
             ]
         ]);
+    }public function deleteAttachment($attachmentId)
+    {
+        $attachment = Attachment::find($attachmentId);
+
+        if (!$attachment) {
+            return response()->json(['message' => 'Attachment not found.'], 404);
+        }
+
+        ImageService::delete($attachment->file_path);
+
+        $attachment->delete();
+
+        return response()->json(['message' => 'Attachment deleted successfully.'], 200);
     }
+
+
+
 
 }
 

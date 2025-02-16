@@ -50,6 +50,7 @@ class ProjectResource extends JsonResource
             'category' => $this->category,
             'attachments' => $this->attachments->map(function ($attachment) {
                 return [
+                    'id' => $attachment->id,
                     'file_path' => asset($attachment->file_path),
                 ];
             }),

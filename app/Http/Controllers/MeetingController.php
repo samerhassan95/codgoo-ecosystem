@@ -160,20 +160,19 @@ class MeetingController extends Controller
     public function update(MeetingRequest $request, $id)
     {
         $meeting = Meeting::find($id);
-
+    
         if (!$meeting) {
             return response()->json([
                 'status' => false,
                 'message' => 'Meeting not found.',
             ], 404);
         }
-
-
+    
         if ($request->has('slot_id') || $request->has('start_time')) {
             $slot = AvailableSlot::findOrFail($request->slot_id ?? $meeting->slot_id);
             $requestedStart = Carbon::parse($request->start_time ?? $meeting->start_time);
             $requestedEnd = $requestedStart->copy()->addMinutes($request->duration ?? 60);
-
+    
             $existingMeetings = $slot->meetings()
                 ->where('id', '!=', $meeting->id)
                 ->where(function ($query) use ($requestedStart, $requestedEnd) {
@@ -181,7 +180,7 @@ class MeetingController extends Controller
                         ->where('end_time', '>', $requestedStart->toTimeString());
                 })
                 ->exists();
-
+    
             if ($existingMeetings) {
                 return response()->json([
                     'status' => false,
@@ -189,7 +188,8 @@ class MeetingController extends Controller
                 ], 400);
             }
         }
-
+    
+        // Update the meeting
         $meeting->update([
             'slot_id' => $request->slot_id ?? $meeting->slot_id,
             'meeting_name' => $request->meeting_name ?? $meeting->meeting_name,
@@ -199,14 +199,20 @@ class MeetingController extends Controller
             'project_id' => $request->project_id ?? $meeting->project_id,
             'jitsi_url' => $request->jitsi_url ?? $meeting->jitsi_url,
             'status' => $request->status ?? $meeting->status,
-            'project_id' => $request->project_id ?? $meeting->project_id,
         ]);
+    
+        // Check if the status is updated to 'Canceled'
+        if ($request->status === 'Canceled' && $meeting->project) {
+            $meeting->project->update(['status' => 'reject']);
+        }
+    
         return response()->json([
             'status' => true,
             'message' => 'Meeting updated successfully.',
             'data' => new MeetingResource($meeting),
         ]);
     }
+    
 
     
 }
