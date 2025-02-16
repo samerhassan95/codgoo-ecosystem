@@ -21,9 +21,9 @@ class ProjectController extends BaseController
 
     public function __construct(ProjectRepositoryInterface $repository, SliderRepositoryInterface $sliderRepository)
     {
-        parent::__construct($repository); // Initialize the parent constructor
-        $this->repository = $repository; // Set the repository property
-        $this->sliderRepository = $sliderRepository; // Set the slider repository property
+        parent::__construct($repository); 
+        $this->repository = $repository; 
+        $this->sliderRepository = $sliderRepository; 
     }
 
     public function store(Request $request)
@@ -38,9 +38,8 @@ class ProjectController extends BaseController
             'addons' => 'array',
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
-            'category_id' => 'nullable|exists:categories,id', 
+            'category_id' => 'nullable|exists:categories,id',
         ]);
-
 
         $user = auth()->user();
         $type = $user instanceof \App\Models\Admin ? 'Admin' : 'Client';
@@ -68,12 +67,19 @@ class ProjectController extends BaseController
         }
 
         if (!empty($validatedData['addons'])) {
-            $project->addons()->attach($validatedData['addons']);
+            $product = $project->product;
+            $productAddons = $product ? $product->addons->pluck('id')->toArray() : [];
+
+            // Filter out addons that already exist in the product
+            $newAddons = array_diff($validatedData['addons'], $productAddons);
+            
+            if (!empty($newAddons)) {
+                $project->addons()->attach($newAddons);
+            }
         }
 
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 201);
     }
-
 
     public function update(Request $request, $id)
     {
@@ -124,46 +130,38 @@ class ProjectController extends BaseController
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 200);
     }
 
-
-
    public function getStatusCounts()
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    if (!$user || $user instanceof \App\Models\Admin) {
-        return response()->json(['message' => 'Access denied.'], 403);
-    }
-
-    // Fetch all projects created by the authenticated client
-    $projects = Project::where('created_by_id', $user->id)
-        ->where('created_by_type', 'Client')
-        ->get();
-
-    // Initialize status counts based on the enum values
-    $statusCounts = [
-        'requested' => 0,
-        'ongoing' => 0,
-        'completed' => 0,
-        'reject' => 0,
-    ];
-
-    // Count projects by status
-    foreach ($projects as $project) {
-        $status = $project->status;
-
-        // Ensure only valid statuses are counted
-        if (isset($statusCounts[$status])) {
-            $statusCounts[$status]++;
+        if (!$user || $user instanceof \App\Models\Admin) {
+            return response()->json(['message' => 'Access denied.'], 403);
         }
+
+        $projects = Project::where('created_by_id', $user->id)
+            ->where('created_by_type', 'Client')
+            ->get();
+
+        $statusCounts = [
+            'requested' => 0,
+            'ongoing' => 0,
+            'completed' => 0,
+            'reject' => 0,
+        ];
+
+        foreach ($projects as $project) {
+            $status = $project->status;
+
+            if (isset($statusCounts[$status])) {
+                $statusCounts[$status]++;
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $statusCounts,
+        ]);
     }
-
-    return response()->json([
-        'status' => true,
-        'data' => $statusCounts,
-    ]);
-}
-
-
 
     public function filterProjectsByStatus($status)
     {
@@ -230,9 +228,6 @@ class ProjectController extends BaseController
         ]);
     }
     
-
-
-
     public function getProjectDetails($projectId)
     {
         $user = auth()->user();
@@ -286,8 +281,6 @@ class ProjectController extends BaseController
             ],
         ]);
     }
-
-
 
     public function getTaskSummaryForProject($projectId)
     {
@@ -380,8 +373,6 @@ class ProjectController extends BaseController
             'data' => $attachments,
         ]);
     }
-
-
 
     public function uploadAttachment(Request $request, $projectId)
     {

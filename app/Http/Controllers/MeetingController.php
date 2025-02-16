@@ -135,6 +135,7 @@ class MeetingController extends Controller
 
         $filteredMeetings = $meetings->map(function ($meeting) {
             return [
+                'meeting_id' => $meeting->id,
                 'meeting_name' => $meeting->meeting_name,
                 'meeting_date' => $meeting->slot ? $meeting->slot->date : null,
                 'name' => $meeting->project ? $meeting->project->name : null, 
@@ -167,14 +168,13 @@ class MeetingController extends Controller
         }
 
 
-        // التحقق من تداخل الوقت إذا كان هناك تحديث للوقت أو الـ Slot
         if ($request->has('slot_id') || $request->has('start_time')) {
             $slot = AvailableSlot::findOrFail($request->slot_id ?? $meeting->slot_id);
             $requestedStart = Carbon::parse($request->start_time ?? $meeting->start_time);
             $requestedEnd = $requestedStart->copy()->addMinutes($request->duration ?? 60);
 
             $existingMeetings = $slot->meetings()
-                ->where('id', '!=', $meeting->id) // تجاهل الاجتماع الحالي
+                ->where('id', '!=', $meeting->id)
                 ->where(function ($query) use ($requestedStart, $requestedEnd) {
                     $query->where('start_time', '<', $requestedEnd->toTimeString())
                         ->where('end_time', '>', $requestedStart->toTimeString());
@@ -189,7 +189,6 @@ class MeetingController extends Controller
             }
         }
 
-        // تحديث البيانات
         $meeting->update([
             'slot_id' => $request->slot_id ?? $meeting->slot_id,
             'meeting_name' => $request->meeting_name ?? $meeting->meeting_name,
