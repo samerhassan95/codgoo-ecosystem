@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\{AddonController,
     CategoryController,
+    Client\ClientAuthController,
     InvoiceController,
     MeetingController,
     MigrationController,
     MilestoneController,
+    NotificationController,
     ProductController,
     ProductAddonController,
     ProductMediaController,
@@ -17,7 +19,8 @@ use App\Http\Controllers\{AddonController,
     DepartmentController,
     TicketReplyController,
     SkillController,
-    GalleryController};
+    GalleryController,
+    };
 use Illuminate\Support\Facades\Route;
 
 
@@ -118,7 +121,7 @@ Route::middleware('admin')->group(function () {
 
     Route::get('meetings/with-project', [MeetingController::class, 'getMeetingsWithProject']);
     Route::get('meeting/{id}', [MeetingController::class, 'getMeetingById']);
-    Route::put('meetings/{id}', [MeetingController::class, 'update']); 
+    Route::put('meetings/{id}', [MeetingController::class, 'update']);
     Route::apiResource('projects', ProjectController::class)->names([
         'index' => 'admin.projects.index',
         'show' => 'admin.projects.show',
@@ -132,6 +135,9 @@ Route::middleware('admin')->group(function () {
     Route::get('milestones/{milestone_id}/tasks', [TaskController::class, 'getTasksByMilestone']);
 
     Route::delete('projects/attachments/{attachmentId}', [ProjectController::class, 'deleteAttachment']);
+
+    Route::post('send-notification', [NotificationController::class, 'sendNotification']);
+    Route::get('get-clients', [ClientAuthController::class, 'getAllClients']);
 
 
 });

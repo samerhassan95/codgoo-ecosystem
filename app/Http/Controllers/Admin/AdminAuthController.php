@@ -306,7 +306,7 @@ class AdminAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'phone' => 'required|unique:admins,phone',
             'password' => 'required|min:6|max:255',
-            'username' => 'required|unique|max:255',
+            'username' => 'required|unique:admins,username|max:255',
         ]);
 
         if ($validator->fails()) {

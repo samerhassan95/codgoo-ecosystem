@@ -217,9 +217,6 @@ class ClientAuthController extends Controller
         ]);
     }
 
-    
-
-
     public function logout()
     {
         $result = $this->clientRepo->logout();
@@ -255,7 +252,6 @@ class ClientAuthController extends Controller
         ]);
     }
 
-
     public function forgotPasswordRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -287,10 +283,8 @@ class ClientAuthController extends Controller
         ], 200);
     }
 
-
     public function verifyOtp(Request $request)
     {
-        // Validate the OTP and phone number
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
             'otp' => 'required|numeric',
@@ -304,13 +298,10 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Retrieve phone and OTP from request
         $phone = $request->phone;
         $otp = $request->otp;
 
-        // Check if OTP exists in cache and matches
         $storedOtp = Cache::get('otp');
-        // dd($storedOtp);
         if (!$storedOtp || $storedOtp != $otp) {
             return response()->json([
                 'status' => false,
@@ -319,7 +310,6 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Optionally, delete the OTP from cache after it's verified
         Cache::forget('otp_' . $phone);
 
         return response()->json([
@@ -331,7 +321,6 @@ class ClientAuthController extends Controller
 
     public function resetPassword(Request $request)
     {
-        // Validate password and phone number
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
             'password' => 'required|min:6|confirmed',  
@@ -345,11 +334,9 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Retrieve phone and new password from request
         $phone = $request->phone;
         $newPassword = $request->password;
 
-        // Retrieve the stored OTP from cache (ensure it's verified before)
         $storedOtp = Cache::get('otp');
 
         if (!$storedOtp) {
@@ -360,7 +347,6 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Find client by phone
         $client = Client::where('phone', $phone)->first();
 
         if (!$client) {
@@ -371,7 +357,6 @@ class ClientAuthController extends Controller
             ], 404);
         }
 
-        // Update password
         $client->password = Hash::make($newPassword);
         $client->save();
 
@@ -385,7 +370,7 @@ class ClientAuthController extends Controller
     public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'new_password' => 'required|min:6|confirmed', // Must match new_password_confirmation
+            'new_password' => 'required|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
@@ -396,7 +381,6 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Get the authenticated client
         $client = auth('client')->user();
 
         if (!$client) {
@@ -407,7 +391,6 @@ class ClientAuthController extends Controller
             ], 401);
         }
 
-        // Update the password
         $client->password = Hash::make($request->new_password);
         $client->save();
 
@@ -421,9 +404,8 @@ class ClientAuthController extends Controller
 
     public function changePhoneRequest(Request $request)
     {
-        // Validate the new phone number
         $validator = Validator::make($request->all(), [
-            'new_phone' => 'required|unique:clients,phone', // Ensure it's unique in the clients table
+            'new_phone' => 'required|unique:clients,phone',
         ]);
 
         if ($validator->fails()) {
@@ -434,7 +416,6 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Get the authenticated client
         $client = auth('client')->user();
 
         if (!$client) {
@@ -445,14 +426,12 @@ class ClientAuthController extends Controller
             ], 401);
         }
 
-        // Generate OTP
-        $otp = 1234; // Generate a 4-digit OTP
+        $otp = 1234;
 
-        // Store the OTP and new phone in cache (with a unique key, e.g., phone + client ID)
         Cache::put('otp_change_phone_' . $client->id, [
             'otp' => $otp,
             'new_phone' => $request->new_phone,
-        ], now()->addMinutes(10)); // OTP valid for 10 minutes
+        ], now()->addMinutes(10));
 
         // Simulate sending the OTP (you can integrate an SMS service here)
         // Log::info("OTP for phone {$request->new_phone}: {$otp}"); // For debugging only
@@ -467,7 +446,6 @@ class ClientAuthController extends Controller
 
     public function verifyChangePhone(Request $request)
     {
-        // Validate the OTP
         $validator = Validator::make($request->all(), [
             'otp' => 'required|numeric',
         ]);
@@ -480,7 +458,6 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Get the authenticated client
         $client = auth('client')->user();
 
         if (!$client) {
@@ -491,7 +468,6 @@ class ClientAuthController extends Controller
             ], 401);
         }
 
-        // Retrieve the OTP and new phone from cache
         $cachedData = Cache::get('otp_change_phone_' . $client->id);
 
         if (!$cachedData || $cachedData['otp'] != $request->otp) {
@@ -502,11 +478,9 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Update the phone number
         $client->phone = $cachedData['new_phone'];
         $client->save();
 
-        // Remove the cached OTP after successful verification
         Cache::forget('otp_change_phone_' . $client->id);
 
         return response()->json([
@@ -518,5 +492,15 @@ class ClientAuthController extends Controller
         ], 200);
     }
 
-    
+    public function getAllClients()
+    {
+        $clients = $this->clientRepo->getAllClients();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Clients retrieved successfully',
+            'data' => $clients
+        ]);
+    }
+
 }
