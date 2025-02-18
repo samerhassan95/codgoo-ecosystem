@@ -173,61 +173,43 @@ class ProjectController extends BaseController
             3 => 'requested',
             4 => 'reject',
         ];
-
+    
         if (!array_key_exists($status, $statusMapping)) {
             return response()->json([
                 'message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (requested), 4 (reject).'
             ], 400);
         }
-
+    
         $statusString = $statusMapping[$status];
-
+    
         $user = auth()->user();
-
+    
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-
-        // Fetch all projects created by the authenticated client
+    
         $projects = Project::where('created_by_id', $user->id)
             ->where('created_by_type', 'Client')
             ->with('milestones')
             ->get();
-
-        // Return all projects if "all" is selected
+    
         if ($statusString === 'all') {
             return response()->json([
                 'status' => true,
-                'data' => $projects,
+                'data' => ProjectResource::collection($projects), // Returning ProjectResource collection
             ]);
         }
-
-        // Filter projects based on the new statuses
+    
         $filteredProjects = $projects->filter(function ($project) use ($statusString) {
-            if ($statusString === 'completed') {
-                return $project->status === 'completed';
-            }
-
-            if ($statusString === 'ongoing') {
-                return $project->status === 'ongoing';
-            }
-
-            if ($statusString === 'requested') {
-                return $project->status === 'requested';
-            }
-
-            if ($statusString === 'reject') {
-                return $project->status === 'reject';
-            }
-
-            return false;
+            return $project->status === $statusString;
         });
-
+    
         return response()->json([
             'status' => true,
-            'data' => $filteredProjects->values(),
+            'data' => ProjectResource::collection($filteredProjects->values()), // Returning ProjectResource collection
         ]);
     }
+    
 
     public function getProjectDetails($projectId)
     {
