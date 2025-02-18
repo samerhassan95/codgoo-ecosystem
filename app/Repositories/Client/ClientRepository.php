@@ -55,7 +55,13 @@ class ClientRepository implements ClientRepositoryInterface
             return ['error' => 'Client not found'];
         }
 
-        // Implement your password reset logic here (e.g., sending reset email or SMS)
         return ['message' => 'Password reset link sent'];
     }
+
+
+    public function getAllClients()
+    {
+        return Client::all(); 
+    }
+
 }
