@@ -49,9 +49,9 @@ class TicketController extends BaseController
     public function update(Request $request, $ticketId)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'department_id' => 'required|integer',
-            'priority' => 'required|in:High,Medium,Low',
+            'name' => 'nullable|string|max:255',
+            'department_id' => 'nullable|integer',
+            'priority' => 'nullable|in:High,Medium,Low',
             'description' => 'nullable|string',
             'status' => 'nullable|in:pending,open,closed,answered',
             'attachment' => 'nullable|file|mimes:jpg,png,pdf|max:2048',
