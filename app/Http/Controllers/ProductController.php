@@ -136,7 +136,7 @@ class ProductController extends BaseController
             'attachments' => $product->attachments->map(function ($attachment) {
                 return [
                     'id' => $attachment->id,
-                    'file_path' => $attachment->file_path,
+                    'file_path' => asset($attachment->file_path),
                 ];
             }),
             'addons' => $product->addons->map(function ($addon) {
@@ -148,7 +148,6 @@ class ProductController extends BaseController
             }),
         ];
 
-        // Return the response
         return response()->json([
             'status' => true,
             'data' => $data,
