@@ -16,6 +16,12 @@ class TaskResource extends JsonResource
             'due_date' => $this->due_date,
             'status' => $this->status,
             'priority' => $this->priority,
+            'milestone_id' => $this->milestone_id,
+            'assigned_to' => $this->assigned_to ? [
+                'id' => $this->assigned_to,
+                'name' => $this->assignedEmployee->name,
+                'image' =>asset( $this->assignedEmployee->image) ,
+            ] : null,
         ];
     }
 }

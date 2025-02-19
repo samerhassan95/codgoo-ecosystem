@@ -14,5 +14,9 @@ class Task extends Model
         return $this->belongsTo(Milestone::class);
     }
 
-
+    public function assignedEmployee()
+    {
+        return $this->belongsTo(Employee::class, 'assigned_to');
+    }
+    
 }

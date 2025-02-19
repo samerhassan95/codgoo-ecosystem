@@ -21,7 +21,7 @@ class TaskRequest extends FormRequest
             'status' => 'required|string|in:not_started,in_progress,awaiting_feedback,completed,canceled,testing',
             'priority' => 'required|string|in:High,Low,Medium',
             'milestone_id' => 'required|exists:milestones,id',
-        ];           
-
+            'assigned_to' => 'nullable|exists:employees,id',
+        ];
     }
 }

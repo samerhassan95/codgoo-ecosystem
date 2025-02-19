@@ -96,7 +96,7 @@ class EmployeeAuthController extends Controller
         // Validate OTP in the request
         $validator = Validator::make($request->all(), [
             'otp' => 'required|numeric',
-            'phone' => 'required|exists:employees,phone',  // Ensure phone exists
+            'phone' => 'required|exists:employees,phone',
         ]);
 
         if ($validator->fails()) {
@@ -108,11 +108,9 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Retrieve the OTP from cache
         $storedOtp = Cache::get('otp_' . $request->phone);
 
         if (!$storedOtp) {
-            // OTP has expired or is invalid
             return response()->json([
                 "status" => false,
                 'code' => 402,
@@ -121,9 +119,7 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Check if the OTP is correct
         if ($storedOtp != $request->otp) {
-            // OTP is incorrect, delete the Employee from the database
             $Employee = Employee::where('phone', $request->phone)->first();
             if ($Employee) {
                 $Employee->delete();
@@ -163,9 +159,8 @@ class EmployeeAuthController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $Employee = auth()->user();  // Get the currently authenticated user
+        $Employee = auth()->user(); 
 
-        // Validation rules (with unique checks)
         $request->validate([
             'username' => 'sometimes|required|string|max:255|unique:Employees,username,' . $Employee->id,
             'email' => 'sometimes|required|email|max:255|unique:Employees,email,' . $Employee->id,
@@ -179,13 +174,9 @@ class EmployeeAuthController extends Controller
             'country' => 'nullable|string|max:255',
         ]);
 
-        // If there's a image, handle the upload
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = (new ImageService())->upload($request->file('image'), 'Employees');
-        }
+        $imagePath = $request->hasFile('image') ? ImageService::upload($request->file('image'), 'employee_images') : null;
+    
 
-        // Update profile fields
         $updated = $Employee->update([
             'username' => $request->username ?? $Employee->username,
             'name' => $request->name ?? $Employee->name,
@@ -232,7 +223,6 @@ class EmployeeAuthController extends Controller
         }
 
         $employee = Employee::where('phone', $request->login)
-                        // ->orWhere('username', $request->login)
                         ->first();
 
         if ($employee) {
@@ -352,7 +342,6 @@ class EmployeeAuthController extends Controller
 
     public function verifyOtp(Request $request)
     {
-        // Validate the OTP and phone number
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:Employees,phone',
             'otp' => 'required|numeric',
@@ -366,11 +355,9 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Retrieve phone and OTP from request
         $phone = $request->phone;
         $otp = $request->otp;
 
-        // Check if OTP exists in cache and matches
         $storedOtp = Cache::get('otp');
         // dd($storedOtp);
         if (!$storedOtp || $storedOtp != $otp) {
