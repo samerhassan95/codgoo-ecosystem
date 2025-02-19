@@ -31,7 +31,7 @@ class ProjectResource extends JsonResource
             ];
         });
 
-        $totalPrice = $this->price + $addons->sum('price');
+        $totalPrice = ($this->product ? $this->product->price : 0) + $addons->sum('price');
 
         return
         [
