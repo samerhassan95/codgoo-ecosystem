@@ -254,13 +254,13 @@ class ProjectController extends BaseController
                 'deadline' => $deadline ? Carbon::parse($deadline)->toDateString() : null,
                 'billing_type' => $project->billing_type,
                 'total_rate' => $totalRate,
-                'progress' => $progress,
+                'progress' => (int)$progress,
                 'tasks' => [
-                    'open_tasks' => $openTasks,
-                    'total_tasks' => $totalTasks
+                    'open_tasks' => (int)$openTasks,
+                    'total_tasks' => (int)$totalTasks
                 ],
-                'total_days' => $totalDays,
-                'days_left' => $daysLeft,
+                'total_days' => (int)$totalDays,
+                'days_left' => (int)$daysLeft,
             ],
         ]);
     }
