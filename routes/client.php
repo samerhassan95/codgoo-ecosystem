@@ -141,5 +141,6 @@ Route::middleware('client')->group(function ()  {
     Route::post('privacy-policy', [PrivacyPolicyController::class, 'store']);
     Route::get('client-invoices', [InvoiceController::class, 'getInvoicesForClient']);
     Route::get('invoice-details/{invoiceId}', [InvoiceController::class, 'getInvoiceDetails']);
+    Route::delete('delete', [ClientAuthController::class, 'deleteAccount']);
 
 });

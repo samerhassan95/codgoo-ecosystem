@@ -31,7 +31,6 @@ class ClientAuthController extends Controller
     
     public function register(Request $request)
     {
-        // Validate client data
         $validator = Validator::make($request->all(), [
             'phone' => 'required|unique:clients,phone',
             'password' => 'required|min:6|max:255',
@@ -55,17 +54,14 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Handle photo upload
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = ImageService::upload($request->file('photo'), 'client_photos');
 
         }
 
-        // Generate OTP
         $otp = 1234;  // Generate a random OTP
 
-        // Create the client user in the database (without OTP verification at this point)
         $client = Client::create([
             'username' => $request->username,
             'phone' => $request->phone,
@@ -80,7 +76,6 @@ class ClientAuthController extends Controller
             'country' => $request->country,
         ]);
 
-        // Store the OTP temporarily in cache (for example, with 10 minutes expiration)
         Cache::put('otp_' . $client->phone, $otp, now()->addMinutes(10));
 
         // Send OTP to the user (simulated, for example via email or SMS)
@@ -95,10 +90,9 @@ class ClientAuthController extends Controller
 
     public function verifyOtpAndCreateClient(Request $request)
     {
-        // Validate OTP in the request
         $validator = Validator::make($request->all(), [
             'otp' => 'required|numeric',
-            'phone' => 'required|exists:clients,phone',  // Ensure phone exists
+            'phone' => 'required|exists:clients,phone',
         ]);
 
         if ($validator->fails()) {
@@ -110,11 +104,9 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Retrieve the OTP from cache
         $storedOtp = Cache::get('otp_' . $request->phone);
 
         if (!$storedOtp) {
-            // OTP has expired or is invalid
             return response()->json([
                 "status" => false,
                 'code' => 402,
@@ -123,9 +115,7 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // Check if the OTP is correct
         if ($storedOtp != $request->otp) {
-            // OTP is incorrect, delete the client from the database
             $client = Client::where('phone', $request->phone)->first();
             if ($client) {
                 $client->delete();
@@ -139,7 +129,6 @@ class ClientAuthController extends Controller
             ], 402);
         }
 
-        // OTP is valid, return the created user data
         $client = Client::where('phone', $request->phone)->first();
         $token = auth('client')->login($client);
 
@@ -167,9 +156,8 @@ class ClientAuthController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $client = auth()->user();  // Get the currently authenticated user
+        $client = auth()->user();
 
-        // Validation rules (with unique checks)
         $request->validate([
             'username' => 'sometimes|required|string|max:255|unique:clients,username,' . $client->id,
             'email' => 'sometimes|required|email|max:255|unique:clients,email,' . $client->id,
@@ -183,13 +171,11 @@ class ClientAuthController extends Controller
             'country' => 'nullable|string|max:255',
         ]);
 
-        // If there's a photo, handle the upload
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = (new ImageService())->upload($request->file('photo'), 'client_photos');
         }
 
-        // Update profile fields
         $updated = $client->update([
             'username' => $request->username ?? $client->username,
             'name' => $request->name ?? $client->name,
@@ -502,5 +488,21 @@ class ClientAuthController extends Controller
             'data' => $clients
         ]);
     }
+
+    public function deleteAccount()
+{
+    $client = auth()->user(); 
+
+    if (!$client) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $client->delete();
+
+    auth()->logout();
+
+    return response()->json(['message' => 'Account deleted successfully.'], 200);
+}
+
 
 }
