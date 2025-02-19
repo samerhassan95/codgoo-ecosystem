@@ -106,10 +106,9 @@ class ProductController extends BaseController
 
     public function show($id)
     {
-        // Retrieve the product with its related media, attachments, and addons
         $product = Product::with(['media', 'attachments', 'addons'])->find($id);
 
-        // Check if the product exists
+
         if (!$product) {
             return response()->json([
                 'status' => false,
@@ -124,6 +123,7 @@ class ProductController extends BaseController
             'description' => $product->description,
             'price' => $product->price,
             'note' => $product->note,
+            'image' => $product->image ? asset($product->image) : null,
             'created_at' => $product->created_at,
             'updated_at' => $product->updated_at,
             'media' => $product->media->map(function ($media) {
