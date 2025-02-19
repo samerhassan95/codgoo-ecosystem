@@ -14,7 +14,7 @@ class SliderRequest extends FormRequest
     public function rules()
     {
         return [
-            'product_id' => 'required|exists:products,id',
+            'product_id' => 'nullable|exists:products,id',
             'image' => 'required|image|max:10240', 
         
         ];
