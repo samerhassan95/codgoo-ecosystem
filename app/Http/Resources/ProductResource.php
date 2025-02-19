@@ -12,7 +12,7 @@ class ProductResource extends JsonResource
                 'id' => $addon->id,
                 'name' => $addon->name,
                 'price' => $addon->price,
-                'icon' => $addon->icon ? asset( $addon->icon) : null,
+                'icon' => $addon->icon ? asset($addon->icon) : null,
                 'description' => $addon->description,
             ];
         });
@@ -26,11 +26,18 @@ class ProductResource extends JsonResource
             'price' => $this->price,
             'note' => $this->note,
             'addons' => $addons,
-            'image' => $this->image ? asset('storage/' . $this->image) : null,  // Include image URL
+            'image' => $this->image ? asset( $this->image) : null,
             'total_price' => $totalPrice,
             'attachments' => $this->attachments->map(function ($attachment) {
                 return [
                     'file_path' => asset($attachment->file_path),
+                ];
+            }),
+            'media' => $this->media->map(function ($media) {
+                return [
+                    'id' => $media->id,
+                    'file_path' => asset( $media->file_path),
+                    'type' => $media->type,
                 ];
             }),
         ];

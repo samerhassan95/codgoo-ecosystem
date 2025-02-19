@@ -19,8 +19,8 @@ class ProductRequest extends FormRequest
             'description' => 'nullable|string',
             'price' => 'nullable|numeric',
             'note' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',  // Validate image
-            'attachments.*' => 'file|max:10240',  // Max 10MB per file
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', 
+            'attachments.*' => 'file|max:10240',
             
         ];
     }

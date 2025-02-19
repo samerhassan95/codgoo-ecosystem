@@ -10,7 +10,7 @@ class ProductMediaResource extends JsonResource
         return [
             'id' => $this->id,
             'product_id' => $this->product_id,
-            'file_path' => asset('storage/' . $this->file_path),
+            'file_path' => asset($this->file_path),
             'type' => $this->type,
             'created_at' => $this->created_at->toDateTimeString(),
         ];
