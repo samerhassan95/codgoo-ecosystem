@@ -129,7 +129,7 @@ class ProductController extends BaseController
             'media' => $product->media->map(function ($media) {
                 return [
                     'id' => $media->id,
-                    'file_path' => $media->file_path,
+                    'file_path' => asset($media->file_path),
                     'type' => $media->type,
                 ];
             }),
