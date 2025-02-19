@@ -26,7 +26,7 @@ class ProductResource extends JsonResource
             'price' => $this->price,
             'note' => $this->note,
             'addons' => $addons,
-            'image' => $this->image ? asset( $this->image) : null,
+            'image' => $this->image ? asset($this->image) : null,
             'total_price' => $totalPrice,
             'attachments' => $this->attachments->map(function ($attachment) {
                 return [
