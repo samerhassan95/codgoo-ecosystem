@@ -46,6 +46,7 @@ class Milestone extends Model
                     'project_id' => $milestone->project_id,
                     'status' => 'unpaid',
                     'due_date' => now()->addDays(30),
+                    'amount' => $milestone->amount,
                 ]);
             }
         });
