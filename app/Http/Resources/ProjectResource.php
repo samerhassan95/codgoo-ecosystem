@@ -12,7 +12,7 @@ class ProjectResource extends JsonResource
         $completedMilestones = $this->milestones ? $this->milestones->where('status', 'completed')->count() : 0;
         
 
-        $completionPercentage = $totalMilestones > 0 ? ($completedMilestones / $totalMilestones) * 100 : 0;
+        $completionPercentage = $totalMilestones > 0 ? round(($completedMilestones / $totalMilestones) * 100, 2) : 0;
 
         $projectStatus = 'pending'; 
         if ($totalMilestones > 0) {
