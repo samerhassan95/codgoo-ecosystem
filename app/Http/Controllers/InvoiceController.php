@@ -184,7 +184,7 @@ class InvoiceController extends BaseController
             'milestone.tasks', 
             'project' 
         ])->find($invoiceId);
-    
+
         if (!$invoice) {
             return response()->json([
                 'status' => false,
@@ -192,13 +192,19 @@ class InvoiceController extends BaseController
                 'data' => []
             ], 404);
         }
-    
+
+        // Determine overdue status for unpaid invoices
+        $status = $invoice->status;
+        if ($status === 'unpaid' && $invoice->due_date && Carbon::parse($invoice->due_date)->isPast()) {
+            $status = 'overdue';
+        }
+
         $formattedInvoice = [
             'id' => $invoice->id,
             'invoice_id' => 'INV-' . $invoice->id,
-            'status' => ucfirst($invoice->status),
+            'status' => ucfirst($status), // Overdue or Paid/Unpaid
             'created_at' => $invoice->created_at->format('d-m-Y'),
-            'due_date' => $invoice->due_date ? $invoice->due_date: null,
+            'due_date' => $invoice->due_date ? $invoice->due_date : null,
             'payment_type' => $invoice->payment_method ?? 'N/A',
             'amount' => number_format($invoice->amount, 2),
             'tasks' => $invoice->milestone
@@ -212,13 +218,14 @@ class InvoiceController extends BaseController
                 })
                 : []
         ];
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Invoice details retrieved successfully.',
             'data' => $formattedInvoice
         ], 200);
     }
+
     
 
 }
