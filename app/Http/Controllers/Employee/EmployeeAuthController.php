@@ -49,18 +49,18 @@ class EmployeeAuthController extends Controller
                 'data' => null,
             ], 402);
         }
-    
-        // Handle image upload
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('employee_images', 'public');
+
+        if (!$request->hasFile('image') && !$request->hasFile('cover_photo')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No image or cover photo uploaded',
+                'data' => null
+            ], 400);
         }
     
-        // Handle cover photo upload
-        $coverPhotoPath = null;
-        if ($request->hasFile('cover_photo')) {
-            $coverPhotoPath = $request->file('cover_photo')->store('employee_cover_photos', 'public');
-        }
+        $imagePath = $request->hasFile('image') ? ImageService::upload($request->file('image'), 'employee_images') : null;
+        $coverPhotoPath = $request->hasFile('cover_photo') ? ImageService::upload($request->file('cover_photo'), 'employee_cover_photos') : null;
+
     
         // Generate OTP (Example, you can use a random generator)
         $otp = 1234;  // Generate a random OTP
@@ -71,8 +71,8 @@ class EmployeeAuthController extends Controller
             'password' => Hash::make($request->password),
             'name' => $request->name,
             'email' => $request->email,
-            'image' => $imagePath ? asset('storage/' . $imagePath) : null,
-            'cover_photo' => $coverPhotoPath ? asset('storage/' . $coverPhotoPath) : null,
+            'image' => $imagePath ? asset( $imagePath) : null,
+            'cover_photo' => $coverPhotoPath ? asset($coverPhotoPath) : null,
             'intro' => $request->intro,
            
         ]);
@@ -90,7 +90,6 @@ class EmployeeAuthController extends Controller
         ]);
     }
     
-
     public function verifyOtpAndCreateEmployee(Request $request)
     {
         // Validate OTP in the request
@@ -152,57 +151,53 @@ class EmployeeAuthController extends Controller
         ]);
     }
 
-
-
-
-
-
     public function updateProfile(Request $request)
     {
-        $Employee = auth()->user(); 
-
-        $request->validate([
-            'username' => 'sometimes|required|string|max:255|unique:Employees,username,' . $Employee->id,
-            'email' => 'sometimes|required|email|max:255|unique:Employees,email,' . $Employee->id,
-            'phone' => 'sometimes|required|string|max:255|unique:Employees,phone,' . $Employee->id,
-            'name' => 'sometimes|required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'company_name' => 'nullable|string|max:255',
-            'website' => 'nullable|url|max:255',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-        ]);
-
-        $imagePath = $request->hasFile('image') ? ImageService::upload($request->file('image'), 'employee_images') : null;
+        $employee = auth()->user(); 
     
-
-        $updated = $Employee->update([
-            'username' => $request->username ?? $Employee->username,
-            'name' => $request->name ?? $Employee->name,
-            'email' => $request->email ?? $Employee->email,
-            'phone' => $request->phone ?? $Employee->phone,
-            'image' => isset($imagePath) ? asset( $imagePath) : $Employee->image,
-            'company_name' => $request->company_name ?? $Employee->company_name,
-            'website' => $request->website ?? $Employee->website,
-            'address' => $request->address ?? $Employee->address,
-            'city' => $request->city ?? $Employee->city,
-            'country' => $request->country ?? $Employee->country,
+        // Validation rules aligned with schema
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'phone' => 'sometimes|required|string|max:255|unique:employees,phone,' . $employee->id,
+            'email' => 'sometimes|required|email|max:255|unique:employees,email,' . $employee->id,
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'intro' => 'nullable|string|max:1000', 
         ]);
-
+    
+        // Handle image updates (replace existing if new one is uploaded)
+        $imagePath = $request->hasFile('image') 
+            ? ImageService::update($request->file('image'), $employee->image, 'employee_images') 
+            : $employee->image;
+    
+        $coverPhotoPath = $request->hasFile('cover_photo') 
+            ? ImageService::update($request->file('cover_photo'), $employee->cover_photo, 'employee_cover_photos') 
+            : $employee->cover_photo;
+    
+        // Update Employee profile
+        $updated = $employee->update([
+            'name' => $request->name ?? $employee->name,
+            'phone' => $request->phone ?? $employee->phone,
+            'email' => $request->email ?? $employee->email,
+            'image' => $imagePath ? asset($imagePath) : $employee->image,
+            'cover_photo' => $coverPhotoPath ? asset($coverPhotoPath) : $employee->cover_photo,
+            'intro' => $request->intro ?? $employee->intro,
+        ]);
+    
         if ($updated) {
             return response()->json([
                 'status' => true,
                 'message' => 'Profile updated successfully.',
-                'data' => $Employee->makeHidden(['remember_token'])
+                'data' => $employee->makeHidden(['password', 'remember_token'])
             ]);
         }
-
+    
         return response()->json([
             'status' => false,
             'message' => 'Failed to update profile.',
         ]);
     }
+    
 
     
     public function login(Request $request)
@@ -368,7 +363,6 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Optionally, delete the OTP from cache after it's verified
         Cache::forget('otp_' . $phone);
 
         return response()->json([
