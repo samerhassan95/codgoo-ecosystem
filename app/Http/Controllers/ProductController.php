@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
+use App\Repositories\NotificationRepository;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\ProductRequest;
@@ -172,5 +175,5 @@ class ProductController extends BaseController
     }
 
 
-    
+
 }
