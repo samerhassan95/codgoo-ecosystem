@@ -137,38 +137,46 @@ class InvoiceController extends BaseController
 
   
     public function getInvoicesForClient(Request $request)
-    {
-        $client = auth()->user();
-        $invoices = Invoice::whereHas('project', function ($query) use ($client) {
-            $query->where('created_by_id', $client->id);
-        })->with('project.creator')->get();
+{
+    $client = auth()->user();
     
-        if ($invoices->isEmpty()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No invoices found.',
-                'data' => []
-            ], 404);
-        }
-    
-        $formattedInvoices = $invoices->map(function ($invoice) {
-            return [
+    // Fetch invoices for the client
+    $invoices = Invoice::whereHas('project', function ($query) use ($client) {
+        $query->where('created_by_id', $client->id);
+    })->with('project.creator')->get();
 
-                'id' => $invoice->id,
-                'invoice_id' => 'INV-' . $invoice->id,
-                'client_name' => auth()->user()->name,
-                'created_at' => $invoice->created_at->format('d-m-Y'),
-                'amount' => number_format($invoice->amount, 2),
-                'status' => ucfirst($invoice->status),
-            ];
-        });
-    
+    if ($invoices->isEmpty()) {
         return response()->json([
-            'status' => true,
-            'message' => 'Invoices retrieved successfully.',
-            'data' => $formattedInvoices
-        ], 200);
+            'status' => false,
+            'message' => 'No invoices found.',
+            'data' => []
+        ], 404);
     }
+
+    $formattedInvoices = $invoices->map(function ($invoice) {
+        // Determine overdue status for unpaid invoices
+        $status = $invoice->status;
+        if ($status === 'unpaid' && $invoice->due_date && Carbon::parse($invoice->due_date)->isPast()) {
+            $status = 'overdue';
+        }
+
+        return [
+            'id' => $invoice->id,
+            'invoice_id' => 'INV-' . $invoice->id,
+            'client_name' => auth()->user()->name,
+            'created_at' => $invoice->created_at->format('d-m-Y'),
+            'amount' => number_format($invoice->amount, 2),
+            'status' => ucfirst($status), // Overdue or Paid/Unpaid
+        ];
+    });
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Invoices retrieved successfully.',
+        'data' => $formattedInvoices
+    ], 200);
+}
+
     
     public function getInvoiceDetails($invoiceId)
     {
