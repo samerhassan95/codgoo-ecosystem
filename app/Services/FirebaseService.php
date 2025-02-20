@@ -12,7 +12,13 @@ class FirebaseService
 
     public function __construct()
     {
-        $factory = (new Factory)->withServiceAccount(base_path(config('firebase.credentials')));
+        $credentialsPath = config('firebase.credentials');
+
+        if (!file_exists(base_path($credentialsPath))) {
+            throw new \Exception("Firebase credentials file not found at: " . base_path($credentialsPath));
+        }
+
+        $factory = (new Factory)->withServiceAccount(base_path($credentialsPath));
         $this->messaging = $factory->createMessaging();
     }
 
