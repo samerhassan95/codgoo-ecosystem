@@ -12,6 +12,8 @@ class NotificationRepository
             'title' => $title,
             'message' => $message,
             'token' => $token,
+            'notifiable_id' => $notifiable->id,  
+            'notifiable_type' => get_class($notifiable), 
         ]);
     }
 }
