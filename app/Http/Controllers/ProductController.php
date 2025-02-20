@@ -59,7 +59,6 @@ class ProductController extends BaseController
             $product->addons()->attach($validatedData['addons']);
         }
 
-        // **Send Notification to All Clients**
         $clients = Client::whereNotNull('device_token')->get();
 
         if ($clients->isNotEmpty()) {

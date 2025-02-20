@@ -8,12 +8,13 @@ class NotificationRepository
 {
     public function createNotification($notifiable, $title, $message, $token)
     {
-        return $notifiable->notifications()->create([
+        return Notification::create([
+            'notifiable_id' => $notifiable->id,
+            'notifiable_type' => get_class($notifiable),
             'title' => $title,
             'message' => $message,
             'token' => $token,
-            'notifiable_id' => $notifiable->id,  
-            'notifiable_type' => get_class($notifiable), 
         ]);
+        
     }
 }
