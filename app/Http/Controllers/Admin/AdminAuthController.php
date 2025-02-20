@@ -307,8 +307,9 @@ class AdminAuthController extends Controller
             'phone' => 'required|unique:admins,phone',
             'password' => 'required|min:6|max:255',
             'username' => 'required|unique:admins,username|max:255',
+            'device_token' => 'nullable|string', 
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 "status" => false,
@@ -317,134 +318,136 @@ class AdminAuthController extends Controller
                 'data' => null,
             ], 402);
         }
-
+    
         Admin::create([
             "username" => $request->username,
             "phone" => $request->phone,
             "password" => Hash::make($request->password),
+            "device_token" => $request->device_token, 
         ]);
-
+    
         return response()->json([
             'status' => true,
             'code' => 200,
             'message' => "Admin account created successfully",
         ], 200);
     }
+    
     public function login(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'login' => 'required', 
-            'password' => 'required',
-                ]);
+{
+    $validator = Validator::make($request->all(), [
+        'login' => 'required',
+        'password' => 'required',
+        'device_token' => 'nullable|string',
+    ]);
 
-        if ($validator->fails())
-        {
-            return response()->json([
-                "status" => false,
-                 'code' => 402,
-                 'message' => $validator->errors()->first(),
-                 'data' => null,
-                    ], 402);
-        }
-
-        $client = Client::where('phone', $request->login)
-                        ->orWhere('username', $request->login)
-                        ->first();
-
-        if ($client) {
-            $credentials =
-            [
-                'password' => $request->password,
-            ];
-
-            if ($client->phone == $request->login)
-            {
-                $credentials['phone'] = $request->login;
-            } else
-            {
-                $credentials['username'] = $request->login;
-            }
-
-            try {
-                if (!$token = auth('client')->attempt($credentials))
-                {
-                    return response()->json([
-                        'status' => false,
-                        'code' => 401,
-                        'message' => __('The phone/username or password is incorrect'),
-                        'data' => null,
-                    ], 401);
-                }
-
-                $data = $client->toArray();
-                $data['token'] = $token;
-                $data['type'] = 'client'; 
-                return response()->json([
-                    'status' => true,
-                    'code' => 200,
-                    'message' => __('Client login successful'),
-                    'data' => $data,
-                ], 200);
-
-            } catch (JWTException $e) {
-                return response()->json([
-                    'status' => false,
-                    'code' => 500,
-                    'message' => __('Server error, please try again later'),
-                    'data' => null,
-                ], 500);
-            }
-        }
-
-        $admin = Admin::where('phone', $request->login)
-                      ->orWhere('username', $request->login)
-                      ->first();
-
-        if ($admin) {
-            $credentials = [
-                'password' => $request->password,
-            ];
-
-            if ($admin->phone == $request->login) {
-                $credentials['phone'] = $request->login;
-            } else {
-                $credentials['username'] = $request->login;
-            }
-
-            try {
-                if (!$token = auth('admin')->attempt($credentials)) {
-                    return response()->json([
-                        'status' => false,
-                        'code' => 401,
-                        'message' => __('The phone/username or password is incorrect'),
-                        'data' => null,
-                    ], 401);
-                }
-                $data = $admin->toArray();
-                $data['token'] = $token;
-                $data['type'] = 'admin'; 
-                return response()->json([
-                    'status' => true,
-                    'code' => 200,
-                    'message' => __('Admin login successful'),
-                    'data' => $data,
-                ], 200);
-
-            } catch (JWTException $e) {
-                return response()->json([
-                    'status' => false,
-                    'code' => 500,
-                    'message' => __('Server error, please try again later'),
-                    'data' => null,
-                ], 500);
-            }
-        }
-
+    if ($validator->fails()) {
         return response()->json([
-            'status' => false,
-            'message' => __('The phone/username does not exist'),
-        ], 404);
+            "status" => false,
+            'code' => 402,
+            'message' => $validator->errors()->first(),
+            'data' => null,
+        ], 402);
     }
+
+    $client = Client::where('phone', $request->login)
+                    ->orWhere('username', $request->login)
+                    ->first();
+
+    if ($client) {
+        $credentials = ['password' => $request->password];
+
+        if ($client->phone == $request->login) {
+            $credentials['phone'] = $request->login;
+        } else {
+            $credentials['username'] = $request->login;
+        }
+
+        try {
+            if (!$token = auth('client')->attempt($credentials)) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 401,
+                    'message' => __('The phone/username or password is incorrect'),
+                    'data' => null,
+                ], 401);
+            }
+
+            $client->update(['device_token' => $request->device_token]);
+
+            $data = $client->toArray();
+            $data['token'] = $token;
+            $data['type'] = 'client';
+
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => __('Client login successful'),
+                'data' => $data,
+            ], 200);
+
+        } catch (JWTException $e) {
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => __('Server error, please try again later'),
+                'data' => null,
+            ], 500);
+        }
+    }
+
+    $admin = Admin::where('phone', $request->login)
+                  ->orWhere('username', $request->login)
+                  ->first();
+
+    if ($admin) {
+        $credentials = ['password' => $request->password];
+
+        if ($admin->phone == $request->login) {
+            $credentials['phone'] = $request->login;
+        } else {
+            $credentials['username'] = $request->login;
+        }
+
+        try {
+            if (!$token = auth('admin')->attempt($credentials)) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 401,
+                    'message' => __('The phone/username or password is incorrect'),
+                    'data' => null,
+                ], 401);
+            }
+
+            $admin->update(['device_token' => $request->device_token]);
+
+            $data = $admin->toArray();
+            $data['token'] = $token;
+            $data['type'] = 'admin';
+
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => __('Admin login successful'),
+                'data' => $data,
+            ], 200);
+
+        } catch (JWTException $e) {
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => __('Server error, please try again later'),
+                'data' => null,
+            ], 500);
+        }
+    }
+
+    return response()->json([
+        'status' => false,
+        'message' => __('The phone/username does not exist'),
+    ], 404);
+}
+
 
 
 

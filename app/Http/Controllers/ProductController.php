@@ -13,10 +13,14 @@ use App\Services\ImageService;
 class ProductController extends BaseController
 {
     private $repository;
-    public function __construct(ProductRepositoryInterface $repository)
+    private $firebaseService;
+    private $notificationRepository;
+
+    public function __construct(ProductRepositoryInterface $repository, FirebaseService $firebaseService, NotificationRepository $notificationRepository)
     {
         parent::__construct($repository);
-
+        $this->firebaseService = $firebaseService;
+        $this->notificationRepository = $notificationRepository;
     }
 
     public function store(Request $request)
@@ -48,9 +52,22 @@ class ProductController extends BaseController
             }
         }
 
-        // Attach addons to the product
         if (!empty($validatedData['addons'])) {
             $product->addons()->attach($validatedData['addons']);
+        }
+
+        // **Send Notification to All Clients**
+        $clients = Client::whereNotNull('device_token')->get();
+
+        if ($clients->isNotEmpty()) {
+            $title = "New Product Added!";
+            $message = "Check out our latest product: " . $product->name;
+
+            foreach ($clients as $client) {
+                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+            }
         }
 
         return response()->json(new ProductResource($product->load(['attachments', 'addons'])), 201);

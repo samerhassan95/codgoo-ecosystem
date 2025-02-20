@@ -34,7 +34,7 @@ class ClientAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'phone' => 'required|unique:clients,phone',
             'password' => 'required|min:6|max:255',
-            'username' => 'required|unique:clients|max:255',
+            'username' => 'required|unique:clients,username|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:clients,email',
@@ -43,6 +43,7 @@ class ClientAuthController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
+            'device_token' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -57,7 +58,6 @@ class ClientAuthController extends Controller
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = ImageService::upload($request->file('photo'), 'client_photos');
-
         }
 
         $otp = 1234;  // Generate a random OTP
@@ -74,12 +74,10 @@ class ClientAuthController extends Controller
             'address' => $request->address,
             'city' => $request->city,
             'country' => $request->country,
+            'device_token' => $request->device_token, 
         ]);
 
         Cache::put('otp_' . $client->phone, $otp, now()->addMinutes(10));
-
-        // Send OTP to the user (simulated, for example via email or SMS)
-        // You can use a service to send an OTP here
 
         return response()->json([
             'status' => true,
@@ -87,6 +85,7 @@ class ClientAuthController extends Controller
             'data' => null,
         ]);
     }
+
 
     public function verifyOtpAndCreateClient(Request $request)
     {
@@ -490,19 +489,19 @@ class ClientAuthController extends Controller
     }
 
     public function deleteAccount()
-{
-    $client = auth()->user(); 
+    {
+        $client = auth()->user(); 
 
-    if (!$client) {
-        return response()->json(['message' => 'Unauthorized'], 401);
+        if (!$client) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $client->delete();
+
+        auth()->logout();
+
+        return response()->json(['message' => 'Account deleted successfully.'], 200);
     }
-
-    $client->delete();
-
-    auth()->logout();
-
-    return response()->json(['message' => 'Account deleted successfully.'], 200);
-}
 
 
 }
