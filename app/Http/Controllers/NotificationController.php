@@ -36,21 +36,29 @@ class NotificationController extends Controller
                 return response()->json(['message' => 'User not found or missing FCM token'], 400);
             }
 
+            // Send Notification via Firebase
             $this->firebaseService->sendNotification($notifiable->fcm_token, $request->title, $request->message);
 
-            return response()->json(['message' => 'Notification sent to user successfully!']);
+            // Store notification in the database
+            $this->notificationRepository->createNotification($notifiable, $request->title, $request->message, $notifiable->fcm_token);
+
+            return response()->json(['message' => 'Notification sent to user and stored successfully!']);
         }
 
-        $clients = Client::whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
+        $clients = Client::whereNotNull('fcm_token')->get();
 
-        if (count($clients) === 0) {
+        if ($clients->isEmpty()) {
             return response()->json(['message' => 'No clients with valid FCM tokens.'], 400);
         }
 
-        foreach ($clients as $token) {
-            $this->firebaseService->sendNotification($token, $request->title, $request->message);
+        foreach ($clients as $client) {
+            $this->firebaseService->sendNotification($client->fcm_token, $request->title, $request->message);
+
+            // Store notification in the database for each client
+            $this->notificationRepository->createNotification($client, $request->title, $request->message, $client->fcm_token);
         }
 
-        return response()->json(['message' => 'Notifications sent to all clients successfully!']);
+        return response()->json(['message' => 'Notifications sent to all clients and stored successfully!']);
     }
+
 }
