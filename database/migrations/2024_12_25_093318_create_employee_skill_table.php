@@ -13,15 +13,13 @@ return new class extends Migration
     {
         Schema::create('employee_skill', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('employee_id'); // Foreign key to employees table
-            $table->unsignedBigInteger('skill_id'); // Foreign key to skills table
+            $table->unsignedBigInteger('employee_id'); 
+            $table->unsignedBigInteger('skill_id');
             $table->timestamps();
 
-            // Foreign key constraints
             $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
             $table->foreign('skill_id')->references('id')->on('skills')->onDelete('cascade');
 
-            // Unique constraint to prevent duplicate entries
             $table->unique(['employee_id', 'skill_id']);
         });
     }

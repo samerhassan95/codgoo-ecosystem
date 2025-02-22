@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('addons', function (Blueprint $table) {
             $table->id();
-            $table->string('icon')->nullable();  // Icon path
+            $table->string('icon')->nullable();  
             $table->string('name');
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2)->nullable();

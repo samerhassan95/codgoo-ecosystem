@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description');
-            $table->decimal('price', 10, 2);  // Set by admin
+            $table->decimal('price', 10, 2); 
             $table->text('note');
             $table->timestamps();
         });

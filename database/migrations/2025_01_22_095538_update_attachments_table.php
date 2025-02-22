@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('attachments', function (Blueprint $table) {
             $table->unsignedBigInteger('uploaded_by_id')->nullable();
-            $table->string('uploaded_by_type')->nullable(); // Polymorphic type
+            $table->string('uploaded_by_type')->nullable(); 
         });
     }
 

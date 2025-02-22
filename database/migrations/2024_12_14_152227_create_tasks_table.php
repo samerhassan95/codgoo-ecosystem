@@ -18,7 +18,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->date('start_date')->nullable();
             $table->date('due_date')->nullable(); 
-            // $table->foreignId('assigned_to')->nullable()->constrained('users')->cascadeOnDelete(); visable ot employee
             $table->enum('status', ['not_started', 'in_progress', 'completed', 'awaiting_feedback', 'canceled'])->default('not_started'); 
             $table-> enum('priority', ['High', 'Low', 'Medium'])->default('Medium'); 
             $table->timestamps();

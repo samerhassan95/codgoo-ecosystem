@@ -156,7 +156,7 @@ class ClientAuthController extends Controller
     public function updateProfile(Request $request)
     {
         $client = auth()->user();
-
+    
         $request->validate([
             'username' => 'sometimes|required|string|max:255|unique:clients,username,' . $client->id,
             'email' => 'sometimes|required|email|max:255|unique:clients,email,' . $client->id,
@@ -169,38 +169,46 @@ class ClientAuthController extends Controller
             'city' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
         ]);
-
+    
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = (new ImageService())->upload($request->file('photo'), 'client_photos');
         }
-
+    
         $updated = $client->update([
             'username' => $request->username ?? $client->username,
             'name' => $request->name ?? $client->name,
             'email' => $request->email ?? $client->email,
             'phone' => $request->phone ?? $client->phone,
-            'photo' => isset($photoPath) ? asset( $photoPath) : $client->photo,
+            'photo' => isset($photoPath) ? asset($photoPath) : $client->photo,
             'company_name' => $request->company_name ?? $client->company_name,
             'website' => $request->website ?? $client->website,
             'address' => $request->address ?? $client->address,
             'city' => $request->city ?? $client->city,
             'country' => $request->country ?? $client->country,
         ]);
-
+    
         if ($updated) {
             return response()->json([
                 'status' => true,
                 'message' => 'Profile updated successfully.',
-                'data' => $client->makeHidden(['remember_token'])
-            ]);
+                'data' => array_merge(
+                    $client->makeHidden(['remember_token', 'password'])->toArray(), 
+                    [
+                        'token' => $request->bearerToken(), 
+                        'type' => 'client'
+                    ]
+                ),
+            ], 200);
         }
-
+    
         return response()->json([
             'status' => false,
             'message' => 'Failed to update profile.',
         ]);
     }
+    
+
 
     public function logout()
     {

@@ -11,7 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // حذف الجداول القديمة
         Schema::dropIfExists('slider_projects');
         Schema::dropIfExists('sliders');
 
