@@ -70,40 +70,46 @@ class MeetingController extends Controller
     public function getMeetingsForClient(Request $request)
     {
         $client = $request->user();
-
-        $meetings = Meeting::where('client_id', $client->id)->get();
-
+    
+        $meetings = Meeting::where('client_id', $client->id)
+            ->join('available_slots', 'meetings.slot_id', '=', 'available_slots.id')
+            ->orderByDesc('available_slots.date')
+            ->select('meetings.*') // Ensure only meeting fields are retrieved
+            ->get();
+    
         return MeetingResource::collection($meetings);
     }
+    
+    
 
     public function filterMeetingsByStatus(Request $request)
     {
         $client = $request->user();
-
+    
         $statusMapping = [
-            0 => 'all',            
+            0 => 'all',
             1 => 'Request Sent',
             2 => 'Confirmed',
             3 => 'Completed',
             4 => 'Canceled',
         ];
-
+    
         $status = $request->query('status');
-
-        if ($status && isset($statusMapping[$status])) {
-            if ($status == 0) {
-                $meetings = Meeting::where('client_id', $client->id)->get();
-            } else {
-                $meetings = Meeting::where('client_id', $client->id)
-                    ->where('status', $statusMapping[$status])
-                    ->get();
-            }
-        } else {
-            $meetings = Meeting::where('client_id', $client->id)->get();
+    
+        $meetingsQuery = Meeting::where('client_id', $client->id)
+            ->join('available_slots', 'meetings.slot_id', '=', 'available_slots.id')
+            ->orderByDesc('available_slots.date')
+            ->select('meetings.*'); // Ensures only meeting fields are retrieved
+    
+        if ($status && isset($statusMapping[$status]) && $status != 0) {
+            $meetingsQuery->where('status', $statusMapping[$status]);
         }
-
+    
+        $meetings = $meetingsQuery->get();
+    
         return MeetingResource::collection($meetings);
     }
+    
 
 
     public function getMeetingById($id, Request $request)
