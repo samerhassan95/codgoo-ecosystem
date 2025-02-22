@@ -237,11 +237,13 @@ class ClientAuthController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Profile retrieved successfully.',
-            'data' => [
-                'client' => $client,
-                'token' => $request->bearerToken(),
-                'type' => 'client',
-            ],
+            'data' => array_merge(
+                $client->makeHidden(['remember_token', 'password'])->toArray(), 
+                [
+                    'token' => $request->bearerToken(), 
+                    'type' => 'client'
+                ]
+            ),
         ]);
     }
 
