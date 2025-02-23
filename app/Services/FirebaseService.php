@@ -40,8 +40,12 @@ class FirebaseService
             }
 
             $messageData = $messageDoc->data();
-            $chatId = $messageDoc->reference()->parent()->parent()->id(); // استخراج ID المحادثة
-
+            $parentRef = $messageDoc->reference()->parent()->parent();
+            if (!$parentRef) {
+                continue; 
+            }
+            $chatId = $parentRef->id();
+            
             if (!isset($chatSummaries[$chatId])) {
                 $chatSummaries[$chatId] = [
                     'chatId' => $chatId,
