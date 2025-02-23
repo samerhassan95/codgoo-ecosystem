@@ -31,36 +31,39 @@ class FirebaseService
 
     public function getAllChats()
     {
-        $chatsCollection = $this->firestore->collection('chats')->documents();
+        $messagesCollection = $this->firestore->collectionGroup('messages')->documents();
         $chatSummaries = [];
 
-        foreach ($chatsCollection as $chatDoc) {
-            if (!$chatDoc->exists()) {
+        foreach ($messagesCollection as $messageDoc) {
+            if (!$messageDoc->exists()) {
                 continue;
             }
 
-            $chatData = $chatDoc->data();
-            $messagesCollection = $this->firestore->collection('chats')->document($chatDoc->id())->collection('messages')->documents();
+            $messageData = $messageDoc->data();
+            $chatId = $messageDoc->reference()->parent()->parent()->id(); // استخراج ID المحادثة
 
-            $messages = collect();
-            foreach ($messagesCollection as $messageDoc) {
-                $messages->push($messageDoc->data());
+            if (!isset($chatSummaries[$chatId])) {
+                $chatSummaries[$chatId] = [
+                    'chatId' => $chatId,
+                    'unreadMessages' => 0,
+                    'lastMessage' => null,
+                    'lastMessageTime' => null,
+                ];
             }
 
-            // Count unread messages
-            $unreadCount = $messages->filter(fn($msg) => isset($msg['seen']) && !$msg['seen'])->count();
+            // حساب الرسائل غير المقروءة
+            if (isset($messageData['seen']) && !$messageData['seen']) {
+                $chatSummaries[$chatId]['unreadMessages']++;
+            }
 
-            // Get last message
-            $lastMessage = $messages->sortByDesc('createdAt')->first();
-
-            $chatSummaries[] = [
-                'chatId' => $chatDoc->id(),
-                'unreadMessages' => $unreadCount,
-                'lastMessage' => $lastMessage['message'] ?? null,
-                'lastMessageTime' => $lastMessage['createdAt'] ?? null,
-            ];
+            // تعيين آخر رسالة
+            if (!isset($chatSummaries[$chatId]['lastMessageTime']) || $messageData['createdAt'] > $chatSummaries[$chatId]['lastMessageTime']) {
+                $chatSummaries[$chatId]['lastMessage'] = $messageData['message'] ?? null;
+                $chatSummaries[$chatId]['lastMessageTime'] = $messageData['createdAt'] ?? null;
+            }
         }
 
-        return $chatSummaries;
+        return array_values($chatSummaries);
     }
+
 }
