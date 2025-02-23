@@ -20,7 +20,9 @@ use App\Http\Controllers\{AddonController,
     DepartmentController,
     TicketReplyController,
     SkillController,
-    GalleryController};
+    GalleryController,
+    ChatController
+};
 use Illuminate\Support\Facades\Route;
 
 
@@ -140,5 +142,6 @@ Route::middleware('admin')->group(function () {
     Route::get('get-clients', [ClientAuthController::class, 'getAllClients']);
     Route::post('contracts/{projectId}/upload', [ContractController::class, 'uploadContract']);
 
+    Route::get('chats', [ChatController::class, 'getAllChats']);
 
 });
