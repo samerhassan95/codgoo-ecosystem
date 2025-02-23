@@ -22,9 +22,9 @@ class ContractController extends Controller
         $project = Project::findOrFail($projectId);
         $admin = auth()->user();
 
-        if (!$admin || !$admin->is_admin) {
-            return response()->json(['message' => 'Only admin can upload the contract'], 403);
-        }
+        // if (!$admin || !$admin->is_admin) {
+        //     return response()->json(['message' => 'Only admin can upload the contract'], 403);
+        // }
 
         $filePath = ImageService::upload($request->file('file'), 'contracts');
 
