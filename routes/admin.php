@@ -3,6 +3,7 @@
 use App\Http\Controllers\{AddonController,
     CategoryController,
     Client\ClientAuthController,
+    ContractController,
     InvoiceController,
     MeetingController,
     MigrationController,
@@ -19,8 +20,7 @@ use App\Http\Controllers\{AddonController,
     DepartmentController,
     TicketReplyController,
     SkillController,
-    GalleryController,
-    };
+    GalleryController};
 use Illuminate\Support\Facades\Route;
 
 
@@ -138,6 +138,7 @@ Route::middleware('admin')->group(function () {
 
     Route::post('send-notification', [NotificationController::class, 'sendNotification']);
     Route::get('get-clients', [ClientAuthController::class, 'getAllClients']);
+    Route::post('contracts/{projectId}/upload', [ContractController::class, 'uploadContract']);
 
 
 });

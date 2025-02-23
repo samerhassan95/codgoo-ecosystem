@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\{CategoryController,
     Client\ClientAuthController,
+    ContractController,
     DepartmentController,
     InvoiceController,
     MeetingController,
@@ -142,5 +143,11 @@ Route::middleware('client')->group(function ()  {
     Route::get('client-invoices', [InvoiceController::class, 'getInvoicesForClient']);
     Route::get('invoice-details/{invoiceId}', [InvoiceController::class, 'getInvoiceDetails']);
     Route::delete('delete', [ClientAuthController::class, 'deleteAccount']);
+
+    Route::post('contracts/{projectId}/upload', [ContractController::class, 'uploadContract']);
+    Route::post('contracts/{contractId}/sign', [ContractController::class, 'signContract']);
+    Route::get('contracts/{contractId}', [ContractController::class, 'getContractDetails']);
+    Route::get('contracts', [ContractController::class, 'getClientContracts']);
+
 
 });
