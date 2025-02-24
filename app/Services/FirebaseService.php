@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\Client; // Import Client Model
-use Google\Cloud\Firestore\FirestoreClient;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 
 class FirebaseService
 {
+    protected $messaging;
     protected $firestore;
 
     public function __construct()
@@ -20,11 +20,14 @@ class FirebaseService
         }
 
         $factory = (new Factory)->withServiceAccount(base_path($credentialsPath));
-
+        $this->messaging = $factory->createMessaging();
         $this->firestore = new FirestoreClient([
             'keyFilePath' => base_path($credentialsPath),
         ]);
     }
+
+
+
 
     public function getAllChats()
     {
@@ -83,4 +86,44 @@ class FirebaseService
         return array_values($chatSummaries);
     }
 
+
+    public function sendNotification($token, $title, $body)
+    {
+        $notification = Notification::create($title, $body);
+        $message = CloudMessage::withTarget('token', $token)
+            ->withNotification($notification)
+            ->withData([
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
+            ]);
+
+        return $this->messaging->send($message);
+    }
+
+
+    public function markMessagesAsSeen($chatId)
+    {
+        $chatRef = $this->firestore->collection('chats')->document($chatId);
+        $messagesCollection = $chatRef->collection('messages')->documents();
+    
+        foreach ($messagesCollection as $messageDoc) {
+            if (!$messageDoc->exists()) {
+                continue;
+            }
+    
+            $messageData = $messageDoc->data();
+    
+            if (isset($messageData['seen']) && !$messageData['seen']) {
+                $messageDoc->reference()->update([
+                    ['path' => 'seen', 'value' => true]
+                ]);
+            }
+        }
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'All messages marked as seen for chat: ' . $chatId
+        ]);
+    }
+    
+    
 }

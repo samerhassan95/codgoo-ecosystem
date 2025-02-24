@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\FirebaseService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
-
+use Illuminate\Http\Request;
 class ChatController extends Controller
 {
     protected $firebaseService;
@@ -40,5 +40,10 @@ class ChatController extends Controller
             'count' => count($paginatedData),
             'data' => $pagination->items(),
         ]);
+    }
+
+    public function markChatAsSeen(Request $request, $chatId): JsonResponse
+    {
+        return $this->firebaseService->markMessagesAsSeen($chatId);
     }
 }

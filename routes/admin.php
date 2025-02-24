@@ -143,5 +143,6 @@ Route::middleware('admin')->group(function () {
     Route::post('contracts/{projectId}/upload', [ContractController::class, 'uploadContract']);
 
     Route::get('chats', [ChatController::class, 'getAllChats']);
+    Route::post('chats/{chatId}/seen', [ChatController::class, 'markChatAsSeen']);
 
 });
