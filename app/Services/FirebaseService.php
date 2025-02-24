@@ -5,7 +5,7 @@ namespace App\Services;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
-use App\Models\Client; 
+use App\Models\Client;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Pagination\LengthAwarePaginator;
 class FirebaseService
@@ -27,9 +27,6 @@ class FirebaseService
             'keyFilePath' => base_path($credentialsPath),
         ]);
     }
-
-
-
 
     public function getAllChats()
     {
@@ -63,7 +60,7 @@ class FirebaseService
                 ];
             }
 
-            $messageType = 'text'; 
+            $messageType = 'text';
             $lastMessageContent = $messageData['message'] ?? null;
 
             if (!empty($messageData['imageUrl'])) {
@@ -94,9 +91,7 @@ class FirebaseService
         $notification = Notification::create($title, $body);
         $message = CloudMessage::withTarget('token', $token)
             ->withNotification($notification)
-            ->withData([
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK'
-            ]);
+            ->withData(['click_action' => 'FLUTTER_NOTIFICATION_CLICK']);
 
         return $this->messaging->send($message);
     }
@@ -106,26 +101,26 @@ class FirebaseService
     {
         $chatRef = $this->firestore->collection('chats')->document($chatId);
         $messagesCollection = $chatRef->collection('messages')->documents();
-    
+
         foreach ($messagesCollection as $messageDoc) {
             if (!$messageDoc->exists()) {
                 continue;
             }
-    
+
             $messageData = $messageDoc->data();
-    
+
             if (isset($messageData['seen']) && !$messageData['seen']) {
                 $messageDoc->reference()->update([
                     ['path' => 'seen', 'value' => true]
                 ]);
             }
         }
-    
+
         return response()->json([
             'success' => true,
             'message' => 'All messages marked as seen for chat: ' . $chatId
         ]);
     }
-    
-    
+
+
 }
