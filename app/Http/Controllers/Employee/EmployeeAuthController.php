@@ -561,5 +561,24 @@ class EmployeeAuthController extends Controller
         ], 200);
     }
 
+    public function getAllEmployees(Request $request)
+    {
+        try {
+            $employees = Employee::all();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Employees retrieved successfully.',
+                'data' => $employees,
+            ], 200);
+
+        } catch (\Exception $e) {            
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while fetching employees.',
+                'data' => null,
+            ], 500);
+        }
+    }
     
 }

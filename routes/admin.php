@@ -4,6 +4,7 @@ use App\Http\Controllers\{AddonController,
     CategoryController,
     Client\ClientAuthController,
     ContractController,
+    Employee\EmployeeAuthController,
     InvoiceController,
     MeetingController,
     MigrationController,
@@ -21,8 +22,7 @@ use App\Http\Controllers\{AddonController,
     TicketReplyController,
     SkillController,
     GalleryController,
-    ChatController
-};
+    ChatController};
 use Illuminate\Support\Facades\Route;
 
 
@@ -144,5 +144,6 @@ Route::middleware('admin')->group(function () {
 
     Route::get('chats', [ChatController::class, 'getAllChats']);
     Route::post('chats/{chatId}/seen', [ChatController::class, 'markChatAsSeen']);
+    Route::get('employees', [EmployeeAuthController::class, 'getAllEmployees']);
 
 });
