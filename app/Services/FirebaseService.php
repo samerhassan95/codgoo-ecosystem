@@ -45,7 +45,7 @@ class FirebaseService
             $chatId = $parentRef->id();
 
             if (!isset($chatSummaries[$chatId])) {
-                $client = Client::find($chatId); // Fetch Client from Database
+                $client = Client::find($chatId);
 
                 $chatSummaries[$chatId] = [
                     'chatId' => $chatId,
@@ -53,20 +53,34 @@ class FirebaseService
                     'clientImage' => asset($client->photo) ?? null,
                     'unreadMessages' => 0,
                     'lastMessage' => null,
+                    'lastMessageType' => null,
                     'lastMessageTime' => null,
                 ];
+            }
+
+            $messageType = 'text'; 
+            $lastMessageContent = $messageData['message'] ?? null;
+
+            if (!empty($messageData['imageUrl'])) {
+                $messageType = 'image';
+                $lastMessageContent = '[Image]';
+            } elseif (!empty($messageData['audio'])) {
+                $messageType = 'audio';
+                $lastMessageContent = '[Audio]';
+            }
+
+            if (!isset($chatSummaries[$chatId]['lastMessageTime']) || $messageData['createdAt'] > $chatSummaries[$chatId]['lastMessageTime']) {
+                $chatSummaries[$chatId]['lastMessage'] = $lastMessageContent;
+                $chatSummaries[$chatId]['lastMessageType'] = $messageType;
+                $chatSummaries[$chatId]['lastMessageTime'] = $messageData['createdAt'] ?? null;
             }
 
             if (isset($messageData['seen']) && !$messageData['seen']) {
                 $chatSummaries[$chatId]['unreadMessages']++;
             }
-
-            if (!isset($chatSummaries[$chatId]['lastMessageTime']) || $messageData['createdAt'] > $chatSummaries[$chatId]['lastMessageTime']) {
-                $chatSummaries[$chatId]['lastMessage'] = $messageData['message'] ?? null;
-                $chatSummaries[$chatId]['lastMessageTime'] = $messageData['createdAt'] ?? null;
-            }
         }
 
         return array_values($chatSummaries);
     }
+
 }
