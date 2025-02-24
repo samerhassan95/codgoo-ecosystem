@@ -72,17 +72,9 @@ class ProductController extends BaseController
     $clients = Client::whereNotNull('device_token')->get();
 
     if ($clients->isNotEmpty()) {
-        $title = "New Product Added!";
-        $message = "Check out our latest product: " . $product->name;
-    
         foreach ($clients as $client) {
-            try {
-                $this->firebaseService->sendNotification($client->device_token, $title, $message);
-                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
-            } catch (\Kreait\Firebase\Exception\Messaging\NotFound $e) {
-                $client->update(['device_token' => null]);
-                \Log::warning("Invalid device token removed for client: " . $client->id);
-            }
+            $this->firebaseService->sendNotification($client->device_token, $title, $message);
+            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
         }
     }
 
