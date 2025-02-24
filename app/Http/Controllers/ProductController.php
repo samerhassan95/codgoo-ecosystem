@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\NotificationTemplate;
 use App\Repositories\NotificationRepository;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
@@ -27,53 +28,67 @@ class ProductController extends BaseController
     }
 
     public function store(Request $request)
-    {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'nullable|numeric',
-            'note' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'attachments.*' => 'file|max:10240',
-            'addons' => 'array',
-            'addons.*' => 'exists:addons,id',
-        ]);
+{
+    $validatedData = $request->validate([
+        'name' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'price' => 'nullable|numeric',
+        'note' => 'nullable|string',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        'attachments.*' => 'file|max:10240',
+        'addons' => 'array',
+        'addons.*' => 'exists:addons,id',
+    ]);
 
-        $productData = collect($validatedData)->except(['attachments', 'image', 'addons'])->toArray();
+    $productData = collect($validatedData)->except(['attachments', 'image', 'addons'])->toArray();
 
-        if ($request->hasFile('image')) {
-            $imagePath = ImageService::upload($request->file('image'), 'product_images');
-            $productData['image'] = $imagePath;
-        }
-
-        $product = Product::create($productData);
-
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = ImageService::upload($file, 'attachments');
-                $product->attachments()->create(['file_path' => $path]);
-            }
-        }
-
-        if (!empty($validatedData['addons'])) {
-            $product->addons()->attach($validatedData['addons']);
-        }
-
-        $clients = Client::whereNotNull('device_token')->get();
-
-        if ($clients->isNotEmpty()) {
-            $title = "New Product Added!";
-            $message = "Check out our latest product: " . $product->name;
-
-            foreach ($clients as $client) {
-                $this->firebaseService->sendNotification($client->device_token, $title, $message);
-
-                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
-            }
-        }
-
-        return response()->json(new ProductResource($product->load(['attachments', 'addons'])), 201);
+    if ($request->hasFile('image')) {
+        $imagePath = ImageService::upload($request->file('image'), 'product_images');
+        $productData['image'] = $imagePath;
     }
+
+    $product = Product::create($productData);
+
+    if ($request->hasFile('attachments')) {
+        foreach ($request->file('attachments') as $file) {
+            $path = ImageService::upload($file, 'attachments');
+            $product->attachments()->create(['file_path' => $path]);
+        }
+    }
+
+    if (!empty($validatedData['addons'])) {
+        $product->addons()->attach($validatedData['addons']);
+    }
+
+    $template = NotificationTemplate::where('type', 'new_product')->first();
+
+    if (!$template) {
+        return response()->json(['message' => 'Notification template not found.'], 400);
+    }
+
+    $title = $template->title;
+    $message = str_replace('{product_name}', $product->name, $template->message);
+
+    $clients = Client::whereNotNull('device_token')->get();
+
+    if ($clients->isNotEmpty()) {
+        $title = "New Product Added!";
+        $message = "Check out our latest product: " . $product->name;
+    
+        foreach ($clients as $client) {
+            try {
+                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+            } catch (\Kreait\Firebase\Exception\Messaging\NotFound $e) {
+                $client->update(['device_token' => null]);
+                \Log::warning("Invalid device token removed for client: " . $client->id);
+            }
+        }
+    }
+
+    return response()->json(new ProductResource($product->load(['attachments', 'addons'])), 201);
+}
+
 
 
 
