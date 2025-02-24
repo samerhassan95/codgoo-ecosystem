@@ -50,7 +50,7 @@ class FirebaseService
                 $chatSummaries[$chatId] = [
                     'chatId' => $chatId,
                     'clientName' => $client->name ?? 'Unknown',
-                    'clientImage' => $client->image ?? null,
+                    'clientImage' => asset($client->photo) ?? null,
                     'unreadMessages' => 0,
                     'lastMessage' => null,
                     'lastMessageTime' => null,
