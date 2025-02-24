@@ -17,7 +17,7 @@ class ChatController extends Controller
 
     public function getAllChats()
     {
-        $chatSummaries = $this->firebaseService->getAllChats();
+        $chatSummaries = $this->firebaseService->getAllChats(); // الآن ترجع Array وليس JSON
 
         $page = request('page', 1);
         $perPage = 10;
@@ -30,6 +30,14 @@ class ChatController extends Controller
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
-        return response()->json($paginated);
+        return response()->json([
+            'from' => $paginated->firstItem() ?? 0,
+            'per_page' => $paginated->perPage(),
+            'to' => $paginated->lastItem() ?? 0,
+            'total' => $paginated->total(),
+            'count' => count($paginated->items()),
+            'data' => $paginated->items(),
+        ]);
     }
+
 }

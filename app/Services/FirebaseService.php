@@ -71,28 +71,9 @@ class FirebaseService
             }
         }
 
-        $page = request('page', 1);
-        $perPage = 10;
-        $offset = ($page - 1) * $perPage;
-        $paginatedData = array_slice(array_values($chatSummaries), $offset, $perPage);
-
-        $pagination = new LengthAwarePaginator(
-            $paginatedData,
-            count($chatSummaries),
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        return response()->json([
-            'from' => $pagination->firstItem() ?? 0,
-            'per_page' => $pagination->perPage(),
-            'to' => $pagination->lastItem() ?? 0,
-            'total' => $pagination->total(),
-            'count' => count($paginatedData),
-            'data' => $pagination->items(),
-        ]);
+        return array_values($chatSummaries); // رجع البيانات كمصفوفة فقط
     }
+
 
 
     private function getClientData($chatId)
