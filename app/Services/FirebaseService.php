@@ -5,7 +5,9 @@ namespace App\Services;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
-
+use App\Models\Client; 
+use Google\Cloud\Firestore\FirestoreClient;
+use Illuminate\Pagination\LengthAwarePaginator;
 class FirebaseService
 {
     protected $messaging;
