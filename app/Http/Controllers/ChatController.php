@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\FirebaseService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\JsonResponse;
 
 class ChatController extends Controller
 {
@@ -15,15 +15,17 @@ class ChatController extends Controller
         $this->firebaseService = $firebaseService;
     }
 
-    public function getAllChats()
+    public function getAllChats(): JsonResponse
     {
-        $chatSummaries = $this->firebaseService->getAllChats(); // الآن ترجع Array وليس JSON
+        $chatSummaries = $this->firebaseService->getAllChats(); 
 
         $page = request('page', 1);
         $perPage = 10;
         $offset = ($page - 1) * $perPage;
-        $paginated = new LengthAwarePaginator(
-            array_slice($chatSummaries, $offset, $perPage),
+        $paginatedData = array_slice($chatSummaries, $offset, $perPage);
+
+        $pagination = new LengthAwarePaginator(
+            $paginatedData,
             count($chatSummaries),
             $perPage,
             $page,
@@ -31,13 +33,12 @@ class ChatController extends Controller
         );
 
         return response()->json([
-            'from' => $paginated->firstItem() ?? 0,
-            'per_page' => $paginated->perPage(),
-            'to' => $paginated->lastItem() ?? 0,
-            'total' => $paginated->total(),
-            'count' => count($paginated->items()),
-            'data' => $paginated->items(),
+            'from' => $pagination->firstItem() ?? 0,
+            'per_page' => $pagination->perPage(),
+            'to' => $pagination->lastItem() ?? 0,
+            'total' => $pagination->total(),
+            'count' => count($paginatedData),
+            'data' => $pagination->items(),
         ]);
     }
-
 }

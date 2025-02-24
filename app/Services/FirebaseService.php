@@ -2,15 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Client; // Import Client Model
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
 
 class FirebaseService
 {
-    protected $messaging;
     protected $firestore;
 
     public function __construct()
@@ -22,8 +20,6 @@ class FirebaseService
         }
 
         $factory = (new Factory)->withServiceAccount(base_path($credentialsPath));
-
-        $this->messaging = $factory->createMessaging();
 
         $this->firestore = new FirestoreClient([
             'keyFilePath' => base_path($credentialsPath),
@@ -49,12 +45,12 @@ class FirebaseService
             $chatId = $parentRef->id();
 
             if (!isset($chatSummaries[$chatId])) {
-                $clientData = $this->getClientData($chatId);
+                $client = Client::find($chatId); // Fetch Client from Database
 
                 $chatSummaries[$chatId] = [
                     'chatId' => $chatId,
-                    'clientName' => $clientData['name'] ?? 'Unknown',
-                    'clientImage' => $clientData['image'] ?? null,
+                    'clientName' => $client->name ?? 'Unknown',
+                    'clientImage' => $client->image ?? null,
                     'unreadMessages' => 0,
                     'lastMessage' => null,
                     'lastMessageTime' => null,
@@ -71,21 +67,6 @@ class FirebaseService
             }
         }
 
-        return array_values($chatSummaries); // رجع البيانات كمصفوفة فقط
+        return array_values($chatSummaries);
     }
-
-
-
-    private function getClientData($chatId)
-    {
-        $clientDoc = $this->firestore->collection('clients')->document($chatId)->snapshot();
-
-        if (!$clientDoc->exists()) {
-            return [];
-        }
-
-        return $clientDoc->data();
-    }
-
-
 }
