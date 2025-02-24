@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 
 use App\Models\Client;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use App\Repositories\Client\ClientRepositoryInterface;
 use Illuminate\Support\Facades\Cache;
@@ -32,12 +33,32 @@ class ClientAuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|unique:clients,phone',
+            'phone' => [
+                'required',
+                'unique:clients,phone',
+                function ($attribute, $value, $fail) {
+                    if (Admin::where('phone', $value)->exists()) {
+                        $fail("This phone number is already registered as an admin.");
+                    }
+                },
+            ],
+            'username' => [
+                'required',
+                'unique:clients,username',
+                function ($attribute, $value, $fail) {
+                    if (Admin::where('username', $value)->exists()) {
+                        $fail("This username is already registered as an admin.");
+                    }
+                },
+            ],
             'password' => 'required|min:6|max:255',
-            'username' => 'required|unique:clients,username|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:clients,email',
+            'email' => [
+                'required',
+                'email',
+                'unique:clients,email',
+            ],
             'company_name' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
             'address' => 'nullable|string|max:255',
@@ -60,8 +81,7 @@ class ClientAuthController extends Controller
             $photoPath = ImageService::upload($request->file('photo'), 'client_photos');
         }
 
-        $otp = 1234;  // Generate a random OTP
-
+        $otp = 1234; 
         $client = Client::create([
             'username' => $request->username,
             'phone' => $request->phone,
