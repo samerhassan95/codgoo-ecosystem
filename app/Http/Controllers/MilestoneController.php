@@ -100,22 +100,31 @@ class MilestoneController  extends BaseController
     private function sendMilestoneCreatedNotification(Milestone $milestone)
     {
         $client = $milestone->project->creator ?? null;
-        \Log::info('Client:', ['client' => $client]);
-
-        if ($client && $client->device_token) {
-            $template = NotificationTemplate::where('type', 'milestone_created')->first();
-
-            if ($template) {
-                $title = $template->title;
-                $message = str_replace(
-                    ['{milestone}', '{project}'],
-                    [$milestone->name, $milestone->project->name],
-                    $template->message
-                );
-
-                $this->firebaseService->sendNotification($client->device_token, $title, $message);
-                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
-            }
+    
+        if (!$client) {
+            \Log::warning('No client found for project:', ['project_id' => $milestone->project_id]);
+            return;
+        }
+    
+        if (!$client->device_token) {
+            \Log::warning('Device token missing for client:', ['client_id' => $client->id]);
+            return;
+        }
+    
+        $template = NotificationTemplate::where('type', 'milestone_created')->first();
+    
+        if ($template) {
+            $title = $template->title;
+            $message = str_replace(
+                ['{milestone}', '{project}'],
+                [$milestone->name, $milestone->project->name],
+                $template->message
+            );
+    
+            $this->firebaseService->sendNotification($client->device_token, $title, $message);
+            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+        } else {
+            \Log::warning('Notification template not found for type: milestone_created');
         }
     }
 
