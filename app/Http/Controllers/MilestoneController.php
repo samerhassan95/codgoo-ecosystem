@@ -106,12 +106,10 @@ class MilestoneController  extends BaseController
         }
 
         $client = $project->creator;
-
-        if (!$client instanceof \App\Models\Client) {
-            \Log::warning('The creator of the project is not a client', ['project_id' => $project->id]);
+        if (!$client) {
+            \Log::warning('No client found for project:', ['project_id' => $project->id]);
             return;
         }
-
 
         if (!$client->device_token) {
             \Log::warning('Device token missing for client:', ['client_id' => $client->id]);
