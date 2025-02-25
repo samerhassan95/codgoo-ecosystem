@@ -7,4 +7,6 @@ use App\Repositories\Common\CommonRepositoryInterface;
 interface TaskRepositoryInterface extends CommonRepositoryInterface
 {
 
+    public function create(array $data);
+
 }
