@@ -4,50 +4,109 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TaskRequest;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
+use App\Models\Employee;
+use App\Models\NotificationTemplate;
 use App\Repositories\TaskRepositoryInterface;
-use App\Services\ImageService;
+use App\Repositories\NotificationRepository;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class TaskController extends BaseController
 {
     private $repository;
+    private $notificationRepository;
+    private $firebaseService;
 
-    public function __construct(TaskRepositoryInterface $repository)
+    public function __construct(TaskRepositoryInterface $repository, NotificationRepository $notificationRepository, FirebaseService $firebaseService)
     {
         parent::__construct($repository);
         $this->repository = $repository;
+        $this->notificationRepository = $notificationRepository;
+        $this->firebaseService = $firebaseService;
     }
 
-      public function getTasksByMilestone($milestone_id)
-      {
-          $tasks = Task::where('milestone_id', $milestone_id)->get();
+    public function store(Request $request)
+    {
+        // Manually apply validation using TaskRequest
+        $validatedData = $request->validate((new TaskRequest())->rules());
 
-          return response()->json([
-              'status' => true,
-              'message' => 'Tasks fetched successfully for the milestone.',
-              'data' => $tasks
-          ], 200);
-      }
+        $task = $this->repository->create($validatedData);
 
-      public function getTasksByProject($project_id, Request $request)
-      {
-          $tasks = QueryBuilder::for(Task::class)
-              ->whereHas('milestone', function ($query) use ($project_id) {
-                  $query->where('project_id', $project_id);
-              })
-              ->allowedFilters([
+        // Get milestone and client
+        $milestone = $task->milestone;
+        $client = $milestone->project->client ?? null; // Assuming project relation exists on milestone
+
+        // Notify the client
+        if ($client && $client->device_token) {
+            $template = NotificationTemplate::where('type', 'create_task')->first();
+            if ($template) {
+                $title = $template->title;
+                $message = str_replace(
+                    ['{label}', '{milestone}'],
+                    [$task->label, $milestone->name],
+                    $template->message
+                );
+
+                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+            }
+        }
+
+        // Notify the assigned employee
+        if ($task->assigned_to) {
+            $employee = Employee::find($task->assigned_to);
+            if ($employee && $employee->device_token) {
+                $template = NotificationTemplate::where('type', 'assigne_task')->first();
+                if ($template) {
+                    $title = $template->title;
+                    $message = str_replace(
+                        ['{label}', '{milestone}'],
+                        [$task->label, $milestone->name],
+                        $template->message
+                    );
+
+                    $this->firebaseService->sendNotification($employee->device_token, $title, $message);
+                    $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token);
+                }
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Task created successfully, and notifications sent.',
+            'data' => new TaskResource($task),
+        ], 201);
+    }
+
+    public function getTasksByMilestone($milestone_id)
+    {
+        $tasks = Task::where('milestone_id', $milestone_id)->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Tasks fetched successfully for the milestone.',
+            'data' => TaskResource::collection($tasks)
+        ], 200);
+    }
+
+    public function getTasksByProject($project_id, Request $request)
+    {
+        $tasks = QueryBuilder::for(Task::class)
+            ->whereHas('milestone', function ($query) use ($project_id) {
+                $query->where('project_id', $project_id);
+            })
+            ->allowedFilters([
                 'label',
                 'status',
                 'priority',
-                ])
-              ->get();
-  
-          return response()->json([
-              'status' => true,
-              'message' => 'Tasks fetched successfully for the project.',
-              'data' => $tasks
-          ], 200);
-      }
+            ])
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Tasks fetched successfully for the project.',
+            'data' => TaskResource::collection($tasks)
+        ], 200);
+    }
 }
