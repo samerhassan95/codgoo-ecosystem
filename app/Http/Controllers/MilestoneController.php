@@ -100,6 +100,7 @@ class MilestoneController  extends BaseController
     private function sendMilestoneCreatedNotification(Milestone $milestone)
     {
         $client = $milestone->project->client ?? null;
+        \Log::info('Client:', ['client' => $client]);
 
         if ($client && $client->device_token) {
             $template = NotificationTemplate::where('type', 'milestone_created')->first();
