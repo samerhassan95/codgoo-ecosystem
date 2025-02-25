@@ -105,7 +105,7 @@ class MilestoneController  extends BaseController
             return;
         }
 
-        $client = $project->created_by;
+        $client = $project->creator;
         if (!$client) {
             \Log::warning('No client found for project:', ['project_id' => $project->id]);
             return;
