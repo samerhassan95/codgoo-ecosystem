@@ -4,21 +4,34 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MilestoneRequest;
 use App\Http\Resources\MilestoneResource;
 use App\Models\Milestone;
+use App\Models\NotificationTemplate;
 use App\Models\Project;
 use App\Repositories\MilestoneRepositoryInterface;
+use App\Repositories\NotificationRepository;
+use App\Services\FirebaseService;
 use App\Services\ImageService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+
 class MilestoneController  extends BaseController
 {
     private $repository;
+    private $notificationRepository;
+    private $firebaseService;
 
-    public function __construct(MilestoneRepositoryInterface $repository)
-    {
+    public function __construct(
+        MilestoneRepositoryInterface $repository,
+        NotificationRepository $notificationRepository,
+        FirebaseService $firebaseService
+    ) {
         parent::__construct($repository);
         $this->repository = $repository;
+        $this->notificationRepository = $notificationRepository;
+        $this->firebaseService = $firebaseService;
     }
+
+
     public function store(Request $request)
     {
         $validated = $request->validate((new MilestoneRequest)->rules());
@@ -31,18 +44,13 @@ class MilestoneController  extends BaseController
         }
 
         $project = Project::findOrFail($request->project_id);
-
-        // Calculate the total price including addons and already existing milestones
         $projectBasePrice = $project->price;
         $totalAddons = $project->getTotalAddonsAmount();
         $totalMilestones = $project->milestones()->sum('cost');
 
         $allowedTotal = $projectBasePrice + $totalAddons;
-
-        // Calculate the total amount after adding the new milestone
         $totalAmountWithNewMilestone = $totalMilestones + $validated['cost'];
 
-        // Ensure the total does not exceed the allowed project price
         if ($totalAmountWithNewMilestone > $allowedTotal) {
             return response()->json([
                 'status' => false,
@@ -50,22 +58,85 @@ class MilestoneController  extends BaseController
             ], 400);
         }
 
-        // Calculate the due date by adding the 'period' to the 'start_date'
         if (isset($validated['start_date']) && isset($validated['period'])) {
             $startDate = Carbon::parse($validated['start_date']);
             $dueDate = $startDate->addDays($validated['period']);
-            $validated['end_date'] = $dueDate->toDateString();  // Store the due date in the correct format
+            $validated['end_date'] = $dueDate->toDateString();
         }
 
-        // Create the milestone using the repository
         $milestone = $this->repository->create($validated);
 
-        // Return success response with milestone data
+        $this->sendMilestoneCreatedNotification($milestone);
+
         return response()->json([
             'status' => true,
             'message' => 'Milestone created successfully',
-            'data' => $milestone
+            'data' => new MilestoneResource($milestone)
         ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $milestone = $this->repository->find($id);
+
+        if (!$milestone) {
+            return response()->json(['status' => false, 'message' => 'Milestone not found.'], 404);
+        }
+
+        $oldStatus = $milestone->status;
+        $milestone->update($request->all());
+
+        if ($oldStatus !== $milestone->status) {
+            $this->sendMilestoneStatusUpdatedNotification($milestone);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Milestone updated successfully.',
+            'data' => new MilestoneResource($milestone)
+        ]);
+    }
+
+    private function sendMilestoneCreatedNotification(Milestone $milestone)
+    {
+        $client = $milestone->project->client ?? null;
+
+        if ($client && $client->device_token) {
+            $template = NotificationTemplate::where('type', 'milestone_created')->first();
+
+            if ($template) {
+                $title = $template->title;
+                $message = str_replace(
+                    ['{milestone}', '{project}'],
+                    [$milestone->name, $milestone->project->name],
+                    $template->message
+                );
+
+                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+            }
+        }
+    }
+
+    private function sendMilestoneStatusUpdatedNotification(Milestone $milestone)
+    {
+        $client = $milestone->project->client ?? null;
+
+        if ($client && $client->device_token) {
+            $template = NotificationTemplate::where('type', 'milestone_status_updated')->first();
+
+            if ($template) {
+                $title = $template->title;
+                $message = str_replace(
+                    ['{milestone}', '{status}', '{project}'],
+                    [$milestone->name, $milestone->status, $milestone->project->name],
+                    $template->message
+                );
+
+                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+            }
+        }
     }
 
 

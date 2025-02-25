@@ -109,4 +109,56 @@ class TaskController extends BaseController
             'data' => TaskResource::collection($tasks)
         ], 200);
     }
+
+
+
+    public function update(Request $request, $id)
+    {
+        $task = $this->repository->find($id);
+
+        if (!$task) {
+            return response()->json(['status' => false, 'message' => 'Task not found.'], 404);
+        }
+
+        $oldStatus = $task->status;
+        $task->update($request->all());
+
+        if ($oldStatus !== $task->status) {
+            $this->sendStatusUpdateNotification($task);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Task updated successfully.',
+            'data' => new TaskResource($task),
+        ], 200);
+    }
+
+    private function sendStatusUpdateNotification(Task $task)
+    {
+        $milestone = $task->milestone;
+        $client = $milestone->project->client ?? null;
+        $employee = $task->assignedEmployee;
+
+        $template = NotificationTemplate::where('type', 'update_task_status')->first();
+        if ($template) {
+            $title = $template->title;
+            $message = str_replace(
+                ['{label}', '{status}', '{milestone}'],
+                [$task->label, $task->status, $milestone->name],
+                $template->message
+            );
+
+            if ($client && $client->device_token) {
+                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+            }
+
+            if ($employee && $employee->device_token) {
+                $this->firebaseService->sendNotification($employee->device_token, $title, $message);
+                $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token);
+            }
+        }
+    }
+
 }
