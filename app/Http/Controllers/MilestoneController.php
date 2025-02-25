@@ -99,7 +99,7 @@ class MilestoneController  extends BaseController
 
     private function sendMilestoneCreatedNotification(Milestone $milestone)
     {
-        $client = $milestone->project->creator ?? null;
+        $client = $milestone->project->created_by ?? null;
     
         if (!$client) {
             \Log::warning('No client found for project:', ['project_id' => $milestone->project_id]);
