@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Admin;
+use App\Models\Client;
 use App\Repositories\AddonRepository;
 use App\Repositories\AddonRepositoryInterface;
 use App\Repositories\Employee\EmployeeRepository;
@@ -18,6 +20,7 @@ use App\Repositories\TopicGalleryRepository;
 use App\Repositories\TopicGalleryRepositoryInterface;
 use App\Repositories\TopicRepository;
 use App\Repositories\TopicRepositoryInterface;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\Admin\AdminRepositoryInterface;
 use App\Repositories\Admin\AdminRepository;
