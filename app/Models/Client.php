@@ -36,7 +36,7 @@ class Client extends Authenticatable implements JWTSubject
     }
     public function projects()
     {
-        return $this->morphMany(Project::class, 'created_by');
+        return $this->morphMany(Project::class, 'created_by_id');
     }
 
     public function ticketReplies()
