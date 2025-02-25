@@ -19,7 +19,7 @@ class Project extends Model
 
     public function creator()
     {
-        return $this->morphTo();
+        return $this->morphTo('created_by'); 
     }
 
     public function invoices()
