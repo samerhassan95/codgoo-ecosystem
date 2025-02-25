@@ -24,4 +24,8 @@ class TaskRepository extends CommonRepository implements TaskRepositoryInterface
     {
         return Task::create($data);
     }
+    public function find(int $id)
+    {
+        return Task::find($id);
+    }
 }
