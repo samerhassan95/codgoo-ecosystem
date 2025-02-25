@@ -98,30 +98,26 @@ class MilestoneController  extends BaseController
     }
 
     private function sendMilestoneCreatedNotification(Milestone $milestone)
-{
-    $project = $milestone->project;
-    $creator = $project->creator; // Get the creator (could be Admin or Client)
-    $client = $creator instanceof \App\Models\Client ? $creator : null; // Ensure it's a Client
+    {
+        $client = $milestone->project->creator ?? null;
+        \Log::info('Client:', ['client' => $client]);
 
-    \Log::info('Project Creator:', ['creator' => $project->creator]);
+        if ($client && $client->device_token) {
+            $template = NotificationTemplate::where('type', 'milestone_created')->first();
 
-    if ($client && $client->device_token) {
-        $template = NotificationTemplate::where('type', 'milestone_created')->first();
+            if ($template) {
+                $title = $template->title;
+                $message = str_replace(
+                    ['{milestone}', '{project}'],
+                    [$milestone->name, $milestone->project->name],
+                    $template->message
+                );
 
-        if ($template) {
-            $title = $template->title;
-            $message = str_replace(
-                ['{milestone}', '{project}'],
-                [$milestone->name, $project->name],
-                $template->message
-            );
-
-            $this->firebaseService->sendNotification($client->device_token, $title, $message);
-            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+            }
         }
     }
-}
-
 
     private function sendMilestoneStatusUpdatedNotification(Milestone $milestone)
     {
