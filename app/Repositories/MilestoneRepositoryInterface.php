@@ -8,4 +8,5 @@ interface MilestoneRepositoryInterface extends CommonRepositoryInterface
 {
     // Additional custom methods (if needed)
     public function create(array $data);
+    public function find(int $id);
 }

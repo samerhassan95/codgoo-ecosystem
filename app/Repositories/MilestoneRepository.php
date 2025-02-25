@@ -22,7 +22,12 @@ class MilestoneRepository extends CommonRepository implements MilestoneRepositor
     
     public function create(array $data)
     {
-        // استخدام Eloquent لإنشاء المايلستون
         return Milestone::create($data);
     }
+
+    public function find(int $id)
+{
+    return Milestone::find($id);
+}
+
 }
