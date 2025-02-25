@@ -18,10 +18,9 @@ class Project extends Model
     }
 
     public function creator()
-{
-    return $this->morphTo(null, 'created_by_type', 'created_by_id');
-}
-
+    {
+        return $this->morphTo();
+    }
 
     public function invoices()
     {
