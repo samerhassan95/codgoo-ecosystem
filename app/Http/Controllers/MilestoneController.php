@@ -103,7 +103,7 @@ class MilestoneController  extends BaseController
     $creator = $project->creator; // Get the creator (could be Admin or Client)
     $client = $creator instanceof \App\Models\Client ? $creator : null; // Ensure it's a Client
 
-    \Log::info('Client:', ['client' => $client]);
+    \Log::info('Project Creator:', ['creator' => $project->creator]);
 
     if ($client && $client->device_token) {
         $template = NotificationTemplate::where('type', 'milestone_created')->first();
