@@ -105,6 +105,7 @@ class MilestoneController  extends BaseController
 
         // جلب العميل بالطريقة الصحيحة
         $client = $project->client ?? Client::find($project->client_id);
+        Log::warning('client for project.', ['project_id' => $client]);
 
         if (!$client) {
             Log::warning('No client found for project.', ['project_id' => $project->id]);
