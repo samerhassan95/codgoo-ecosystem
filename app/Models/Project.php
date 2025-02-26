@@ -17,10 +17,11 @@ class Project extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function creator()
+    public function created_by()
     {
-        return $this->morphTo('created_by'); 
+        return $this->morphTo();
     }
+
 
     public function invoices()
     {
