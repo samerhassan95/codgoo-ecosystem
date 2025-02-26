@@ -40,23 +40,23 @@ class ProjectController extends BaseController
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
             'category_id' => 'nullable|exists:categories,id',
+            'client_id' => 'required|exists:clients,id', // Add client_id validation
         ]);
 
         $user = auth()->user();
-        $type = $user instanceof \App\Models\Admin ? 'Admin' : 'Client';
 
-        $validatedData['created_by_id'] = $user->id;
-        $validatedData['created_by_type'] = $type;
-
-        if ($type === 'Client' && isset($validatedData['price'])) {
+        // Only Admin can set the price
+        if ($user instanceof \App\Models\Client && isset($validatedData['price'])) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Admin can set the price.',
             ], 403);
         }
 
-        $project = Project::create(collect($validatedData)->except(['attachments', 'addons'])->toArray());
+        // Create the project with client_id
+        $project = Project::create($validatedData);
 
+        // Handle attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
@@ -67,6 +67,7 @@ class ProjectController extends BaseController
             }
         }
 
+        // Handle addons
         if (!empty($validatedData['addons'])) {
             $product = $project->product;
             $productAddons = $product ? $product->addons->pluck('id')->toArray() : [];
@@ -101,20 +102,23 @@ class ProjectController extends BaseController
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
             'category_id' => 'nullable|exists:categories,id',
+            'client_id' => 'nullable|exists:clients,id', // Add client_id validation
         ]);
 
         $user = auth()->user();
-        $type = $user instanceof \App\Models\Admin ? 'Admin' : 'Client';
 
-        if ($type === 'Client' && isset($validatedData['price'])) {
+        // Only Admin can update the price
+        if ($user instanceof \App\Models\Client && isset($validatedData['price'])) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Admin can update the price.',
             ], 403);
         }
 
-        $project->update(collect($validatedData)->except(['attachments', 'addons'])->toArray());
+        // Update the project with client_id
+        $project->update($validatedData);
 
+        // Handle attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
@@ -124,6 +128,7 @@ class ProjectController extends BaseController
             }
         }
 
+        // Handle addons
         if (isset($validatedData['addons'])) {
             $project->addons()->sync($validatedData['addons']);
         }
@@ -131,33 +136,31 @@ class ProjectController extends BaseController
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 200);
     }
 
-   public function getStatusCounts()
+    public function getStatusCounts()
     {
         $user = auth()->user();
-
+    
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-
-        $projects = Project::where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client')
-            ->get();
-
+    
+        $projects = Project::where('client_id', $user->id)->get();
+    
         $statusCounts = [
             'requested' => 0,
             'ongoing' => 0,
             'completed' => 0,
             'reject' => 0,
         ];
-
+    
         foreach ($projects as $project) {
             $status = $project->status;
-
+    
             if (isset($statusCounts[$status])) {
                 $statusCounts[$status]++;
             }
         }
-
+    
         return response()->json([
             'status' => true,
             'data' => $statusCounts,
@@ -173,40 +176,39 @@ class ProjectController extends BaseController
             3 => 'requested',
             4 => 'reject',
         ];
-    
+
         if (!array_key_exists($status, $statusMapping)) {
             return response()->json([
                 'message' => 'Invalid status. Valid statuses are: 1 (completed), 2 (ongoing), 3 (requested), 4 (reject).'
             ], 400);
         }
-    
+
         $statusString = $statusMapping[$status];
-    
+
         $user = auth()->user();
-    
+
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-    
-        $projects = Project::where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client')
+
+        $projects = Project::where('client_id', $user->id)
             ->with('milestones')
             ->get();
-    
+
         if ($statusString === 'all') {
             return response()->json([
                 'status' => true,
-                'data' => ProjectResource::collection($projects), // Returning ProjectResource collection
+                'data' => ProjectResource::collection($projects),
             ]);
         }
-    
+
         $filteredProjects = $projects->filter(function ($project) use ($statusString) {
             return $project->status === $statusString;
         });
-    
+
         return response()->json([
             'status' => true,
-            'data' => ProjectResource::collection($filteredProjects->values()), // Returning ProjectResource collection
+            'data' => ProjectResource::collection($filteredProjects->values()),
         ]);
     }
     
@@ -215,7 +217,9 @@ class ProjectController extends BaseController
     {
         $user = auth()->user();
 
-        $project = Project::where('id', $projectId)->first();
+        $project = Project::where('id', $projectId)
+            ->where('client_id', $user->id)
+            ->first();
 
         if (!$project) {
             return response()->json(['status' => false, 'message' => 'Project not found or access denied.'], 404);
@@ -270,8 +274,7 @@ class ProjectController extends BaseController
         $user = auth()->user();
 
         $project = Project::where('id', $projectId)
-            ->where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client')
+            ->where('client_id', $user->id)
             ->with(['milestones.tasks'])
             ->first();
 
@@ -316,25 +319,29 @@ class ProjectController extends BaseController
 
     public function getAllAttachments($projectId)
     {
-        $project = Project::with('attachments')->find($projectId);
-
+        $user = auth()->user();
+    
+        $project = Project::where('id', $projectId)
+            ->where('client_id', $user->id)
+            ->with('attachments')
+            ->first();
+    
         if (!$project) {
             return response()->json(['status' => false, 'message' => 'Project not found.'], 404);
         }
-
+    
         $attachments = $project->attachments->map(function ($attachment) {
-
             $uploadedBy = null;
             if ($attachment->uploaded_by_id) {
                 $uploadedBy = Client::find($attachment->uploaded_by_id);
-
+    
                 if (!$uploadedBy) {
                     $uploadedBy = Admin::find($attachment->uploaded_by_id);
                 }
             }
             $filePath =  $attachment->file_path;
             $fileType = file_exists($filePath) ? mime_content_type($filePath) : 'unknown';
-
+    
             return [
                 'id' => $attachment->id,
                 'file_path' => asset($attachment->file_path),
@@ -350,7 +357,7 @@ class ProjectController extends BaseController
                 ] : null,
             ];
         });
-
+    
         return response()->json([
             'status' => true,
             'data' => $attachments,
@@ -363,12 +370,16 @@ class ProjectController extends BaseController
             'attachments.*' => 'required|file|max:10240',
         ]);
 
-        $project = Project::find($projectId);
+        $user = auth()->user();
+
+        $project = Project::where('id', $projectId)
+            ->where('client_id', $user->id)
+            ->first();
 
         if (!$project) {
             return response()->json(['status' => false, 'message' => 'Project not found.'], 404);
         }
-        $user = auth()->user();
+
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
@@ -390,8 +401,7 @@ class ProjectController extends BaseController
             return response()->json(['message' => 'Access denied.'], 403);
         }
 
-        $projects = Project::where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client')
+        $projects = Project::where('client_id', $user->id)
             ->with(['milestones', 'addons', 'attachments'])
             ->paginate(10);
 
@@ -420,8 +430,7 @@ class ProjectController extends BaseController
         $sliders = $this->sliderRepository->all();
         $slidersData = SliderResource::collection($sliders);
 
-        $projects = Project::where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client')
+        $projects = Project::where('client_id', $user->id)
             ->with('milestones')
             ->get();
 
@@ -477,9 +486,16 @@ class ProjectController extends BaseController
                 'invoice_status_counts' => $invoiceCounts,
             ]
         ]);
-    }public function deleteAttachment($attachmentId)
+    }
+    public function deleteAttachment($attachmentId)
     {
-        $attachment = Attachment::find($attachmentId);
+        $user = auth()->user();
+
+        $attachment = Attachment::where('id', $attachmentId)
+            ->whereHas('project', function ($query) use ($user) {
+                $query->where('client_id', $user->id);
+            })
+            ->first();
 
         if (!$attachment) {
             return response()->json(['message' => 'Attachment not found.'], 404);
@@ -491,9 +507,6 @@ class ProjectController extends BaseController
 
         return response()->json(['message' => 'Attachment deleted successfully.'], 200);
     }
-
-
-
 
 }
 
