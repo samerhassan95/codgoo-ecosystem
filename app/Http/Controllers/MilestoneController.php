@@ -121,7 +121,7 @@ class MilestoneController  extends BaseController
     $title = $template->title;
     $message = str_replace(
         ['{milestone}', '{project}'],
-        [$milestone->name, $project->name],
+        [$milestone->label, $project->name],
         $template->message
     );
 
@@ -132,7 +132,6 @@ class MilestoneController  extends BaseController
         Log::warning('Client has no device token.', ['client_id' => $client->id]);
     }
 
-    // تسجيل الإشعار في قاعدة البيانات
     $notification = $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
 
     if ($notification) {
@@ -150,7 +149,7 @@ class MilestoneController  extends BaseController
         $client = $milestone->project->client ?? null;
 
         if ($client && $client->device_token) {
-            $template = NotificationTemplate::where('type', 'milestone_status_updated')->first();
+            $template = NotificationTemplate::where('type', 'milestone_status_update')->first();
 
             if ($template) {
                 $title = $template->title;
