@@ -40,22 +40,33 @@ class ProjectController extends BaseController
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
             'category_id' => 'nullable|exists:categories,id',
-            'client_id' => 'required|exists:clients,id', // Add client_id validation
+            // Remove 'client_id' from validation rules
         ]);
-
+    
         $user = auth()->user();
-
+    
+        // Ensure the authenticated user is a client
+        if (!$user instanceof \App\Models\Client) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Only clients can create projects.',
+            ], 403);
+        }
+    
         // Only Admin can set the price
-        if ($user instanceof \App\Models\Client && isset($validatedData['price'])) {
+        if (isset($validatedData['price'])) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Admin can set the price.',
             ], 403);
         }
-
-        // Create the project with client_id
+    
+        // Set the client_id to the authenticated client's ID
+        $validatedData['client_id'] = $user->id;
+    
+        // Create the project
         $project = Project::create($validatedData);
-
+    
         // Handle attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
@@ -66,20 +77,20 @@ class ProjectController extends BaseController
                 ]);
             }
         }
-
+    
         // Handle addons
         if (!empty($validatedData['addons'])) {
             $product = $project->product;
             $productAddons = $product ? $product->addons->pluck('id')->toArray() : [];
-
+    
             // Filter out addons that already exist in the product
             $newAddons = array_diff($validatedData['addons'], $productAddons);
-
+    
             if (!empty($newAddons)) {
                 $project->addons()->attach($newAddons);
             }
         }
-
+    
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 201);
     }
 
