@@ -102,10 +102,13 @@ class MilestoneController  extends BaseController
         $project = $milestone->project;
         if (!$project) return;
 
-        $client = $project->created_by;
-        if (!$client instanceof Client) return;
+        $client = $project->client;
 
-        if (!$client->device_token) return;
+        $client = $project->client;
+        if (!$client) {
+            Log::warning('No client found for project.', ['project_id' => $project->id]);
+            return;
+        }
 
         $template = NotificationTemplate::where('type', 'milestone_created')->first();
         if (!$template) return;

@@ -15,7 +15,7 @@ return new class extends Migration
 
             $table->dropColumn(['created_by_id', 'created_by_type']);
 
-            $table->morphs('created_by');
+            $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();
         });
     }
 
@@ -25,8 +25,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('projects', function (Blueprint $table) {
-            
-            $table->dropMorphs('created_by');
+
+            $table->dropForeign(['client_id']);
+            $table->dropColumn('client_id');
 
             $table->unsignedBigInteger('created_by_id');
             $table->string('created_by_type');
