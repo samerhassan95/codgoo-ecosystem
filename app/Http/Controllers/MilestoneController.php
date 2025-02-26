@@ -103,8 +103,8 @@ class MilestoneController  extends BaseController
         $project = $milestone->project;
         if (!$project) return;
 
-        $client = $project->client;
-        Log::warning('No client found for project.', ['project_id' =>  $client]);
+        // جلب العميل بالطريقة الصحيحة
+        $client = $project->client ?? Client::find($project->client_id);
 
         if (!$client) {
             Log::warning('No client found for project.', ['project_id' => $project->id]);
@@ -117,13 +117,19 @@ class MilestoneController  extends BaseController
         $title = $template->title;
         $message = str_replace(
             ['{milestone}', '{project}'],
-            [$milestone->name, $milestone->project->name],
+            [$milestone->name, $project->name],
             $template->message
         );
 
-        $this->firebaseService->sendNotification($client->device_token, $title, $message);
-        $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+        // إرسال الإشعار فقط لو العميل عنده `device_token`
+        if ($client->device_token) {
+            $this->firebaseService->sendNotification($client->device_token, $title, $message);
+            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+        } else {
+            Log::warning('Client has no device token.', ['client_id' => $client->id]);
+        }
     }
+
 
 
     private function sendMilestoneStatusUpdatedNotification(Milestone $milestone)
