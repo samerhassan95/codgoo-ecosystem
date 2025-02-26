@@ -45,7 +45,6 @@ class ProjectController extends BaseController
     
         $user = auth()->user();
     
-        // Ensure the authenticated user is a client
         if (!$user instanceof \App\Models\Client) {
             return response()->json([
                 'status' => false,
@@ -53,7 +52,6 @@ class ProjectController extends BaseController
             ], 403);
         }
     
-        // Only Admin can set the price
         if (isset($validatedData['price'])) {
             return response()->json([
                 'status' => false,
@@ -61,13 +59,10 @@ class ProjectController extends BaseController
             ], 403);
         }
     
-        // Set the client_id to the authenticated client's ID
         $validatedData['client_id'] = $user->id;
     
-        // Create the project
         $project = Project::create($validatedData);
     
-        // Handle attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
@@ -78,12 +73,10 @@ class ProjectController extends BaseController
             }
         }
     
-        // Handle addons
         if (!empty($validatedData['addons'])) {
             $product = $project->product;
             $productAddons = $product ? $product->addons->pluck('id')->toArray() : [];
     
-            // Filter out addons that already exist in the product
             $newAddons = array_diff($validatedData['addons'], $productAddons);
     
             if (!empty($newAddons)) {
@@ -113,12 +106,11 @@ class ProjectController extends BaseController
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
             'category_id' => 'nullable|exists:categories,id',
-            'client_id' => 'nullable|exists:clients,id', // Add client_id validation
+            'client_id' => 'nullable|exists:clients,id',
         ]);
 
         $user = auth()->user();
 
-        // Only Admin can update the price
         if ($user instanceof \App\Models\Client && isset($validatedData['price'])) {
             return response()->json([
                 'status' => false,
@@ -126,10 +118,8 @@ class ProjectController extends BaseController
             ], 403);
         }
 
-        // Update the project with client_id
         $project->update($validatedData);
 
-        // Handle attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
@@ -139,7 +129,6 @@ class ProjectController extends BaseController
             }
         }
 
-        // Handle addons
         if (isset($validatedData['addons'])) {
             $project->addons()->sync($validatedData['addons']);
         }

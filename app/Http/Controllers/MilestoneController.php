@@ -155,7 +155,7 @@ class MilestoneController  extends BaseController
                 $title = $template->title;
                 $message = str_replace(
                     ['{milestone}', '{status}', '{project}'],
-                    [$milestone->name, $milestone->status, $milestone->project->name],
+                    [$milestone->label, $milestone->status, $milestone->project->name],
                     $template->message
                 );
 
