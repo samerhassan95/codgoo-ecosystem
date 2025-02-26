@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('projects', function (Blueprint $table) {
 
-            $table->dropColumn(['created_by_id', 'created_by_type']);
+            // $table->dropColumn(['created_by_id', 'created_by_type']);
 
             $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();
         });
