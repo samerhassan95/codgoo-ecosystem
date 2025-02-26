@@ -112,7 +112,7 @@ class MilestoneController  extends BaseController
             return;
         }
 
-        $template = NotificationTemplate::where('type', 'milestone_created')->first();
+        $template = NotificationTemplate::where('type', 'create_milestone')->first();
         if (!$template) return;
 
         $title = $template->title;
