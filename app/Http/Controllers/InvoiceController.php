@@ -28,7 +28,7 @@ class InvoiceController extends BaseController
     public function getInvoicesForProject($projectId, Request $request)
     {
         $project = Project::find($projectId);
-    
+
         if (!$project) {
             return response()->json([
                 'status' => false,
@@ -36,22 +36,22 @@ class InvoiceController extends BaseController
                 'data' => null
             ], 404);
         }
-    
+
         // Apply the filters and only include allowed ones
         $invoicesQuery = QueryBuilder::for(Invoice::class)
             ->where('project_id', $projectId)
             ->with('milestone');
-    
+
         // Apply status filter if it's provided in the query string
         $invoicesQuery->allowedFilters([
             'status', // status can be 'paid', 'unpaid', etc.
             'payment_method',
             'due_date',
         ]);
-    
+
         // Get the invoices
         $invoices = $invoicesQuery->get();
-    
+
         if ($invoices->isEmpty()) {
             return response()->json([
                 'status' => true,
@@ -59,16 +59,10 @@ class InvoiceController extends BaseController
                 'data' => []
             ], 200);
         }
-    
-        $creatorName = 'Unknown';
-        if ($project->created_by_type == 'App\Models\Client') {
-            $creator = Client::find($project->created_by_id);
-            $creatorName = $creator ? $creator->name : 'Unknown';
-        } elseif ($project->created_by_type == 'App\Models\Admin') {
-            $creator = Admin::find($project->created_by_id);
-            $creatorName = $creator ? $creator->username : 'Unknown';
-        }
-    
+
+        $client = Client::find($project->client_id);
+        $creatorName = $client ? $client->name : 'Unknown';
+
         // Transform invoice data for response
         $invoiceData = $invoices->map(function ($invoice) use ($project, $creatorName) {
             return [
@@ -81,7 +75,7 @@ class InvoiceController extends BaseController
                 'client_name' => $creatorName,
             ];
         });
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Invoices retrieved successfully.',
@@ -101,8 +95,7 @@ class InvoiceController extends BaseController
             return response()->json(['message' => 'Access denied.'], 403);
         }
 
-        $projects = Project::where('created_by_id', $user->id)
-            ->where('created_by_type', 'Client')
+        $projects = Project::where('client_id', $user->id)
             ->with('invoices')
             ->get();
 
@@ -139,11 +132,11 @@ class InvoiceController extends BaseController
     public function getInvoicesForClient(Request $request)
     {
         $client = auth()->user();
-        
+
         // Fetch invoices for the client
         $invoices = Invoice::whereHas('project', function ($query) use ($client) {
-            $query->where('created_by_id', $client->id);
-        })->with('project.creator')->get();
+            $query->where('client_id', $client->id);
+        })->with('project.client')->get();
 
         if ($invoices->isEmpty()) {
             return response()->json([

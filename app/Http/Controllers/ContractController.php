@@ -18,32 +18,32 @@ class ContractController extends Controller
         $request->validate([
             'file' => 'required|mimes:pdf,doc,docx|max:2048',
         ]);
-
+    
         $project = Project::findOrFail($projectId);
         $admin = auth()->user();
-
-        // if (!$admin || !$admin->is_admin) {
-        //     return response()->json(['message' => 'Only admin can upload the contract'], 403);
-        // }
-
+    
         $filePath = ImageService::upload($request->file('file'), 'contracts');
-
+    
         $contract = Contract::create([
             'project_id' => $project->id,
             'admin_id' => $admin->id,
             'file_path' => asset($filePath),
         ]);
-
-        return response()->json(['message' => 'Contract uploaded successfully', 'contract' => $contract]);
+    
+        return response()->json([
+            'message' => 'Contract uploaded successfully',
+            'contract' => new ContractResource($contract),
+        ]);
     }
+    
 
     public function signContract($contractId)
     {
         $contract = Contract::findOrFail($contractId);
         $client = auth()->user();
 
-        if ($contract->project->created_by_id !== $client->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if ($contract->project->client_id !== $client->id) {
+            return response()->json(['message' => 'You are not authorized to sign this contract'], 403);
         }
 
         $contract->update([

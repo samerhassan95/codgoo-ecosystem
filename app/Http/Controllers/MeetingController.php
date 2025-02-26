@@ -99,7 +99,7 @@ class MeetingController extends Controller
         $meetingsQuery = Meeting::where('client_id', $client->id)
             ->join('available_slots', 'meetings.slot_id', '=', 'available_slots.id')
             ->orderByDesc('available_slots.date')
-            ->select('meetings.*'); // Ensures only meeting fields are retrieved
+            ->select('meetings.*');
     
         if ($status && isset($statusMapping[$status]) && $status != 0) {
             $meetingsQuery->where('status', $statusMapping[$status]);
