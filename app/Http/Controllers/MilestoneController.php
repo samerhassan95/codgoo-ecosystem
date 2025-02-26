@@ -99,37 +99,49 @@ class MilestoneController  extends BaseController
     }
 
     private function sendMilestoneCreatedNotification(Milestone $milestone)
-    {
-        $project = $milestone->project;
-        if (!$project) return;
+{
+    $project = $milestone->project;
+    if (!$project) return;
 
-        // جلب العميل بالطريقة الصحيحة
-        $client = $project->client ?? Client::find($project->client_id);
-        Log::warning('client for project.', ['project_id' => $client]);
+    $client = is_object($project->client) ? $project->client : Client::find($project->client_id);
 
-        if (!$client) {
-            Log::warning('No client found for project.', ['project_id' => $project->id]);
-            return;
-        }
-
-        $template = NotificationTemplate::where('type', 'create_milestone')->first();
-        if (!$template) return;
-
-        $title = $template->title;
-        $message = str_replace(
-            ['{milestone}', '{project}'],
-            [$milestone->name, $project->name],
-            $template->message
-        );
-
-        // إرسال الإشعار فقط لو العميل عنده `device_token`
-        if ($client->device_token) {
-            $this->firebaseService->sendNotification($client->device_token, $title, $message);
-            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
-        } else {
-            Log::warning('Client has no device token.', ['client_id' => $client->id]);
-        }
+    if (!$client) {
+        Log::warning('No client found for project.', ['project_id' => $project->id]);
+        return;
     }
+
+    Log::info('Client found:', ['client_id' => $client->id]);
+
+    $template = NotificationTemplate::where('type', 'create_milestone')->first();
+    if (!$template) {
+        Log::warning('Notification template not found for milestone_created.');
+        return;
+    }
+
+    $title = $template->title;
+    $message = str_replace(
+        ['{milestone}', '{project}'],
+        [$milestone->name, $project->name],
+        $template->message
+    );
+
+    if ($client->device_token) {
+        Log::info('Sending Firebase notification...', ['client_id' => $client->id]);
+        $this->firebaseService->sendNotification($client->device_token, $title, $message);
+    } else {
+        Log::warning('Client has no device token.', ['client_id' => $client->id]);
+    }
+
+    // تسجيل الإشعار في قاعدة البيانات
+    $notification = $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+
+    if ($notification) {
+        Log::info('Notification created successfully.', ['notification_id' => $notification->id]);
+    } else {
+        Log::error('Failed to create notification in database.', ['client_id' => $client->id]);
+    }
+}
+
 
 
 
