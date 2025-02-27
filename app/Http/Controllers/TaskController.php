@@ -28,23 +28,21 @@ class TaskController extends BaseController
 
     public function store(Request $request)
     {
-        // Manually apply validation using TaskRequest
         $validatedData = $request->validate((new TaskRequest())->rules());
 
         $task = $this->repository->create($validatedData);
 
-        // Get milestone and client
         $milestone = $task->milestone;
-        $client = $milestone->project->client ?? null; // Assuming project relation exists on milestone
+        $client = $milestone->project->client ?? null; 
 
-        // Notify the client
+
         if ($client && $client->device_token) {
             $template = NotificationTemplate::where('type', 'create_task')->first();
             if ($template) {
                 $title = $template->title;
                 $message = str_replace(
                     ['{label}', '{milestone}'],
-                    [$task->label, $milestone->name],
+                    [$task->label, $milestone->label],
                     $template->message
                 );
 
@@ -53,7 +51,6 @@ class TaskController extends BaseController
             }
         }
 
-        // Notify the assigned employee
         if ($task->assigned_to) {
             $employee = Employee::find($task->assigned_to);
             if ($employee && $employee->device_token) {
@@ -110,8 +107,6 @@ class TaskController extends BaseController
         ], 200);
     }
 
-
-
     public function update(Request $request, $id)
     {
         $task = $this->repository->find($id);
@@ -145,7 +140,7 @@ class TaskController extends BaseController
             $title = $template->title;
             $message = str_replace(
                 ['{label}', '{status}', '{milestone}'],
-                [$task->label, $task->status, $milestone->name],
+                [$task->label, $task->status, $milestone->label],
                 $template->message
             );
 

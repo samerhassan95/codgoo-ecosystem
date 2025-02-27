@@ -97,4 +97,10 @@ class Project extends Model
             $this->update(['status' => 'completed']);
         }
     }
+
+    public function contract()
+    {
+        return $this->hasOne(Contract::class);
+    }
+
 }

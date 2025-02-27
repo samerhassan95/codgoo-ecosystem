@@ -32,6 +32,7 @@ class ProjectResource extends JsonResource
         });
 
         $totalPrice = ($this->product ? $this->product->price : 0) + $addons->sum('price');
+        $contractStatus = $this->contract ? $this->contract->status : 'not_created';
 
         return
         [
@@ -53,6 +54,7 @@ class ProjectResource extends JsonResource
                     'file_path' => asset($attachment->file_path),
                 ];
             }),
+            'contract_status' => $contractStatus, 
             'created_at' => $this->created_at->toDateTimeString(),
             'updated_at' => $this->updated_at->toDateTimeString(),
         ];
