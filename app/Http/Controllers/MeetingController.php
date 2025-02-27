@@ -84,8 +84,6 @@ class MeetingController extends Controller
         return MeetingResource::collection($meetings);
     }
 
-
-
     public function filterMeetingsByStatus(Request $request)
     {
         $client = $request->user();
@@ -114,8 +112,6 @@ class MeetingController extends Controller
         return MeetingResource::collection($meetings);
     }
 
-
-
     public function getMeetingById($id, Request $request)
     {
         $user = $request->user();
@@ -136,7 +132,6 @@ class MeetingController extends Controller
             ],
         ]);
     }
-
 
     public function getMeetingsWithProject(Request $request)
     {
@@ -178,7 +173,7 @@ class MeetingController extends Controller
             ], 404);
         }
 
-        $oldStatus = $meeting->status; // حفظ الحالة السابقة
+        $oldStatus = $meeting->status; 
 
         $meeting->update([
             'slot_id' => $request->slot_id ?? $meeting->slot_id,
@@ -191,14 +186,8 @@ class MeetingController extends Controller
             'status' => $request->status ?? $meeting->status,
         ]);
 
-        // إرسال إشعار فقط إذا تغيرت الحالة
         if ($request->status && $request->status !== $oldStatus) {
             $this->sendMeetingStatusNotification($meeting);
-        }
-
-        // إذا تغيرت الحالة إلى "ملغى"، نقوم بتحديث حالة المشروع إلى "مرفوض"
-        if ($request->status === 'Canceled' && $meeting->project) {
-            $meeting->project->update(['status' => 'reject']);
         }
 
         return response()->json([

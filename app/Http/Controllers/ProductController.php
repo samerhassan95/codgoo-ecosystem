@@ -91,10 +91,6 @@ class ProductController extends BaseController
         return response()->json(new ProductResource($product->load(['attachments', 'addons', 'media'])), 201);
     }
     
-
-
-
-
     public function update(Request $request, $id)
     {
         $product = Product::find($id);
@@ -198,7 +194,5 @@ class ProductController extends BaseController
             'data' => $data,
         ], 200);
     }
-
-
 
 }
