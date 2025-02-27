@@ -81,15 +81,13 @@ class TicketReplyController extends BaseController
         $title = $template->title;
         $message = str_replace(
             ['{ticket_id}'],
-            [$ticket->id],
+            [$ticket->name],
             $template->message
         );
 
         try {
-            // **إرسال الإشعار عبر Firebase**
             $this->firebaseService->sendNotification($client->device_token, $title, $message);
 
-            // **حفظ الإشعار في قاعدة البيانات**
             $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
 
             Log::info('Ticket answered notification sent successfully.', ['client_id' => $client->id]);
