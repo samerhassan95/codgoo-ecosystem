@@ -22,15 +22,21 @@ class AddonRepository extends CommonRepository implements AddonRepositoryInterfa
 
     public function create(array $data)
     {
-        // Handle any custom logic before creation if needed (like file upload)
         return Addon::create($data);
     }
     
     public function find(int $id)
     {
-        // Find the addon by its ID
-        return $this->getModel()->find($id);
+        return $this->getModel()->findOrFail($id);
     }
+
+    public function update($id, array $data)
+    {
+        $addon = $this->find($id);
+        $addon->update($data);
+        return $addon;
+    }
+    
     
 
 }
