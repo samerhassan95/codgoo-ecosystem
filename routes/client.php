@@ -18,7 +18,9 @@ use App\Http\Controllers\{CategoryController,
     TicketController,
     TicketReplyController,
     TopicController,
-    AvailableSlotController};
+    AvailableSlotController,
+    NotificationController
+};
 use Illuminate\Support\Facades\Route;
 
 
