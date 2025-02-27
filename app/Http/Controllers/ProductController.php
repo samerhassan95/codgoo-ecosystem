@@ -98,11 +98,11 @@ class ProductController extends BaseController
     public function update(Request $request, $id)
     {
         $product = Product::find($id);
-
+    
         if (!$product) {
             return response()->json(['message' => 'Product not found.'], 404);
         }
-
+    
         $validatedData = $request->validate([
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -112,10 +112,11 @@ class ProductController extends BaseController
             'attachments.*' => 'file|max:10240',
             'addons' => 'array',
             'addons.*' => 'exists:addons,id',
+            'media.*' => 'file|max:10240', 
         ]);
-
-        $productData = collect($validatedData)->except(['attachments', 'image', 'addons'])->toArray();
-
+    
+        $productData = collect($validatedData)->except(['attachments', 'image', 'addons', 'media'])->toArray();
+    
         if ($request->hasFile('image')) {
             if ($product->image) {
                 ImageService::delete($product->image);
@@ -123,21 +124,28 @@ class ProductController extends BaseController
             $imagePath = ImageService::upload($request->file('image'), 'product_images');
             $productData['image'] = $imagePath;
         }
-
+    
         $product->update($productData);
-
+    
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
                 $product->attachments()->create(['file_path' => $path]);
             }
         }
-
+    
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $path = ImageService::upload($file, 'product_media');
+                $product->media()->create(['file_path' => $path, 'type' => 'image']); 
+            }
+        }
+    
         if (isset($validatedData['addons'])) {
             $product->addons()->sync($validatedData['addons']);
         }
-
-        return response()->json(new ProductResource($product->load(['attachments', 'addons'])), 200);
+    
+        return response()->json(new ProductResource($product->load(['attachments', 'addons', 'media'])), 200);
     }
 
 
