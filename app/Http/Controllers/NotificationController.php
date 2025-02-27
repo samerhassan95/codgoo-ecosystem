@@ -24,7 +24,7 @@
 //         $request->validate([
 //             'title' => 'required|string',
 //             'message' => 'required|string',
-//             'notifiable_id' => 'nullable|integer', 
+//             'notifiable_id' => 'nullable|integer',
 //             'notifiable_type' => 'nullable|in:admin,client',
 //         ]);
 
@@ -66,6 +66,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Repositories\NotificationRepository;
 use App\Services\FirebaseService;
@@ -135,4 +136,60 @@ class NotificationController extends Controller
 
         return response()->json(['message' => 'Notifications sent to all clients successfully!']);
     }
+
+    public function getClientNotifications(Request $request)
+    {
+        $client = $request->user();
+
+        $notifications = Notification::where('notifiable_id', $client->id)
+            ->where('notifiable_type', get_class($client))
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => NotificationResource::collection($notifications),
+        ]);
+    }
+
+
+    public function markNotificationAsRead($id, Request $request)
+    {
+        $client = $request->user();
+
+        $notification = Notification::where('id', $id)
+            ->where('notifiable_id', $client->id)
+            ->where('notifiable_type', get_class($client))
+            ->first();
+
+        if (!$notification) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Notification not found.',
+            ], 404);
+        }
+
+        $notification->update(['is_read' => true]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Notification marked as read.',
+        ]);
+    }
+
+
+    public function markAllNotificationsAsRead(Request $request)
+    {
+        $client = $request->user();
+
+        Notification::where('notifiable_id', $client->id)
+            ->where('notifiable_type', get_class($client))
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'All notifications marked as read.',
+        ]);
+    }
+
 }
