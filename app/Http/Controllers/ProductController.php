@@ -28,58 +28,69 @@ class ProductController extends BaseController
     }
 
     public function store(Request $request)
-{
-    $validatedData = $request->validate([
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string',
-        'price' => 'nullable|numeric',
-        'note' => 'nullable|string',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        'attachments.*' => 'file|max:10240',
-        'addons' => 'array',
-        'addons.*' => 'exists:addons,id',
-    ]);
-
-    $productData = collect($validatedData)->except(['attachments', 'image', 'addons'])->toArray();
-
-    if ($request->hasFile('image')) {
-        $imagePath = ImageService::upload($request->file('image'), 'product_images');
-        $productData['image'] = $imagePath;
-    }
-
-    $product = Product::create($productData);
-
-    if ($request->hasFile('attachments')) {
-        foreach ($request->file('attachments') as $file) {
-            $path = ImageService::upload($file, 'attachments');
-            $product->attachments()->create(['file_path' => $path]);
+    {
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'nullable|numeric',
+            'note' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'attachments.*' => 'file|max:10240',
+            'addons' => 'array',
+            'addons.*' => 'exists:addons,id',
+            'media.*' => 'file|max:10240', 
+        ]);
+    
+        $productData = collect($validatedData)->except(['attachments', 'image', 'addons', 'media'])->toArray();
+    
+        if ($request->hasFile('image')) {
+            $imagePath = ImageService::upload($request->file('image'), 'product_images');
+            $productData['image'] = $imagePath;
         }
-    }
-
-    if (!empty($validatedData['addons'])) {
-        $product->addons()->attach($validatedData['addons']);
-    }
-
-    $template = NotificationTemplate::where('type', 'new_product')->first();
-
-    if (!$template) {
-        return response()->json(['message' => 'Notification template not found.'], 400);
-    }
-
-    $title = $template->title;
-    $message = str_replace('{product_name}', $product->name, $template->message);
-
-    $clients = Client::whereNotNull('device_token')->get();
-
-    if ($clients->isNotEmpty()) {
-        foreach ($clients as $client) {
-            $this->firebaseService->sendNotification($client->device_token, $title, $message);
-            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+    
+        $product = Product::create($productData);
+    
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = ImageService::upload($file, 'attachments');
+                $product->attachments()->create(['file_path' => $path]);
+            }
         }
+    
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $path = ImageService::upload($file, 'product_media');
+                $product->media()->create(['file_path' => $path, 'type' => 'image']); 
+            }
+        }
+    
+        // Handle addons
+        if (!empty($validatedData['addons'])) {
+            $product->addons()->attach($validatedData['addons']);
+        }
+    
+        // Send notifications
+        $template = NotificationTemplate::where('type', 'new_product')->first();
+    
+        if (!$template) {
+            return response()->json(['message' => 'Notification template not found.'], 400);
+        }
+    
+        $title = $template->title;
+        $message = str_replace('{product_name}', $product->name, $template->message);
+    
+        $clients = Client::whereNotNull('device_token')->get();
+    
+        if ($clients->isNotEmpty()) {
+            foreach ($clients as $client) {
+                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+            }
+        }
+    
+        return response()->json(new ProductResource($product->load(['attachments', 'addons', 'media'])), 201);
     }
-
-    return response()->json(new ProductResource($product->load(['attachments', 'addons'])), 201);
-}
+    
 
 
 
