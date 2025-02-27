@@ -16,6 +16,7 @@ class Invoice extends Model
         'payment_method',
         'payment_proof',
         'due_date',
+        'amount',
     ];
 
     public function milestone()
