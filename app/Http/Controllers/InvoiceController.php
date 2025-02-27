@@ -7,23 +7,92 @@ use App\Http\Resources\InvoiceResource;
 use App\Models\Admin;
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\Milestone;
 use App\Models\Project;
 use App\Repositories\InvoiceRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Spatie\QueryBuilder\QueryBuilder;
-
+use App\Services\FirebaseService;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends BaseController
 {
     private $repository;
+    private $firebaseService;
 
-    public function __construct(InvoiceRepositoryInterface $repository)
+    public function __construct(InvoiceRepositoryInterface $repository, FirebaseService $firebaseService)
     {
         parent::__construct($repository);
         $this->repository = $repository;
+        $this->firebaseService = $firebaseService;
     }
 
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'milestone_id' => 'required|exists:milestones,id',
+            'project_id' => 'required|exists:projects,id',
+            'amount' => 'nullable|numeric|min:0',
+            'due_date' => 'required|date|after:today',
+        ]);
+
+        $milestone = Milestone::findOrFail($validated['milestone_id']);
+
+        $invoice = Invoice::create([
+            'milestone_id' => $validated['milestone_id'],
+            'project_id' => $validated['project_id'],
+            'amount' => $validated['amount'] ?? $milestone->amount,
+            'due_date' => $validated['due_date'],
+            'status' => 'unpaid',
+        ]);
+
+        $this->sendInvoiceNotification($invoice);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Invoice created successfully!',
+            'data' => new InvoiceResource($invoice),
+        ], 201);
+    }
+
+
+    private function sendInvoiceNotification(Invoice $invoice)
+    {
+        $client = $invoice->project->client;
+
+        if (!$client || !$client->device_token) {
+            Log::warning('Client not found or has no device token for invoice notification.', [
+                'invoice_id' => $invoice->id,
+                'client_id' => $client ? $client->id : null
+            ]);
+            return;
+        }
+
+        $template = \App\Models\NotificationTemplate::where('type', 'invoice_created')->first();
+        if (!$template) {
+            Log::error('Notification template "invoice_created" not found.');
+            return;
+        }
+
+        $title = $template->title;
+        $message = str_replace(
+            ['{invoice_id}', '{amount}', '{due_date}'],
+            ['INV-' . $invoice->id, number_format($invoice->amount, 2), $invoice->due_date->format('d-m-Y')],
+            $template->message
+        );
+
+        try {
+            $this->firebaseService->sendNotification($client->device_token, $title, $message);
+
+            app(\App\Repositories\NotificationRepository::class)->createNotification($client, $title, $message, $client->device_token);
+
+            Log::info('Invoice notification sent successfully.', ['client_id' => $client->id, 'invoice_id' => $invoice->id]);
+        } catch (\Exception $e) {
+            Log::error('Error sending invoice notification: ' . $e->getMessage());
+        }
+    }
 
     public function getInvoicesForProject($projectId, Request $request)
     {
@@ -82,11 +151,6 @@ class InvoiceController extends BaseController
             'data' => $invoiceData
         ], 200);
     }
-    
-
-
-
-
     public function getInvoiceStatusCounts()
     {
         $user = auth()->user();
@@ -128,7 +192,7 @@ class InvoiceController extends BaseController
         ]);
     }
 
-  
+
     public function getInvoicesForClient(Request $request)
     {
         $client = auth()->user();
@@ -170,12 +234,12 @@ class InvoiceController extends BaseController
         ], 200);
     }
 
-    
+
     public function getInvoiceDetails($invoiceId)
     {
         $invoice = Invoice::with([
-            'milestone.tasks', 
-            'project' 
+            'milestone.tasks',
+            'project'
         ])->find($invoiceId);
 
         if (!$invoice) {
@@ -219,6 +283,6 @@ class InvoiceController extends BaseController
         ], 200);
     }
 
-    
+
 
 }
