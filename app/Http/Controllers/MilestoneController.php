@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MilestoneRequest;
 use App\Http\Resources\MilestoneResource;
+use App\Models\Client;
 use App\Models\Milestone;
 use App\Models\NotificationTemplate;
 use App\Models\Project;
