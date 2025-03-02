@@ -195,4 +195,28 @@ class ProductController extends BaseController
         ], 200);
     }
 
+
+    public function deleteMedia($productId, $mediaId)
+    {
+        $product = Product::find($productId);
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found.'], 404);
+        }
+
+        $media = $product->media()->find($mediaId);
+
+        if (!$media) {
+            return response()->json(['message' => 'Media not found.'], 404);
+        }
+
+        // Delete the media file from storage
+        ImageService::delete($media->file_path);
+
+        // Delete the media record from the database
+        $media->delete();
+
+        return response()->json(['message' => 'Media deleted successfully.'], 200);
+    }
+
 }
