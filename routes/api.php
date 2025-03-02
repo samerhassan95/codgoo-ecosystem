@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Client\ClientAuthController;
 use App\Http\Controllers\Employee\EmployeeAuthController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
 
 Route::prefix('admin')->group(function() {
     Route::post('register', [AdminAuthController::class, 'register']);
@@ -35,3 +36,12 @@ Route::prefix('employee')->group(function() {
     Route::post('reset-password', [EmployeeAuthController::class, 'resetPassword']);
 
 });
+
+// Route::get('test-email', function () {
+//     Mail::raw('This is a test email from Laravel.', function ($message) {
+//         $message->to('fatmamohamed2101@gmail.com')
+//                 ->subject('Test Email');
+//     });
+
+//     return 'Email has been sent!';
+// });

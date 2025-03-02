@@ -18,7 +18,8 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
 use App\Services\ImageService;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpMail;
 
 class ClientAuthController extends Controller
 {
@@ -29,7 +30,6 @@ class ClientAuthController extends Controller
         $this->clientRepo = $clientRepo;
     }
 
-    
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -54,11 +54,7 @@ class ClientAuthController extends Controller
             'password' => 'required|min:6|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                'unique:clients,email',
-            ],
+            'email' => 'required|email|unique:clients,email',
             'company_name' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
             'address' => 'nullable|string|max:255',
@@ -66,7 +62,7 @@ class ClientAuthController extends Controller
             'country' => 'nullable|string|max:255',
             'device_token' => 'nullable|string',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 "status" => false,
@@ -75,13 +71,14 @@ class ClientAuthController extends Controller
                 'data' => null,
             ], 402);
         }
-
+    
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = ImageService::upload($request->file('photo'), 'client_photos');
         }
-
-        $otp = 1234; 
+    
+        $otp = rand(1000, 9999);
+    
         $client = Client::create([
             'username' => $request->username,
             'phone' => $request->phone,
@@ -94,17 +91,22 @@ class ClientAuthController extends Controller
             'address' => $request->address,
             'city' => $request->city,
             'country' => $request->country,
-            'device_token' => $request->device_token, 
+            'device_token' => $request->device_token,
         ]);
-
+    
+        // Store OTP in cache for 10 minutes
         Cache::put('otp_' . $client->phone, $otp, now()->addMinutes(10));
-
+    
+        // Send OTP via email
+        Mail::to($client->email)->send(new OtpMail($otp));
+    
         return response()->json([
             'status' => true,
-            'message' => "OTP sent successfully, please verify.",
+            'message' => "OTP sent successfully to your email, please verify.",
             'data' => null,
         ]);
     }
+    
 
 
     public function verifyOtpAndCreateClient(Request $request)
@@ -272,7 +274,7 @@ class ClientAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -280,31 +282,29 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 404);
         }
-
-        $phone = $request->phone;
-
-        $otp = 1234;
-
-        Cache::put('otp', $otp,  now()->addMinutes(10));  
-
-        // Simulate sending OTP (you can integrate an SMS service here)
-        // For now, we'll just log the OTP (In production, send via SMS)
-        // Log::info("OTP for phone {$phone}: {$otp}");
-
+    
+        $client = Client::where('phone', $request->phone)->first();
+        $otp = rand(100000, 999999); // Generate a 6-digit OTP
+    
+        Cache::put('otp_' . $client->phone, $otp, now()->addMinutes(10));
+    
+        // Send OTP via email
+        Mail::to($client->email)->send(new OtpMail($otp));
+    
         return response()->json([
             'status' => true,
-            'message' => 'OTP sent successfully. Please check your phone.',
+            'message' => 'OTP sent successfully. Please check your email.',
             'data' => null
         ], 200);
     }
-
+    
     public function verifyOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
             'otp' => 'required|numeric',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -312,11 +312,12 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-
+    
         $phone = $request->phone;
         $otp = $request->otp;
-
-        $storedOtp = Cache::get('otp');
+    
+        $storedOtp = Cache::get('otp_' . $phone);
+    
         if (!$storedOtp || $storedOtp != $otp) {
             return response()->json([
                 'status' => false,
@@ -324,23 +325,23 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-
+    
         Cache::forget('otp_' . $phone);
-
+    
         return response()->json([
             'status' => true,
             'message' => 'OTP verified successfully. You can now reset your password.',
             'data' => null
         ], 200);
     }
-
+    
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
-            'password' => 'required|min:6|confirmed',  
+            'password' => 'required|min:6|confirmed',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -348,22 +349,12 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-
+    
         $phone = $request->phone;
         $newPassword = $request->password;
-
-        $storedOtp = Cache::get('otp');
-
-        if (!$storedOtp) {
-            return response()->json([
-                'status' => false,
-                'message' => 'OTP has either expired or was not verified.',
-                'data' => null
-            ], 402);
-        }
-
+    
         $client = Client::where('phone', $phone)->first();
-
+    
         if (!$client) {
             return response()->json([
                 'status' => false,
@@ -371,16 +362,17 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 404);
         }
-
+    
         $client->password = Hash::make($newPassword);
         $client->save();
-
+    
         return response()->json([
             'status' => true,
             'message' => 'Password reset successfully.',
             'data' => null
         ], 200);
     }
+    
 
     public function changePassword(Request $request)
     {
@@ -415,14 +407,13 @@ class ClientAuthController extends Controller
             'data' => null
         ], 200);
     }
-
-
+    
     public function changePhoneRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'new_phone' => 'required|unique:clients,phone',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -430,9 +421,9 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-
+    
         $client = auth('client')->user();
-
+    
         if (!$client) {
             return response()->json([
                 'status' => false,
@@ -440,31 +431,30 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 401);
         }
-
-        $otp = 1234;
-
+    
+        $otp = rand(100000, 999999); // Generate a 6-digit OTP
+    
         Cache::put('otp_change_phone_' . $client->id, [
             'otp' => $otp,
             'new_phone' => $request->new_phone,
         ], now()->addMinutes(10));
-
-        // Simulate sending the OTP (you can integrate an SMS service here)
-        // Log::info("OTP for phone {$request->new_phone}: {$otp}"); // For debugging only
-        // Send SMS or notification here
-
+    
+        // Send OTP via email
+        Mail::to($client->email)->send(new OtpMail($otp));
+    
         return response()->json([
             'status' => true,
-            'message' => 'OTP sent to the new phone number.',
+            'message' => 'OTP sent to your email.',
             'data' => null,
         ], 200);
     }
-
+    
     public function verifyChangePhone(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'otp' => 'required|numeric',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -472,9 +462,9 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-
+    
         $client = auth('client')->user();
-
+    
         if (!$client) {
             return response()->json([
                 'status' => false,
@@ -482,9 +472,9 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 401);
         }
-
+    
         $cachedData = Cache::get('otp_change_phone_' . $client->id);
-
+    
         if (!$cachedData || $cachedData['otp'] != $request->otp) {
             return response()->json([
                 'status' => false,
@@ -492,12 +482,12 @@ class ClientAuthController extends Controller
                 'data' => null,
             ], 402);
         }
-
+    
         $client->phone = $cachedData['new_phone'];
         $client->save();
-
+    
         Cache::forget('otp_change_phone_' . $client->id);
-
+    
         return response()->json([
             'status' => true,
             'message' => 'Phone number updated successfully.',
@@ -506,6 +496,7 @@ class ClientAuthController extends Controller
             ],
         ], 200);
     }
+    
 
     public function getAllClients()
     {
