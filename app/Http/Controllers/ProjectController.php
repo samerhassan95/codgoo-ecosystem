@@ -40,7 +40,6 @@ class ProjectController extends BaseController
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
             'category_id' => 'nullable|exists:categories,id',
-            // Remove 'client_id' from validation rules
         ]);
     
         $user = auth()->user();
@@ -59,10 +58,17 @@ class ProjectController extends BaseController
             ], 403);
         }
     
+        // Remove 'addons' from the main project data to prevent SQL error
+        $addons = $validatedData['addons'] ?? [];
+        unset($validatedData['addons']);
+    
+        // Add client ID to project data
         $validatedData['client_id'] = $user->id;
     
+        // Create the project
         $project = Project::create($validatedData);
     
+        // Handle attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
@@ -73,28 +79,22 @@ class ProjectController extends BaseController
             }
         }
     
-        if (!empty($validatedData['addons'])) {
-            $product = $project->product;
-            $productAddons = $product ? $product->addons->pluck('id')->toArray() : [];
-    
-            $newAddons = array_diff($validatedData['addons'], $productAddons);
-    
-            if (!empty($newAddons)) {
-                $project->addons()->attach($newAddons);
-            }
+        // Attach addons to the project (Many-to-Many Relationship)
+        if (!empty($addons)) {
+            $project->addons()->attach($addons);
         }
     
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 201);
     }
-
+    
     public function update(Request $request, $id)
     {
         $project = Project::find($id);
-
+    
         if (!$project) {
             return response()->json(['message' => 'Project not found.'], 404);
         }
-
+    
         $validatedData = $request->validate([
             'product_id' => 'nullable|exists:products,id',
             'name' => 'nullable|string|max:255',
@@ -106,20 +106,25 @@ class ProjectController extends BaseController
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
             'category_id' => 'nullable|exists:categories,id',
-            'client_id' => 'nullable|exists:clients,id',
         ]);
-
+    
         $user = auth()->user();
-
+    
         if ($user instanceof \App\Models\Client && isset($validatedData['price'])) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Admin can update the price.',
             ], 403);
         }
-
+    
+        // Remove 'addons' from the main project data to prevent SQL error
+        $addons = $validatedData['addons'] ?? [];
+        unset($validatedData['addons']);
+    
+        // Update the project
         $project->update($validatedData);
-
+    
+        // Handle attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
@@ -128,13 +133,14 @@ class ProjectController extends BaseController
                 ]);
             }
         }
-
-        if (isset($validatedData['addons'])) {
-            $project->addons()->sync($validatedData['addons']);
-        }
-
+    
+        // Update addons (Many-to-Many Relationship)
+        $project->addons()->sync($addons);
+    
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 200);
     }
+    
+    
 
     public function getStatusCounts()
     {
