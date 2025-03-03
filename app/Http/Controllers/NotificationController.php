@@ -206,7 +206,7 @@ class NotificationController extends Controller
 
         $receiver = Client::find($request->receiver_id);
 
-        if (!$receiver || !$receiver->fcm_token) {
+        if (!$receiver || !$receiver->device_token) {
             return response()->json(['message' => 'Receiver not found or missing FCM token'], 400);
         }
 
@@ -219,7 +219,7 @@ class NotificationController extends Controller
         ];
 
         // Send Firebase Notification
-        $this->firebaseService->sendChatNotification($receiver->fcm_token, $messageData);
+        $this->firebaseService->sendChatNotification($receiver->device_token, $messageData);
 
         return response()->json(['message' => 'Chat notification sent successfully!']);
     }
