@@ -284,7 +284,7 @@ class ClientAuthController extends Controller
         }
     
         $client = Client::where('phone', $request->phone)->first();
-        $otp = rand(100000, 999999); // Generate a 6-digit OTP
+        $otp = rand(1000, 9999); // Generate a 6-digit OTP
     
         Cache::put('otp_' . $client->phone, $otp, now()->addMinutes(10));
     
@@ -432,7 +432,7 @@ class ClientAuthController extends Controller
             ], 401);
         }
     
-        $otp = rand(100000, 999999); // Generate a 6-digit OTP
+        $otp = rand(1000, 9999);// Generate a 6-digit OTP
     
         Cache::put('otp_change_phone_' . $client->id, [
             'otp' => $otp,
