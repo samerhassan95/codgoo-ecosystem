@@ -193,4 +193,35 @@ class NotificationController extends Controller
         ]);
     }
 
+
+    public function sendChatNotification(Request $request)
+    {
+        $request->validate([
+            'receiver_id' => 'required|integer|exists:clients,id',
+            'sender_id' => 'required|integer|exists:clients,id',
+            'message' => 'nullable|string',
+            'imageUrl' => 'nullable|string',
+            'audio' => 'nullable|string',
+        ]);
+
+        $receiver = Client::find($request->receiver_id);
+
+        if (!$receiver || !$receiver->fcm_token) {
+            return response()->json(['message' => 'Receiver not found or missing FCM token'], 400);
+        }
+
+        $messageData = [
+            'id' => uniqid(), // Generate unique message ID
+            'userId' => $request->sender_id,
+            'message' => $request->message ?? "",
+            'imageUrl' => $request->imageUrl ?? "",
+            'audio' => $request->audio ?? "",
+        ];
+
+        // Send Firebase Notification
+        $this->firebaseService->sendChatNotification($receiver->fcm_token, $messageData);
+
+        return response()->json(['message' => 'Chat notification sent successfully!']);
+    }
+
 }

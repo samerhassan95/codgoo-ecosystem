@@ -121,4 +121,35 @@ class FirebaseService
             'message' => 'All messages marked as seen for chat: ' . $chatId
         ]);
     }
+
+    public function sendChatNotification($token, $messageData)
+    {
+        $title = "New Message"; // Default title
+        $body = ""; // Notification body
+    
+        if (!empty($messageData['imageUrl'])) {
+            $body = "📷 New Image"; // Notification for an image
+        } elseif (!empty($messageData['audio'])) {
+            $body = "🎤 New Voice Message"; // Notification for an audio message
+        } elseif (!empty($messageData['message'])) {
+            $body = $messageData['message']; // Notification with text content
+        } else {
+            $body = "📩 You have a new message"; // Default notification
+        }
+    
+        $notification = Notification::create($title, $body);
+        $message = CloudMessage::withTarget('token', $token)
+            ->withNotification($notification)
+            ->withData([
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                'chat_id' => $messageData['id'] ?? "",
+                'user_id' => $messageData['userId'] ?? "",
+                'message' => $messageData['message'] ?? "",
+                'imageUrl' => $messageData['imageUrl'] ?? "",
+                'audio' => $messageData['audio'] ?? "",
+            ]);
+    
+        return $this->messaging->send($message);
+    }
+    
 }

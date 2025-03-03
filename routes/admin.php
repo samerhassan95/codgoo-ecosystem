@@ -146,5 +146,6 @@ Route::middleware('admin')->group(function () {
     Route::post('chats/{chatId}/seen', [ChatController::class, 'markChatAsSeen']);
     Route::get('employees', [EmployeeAuthController::class, 'getAllEmployees']);
     Route::delete('products/{product}/media/{media}', [ProductController::class, 'deleteMedia']);
+    Route::post('send-chat-notification', [NotificationController::class, 'sendChatNotification']);
 
 });
