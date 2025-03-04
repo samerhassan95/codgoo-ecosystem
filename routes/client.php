@@ -19,7 +19,8 @@ use App\Http\Controllers\{CategoryController,
     TicketReplyController,
     TopicController,
     AvailableSlotController,
-    NotificationController
+    NotificationController,
+    PaymentController
 };
 use Illuminate\Support\Facades\Route;
 
@@ -155,4 +156,9 @@ Route::middleware('client')->group(function ()  {
     Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
 
+    Route::post('opay/initiate', [PaymentController::class, 'initiatePayment']);
+    Route::get('opay/callback', [PaymentController::class, 'callback'])->name('payment.callback');
+    Route::get('/payment/success', function () {
+        return 'Payment successful!';
+    })->name('payment.success');
 });

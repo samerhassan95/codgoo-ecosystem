@@ -211,14 +211,13 @@ class NotificationController extends Controller
         }
 
         $messageData = [
-            'id' => uniqid(), // Generate unique message ID
+            'id' => uniqid(), 
             'userId' => $request->sender_id,
             'message' => $request->message ?? "",
             'imageUrl' => $request->imageUrl ?? "",
             'audio' => $request->audio ?? "",
         ];
 
-        // Send Firebase Notification
         $this->firebaseService->sendChatNotification($receiver->device_token, $messageData);
 
         return response()->json(['message' => 'Chat notification sent successfully!']);
