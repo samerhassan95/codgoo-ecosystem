@@ -197,18 +197,13 @@ class NotificationController extends Controller
     public function sendChatNotification(Request $request)
     {
         $request->validate([
-            'receiver_id' => 'required|integer|exists:clients,id',
-            'sender_id' => 'required|integer|exists:clients,id',
+            'receiver_id' => 'nullable|integer',
+            'sender_id' => 'required|integer',
+            'sender_type' => 'required|string|in:client,admin',
             'message' => 'nullable|string',
             'imageUrl' => 'nullable|string',
             'audio' => 'nullable|string',
         ]);
-
-        $receiver = Client::find($request->receiver_id);
-
-        if (!$receiver || !$receiver->device_token) {
-            return response()->json(['message' => 'Receiver not found or missing FCM token'], 400);
-        }
 
         $messageData = [
             'id' => uniqid(), 
@@ -218,9 +213,24 @@ class NotificationController extends Controller
             'audio' => $request->audio ?? "",
         ];
 
-        $this->firebaseService->sendChatNotification($receiver->device_token, $messageData);
+        if ($request->sender_type === 'client') {
+            // Client is sending message to Admins
+            $admins = Admin::whereNotNull('device_token')->pluck('device_token')->toArray();
+            if (!empty($admins)) {
+                foreach ($admins as $adminToken) {
+                    $this->firebaseService->sendChatNotification($adminToken, $messageData);
+                }
+            }
+        } else {
+            // Admin is sending message to Client
+            $receiver = Client::find($request->receiver_id);
+            if ($receiver && $receiver->device_token) {
+                $this->firebaseService->sendChatNotification($receiver->device_token, $messageData);
+            }
+        }
 
         return response()->json(['message' => 'Chat notification sent successfully!']);
     }
+
 
 }

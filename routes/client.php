@@ -156,9 +156,6 @@ Route::middleware('client')->group(function ()  {
     Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
 
-    Route::post('opay/initiate', [PaymentController::class, 'initiatePayment']);
-    Route::get('opay/callback', [PaymentController::class, 'callback'])->name('payment.callback');
-    Route::get('/payment/success', function () {
-        return 'Payment successful!';
-    })->name('payment.success');
+    Route::post('pay', [PaymentController::class, 'initiatePayment'])->name('payment.initiate');
+    Route::post('payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
 });
