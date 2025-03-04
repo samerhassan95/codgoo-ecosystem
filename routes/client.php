@@ -152,7 +152,6 @@ Route::middleware('client')->group(function ()  {
     Route::get('contracts/{contractId}', [ContractController::class, 'getContractDetails']);
     Route::get('contracts', [ContractController::class, 'getClientContracts']);
   
-    Route::get('notifications', [NotificationController::class, 'getClientNotifications']);
     Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
 

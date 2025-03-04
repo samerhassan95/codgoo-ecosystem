@@ -214,7 +214,7 @@ class NotificationController extends Controller
         ];
 
         if ($request->sender_type === 'client') {
-            // Client is sending message to Admins
+
             $admins = Admin::whereNotNull('device_token')->pluck('device_token')->toArray();
             if (!empty($admins)) {
                 foreach ($admins as $adminToken) {
@@ -222,7 +222,6 @@ class NotificationController extends Controller
                 }
             }
         } else {
-            // Admin is sending message to Client
             $receiver = Client::find($request->receiver_id);
             if ($receiver && $receiver->device_token) {
                 $this->firebaseService->sendChatNotification($receiver->device_token, $messageData);
