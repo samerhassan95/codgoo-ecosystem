@@ -49,4 +49,4 @@ Route::prefix('employee')->group(function() {
 //     return 'Email has been sent!';
 // });
 Route::post('send-chat-notification', [NotificationController::class, 'sendChatNotification']);
-Route::get('notifications', [NotificationController::class, 'getClientNotifications']);
+Route::get('notifications', [NotificationController::class, 'getNotifications']);

@@ -138,20 +138,21 @@ class NotificationController extends Controller
         return response()->json(['message' => 'Notifications sent to all clients successfully!']);
     }
 
-    public function getClientNotifications(Request $request)
+    public function getNotifications(Request $request)
     {
-        $client = $request->user();
-
-        $notifications = Notification::where('notifiable_id', $client->id)
-            ->where('notifiable_type', get_class($client))
+        $user = $request->user(); // Get authenticated user
+    
+        $notifications = Notification::where('notifiable_id', $user->id)
+            ->where('notifiable_type', get_class($user))
             ->latest()
             ->get();
-
+    
         return response()->json([
             'status' => true,
             'data' => NotificationResource::collection($notifications),
         ]);
     }
+    
 
 
     public function markNotificationAsRead($id, Request $request)
