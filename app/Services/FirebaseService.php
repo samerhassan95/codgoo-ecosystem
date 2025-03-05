@@ -124,19 +124,20 @@ class FirebaseService
 
     public function sendChatNotification($token, $messageData)
     {
-        $title = "New Message"; // Default title
-        $body = ""; // Notification body
-    
+        $template = NotificationTemplate::where('type', 'chat_message')->first();
+        $title = $template->title ?? "New Message";
+        $body = $template->message ?? "{message}";
+
         if (!empty($messageData['imageUrl'])) {
-            $body = "📷 New Image"; // Notification for an image
+            $body = str_replace("{message}", "📷 New Image", $body);
         } elseif (!empty($messageData['audio'])) {
-            $body = "🎤 New Voice Message"; // Notification for an audio message
+            $body = str_replace("{message}", "🎤 New Voice Message", $body);
         } elseif (!empty($messageData['message'])) {
-            $body = $messageData['message']; // Notification with text content
+            $body = str_replace("{message}", $messageData['message'], $body);
         } else {
-            $body = "📩 You have a new message"; // Default notification
+            $body = str_replace("{message}", "📩 You have a new message", $body);
         }
-    
+
         $notification = Notification::create($title, $body);
         $message = CloudMessage::withTarget('token', $token)
             ->withNotification($notification)
@@ -148,8 +149,9 @@ class FirebaseService
                 'imageUrl' => $messageData['imageUrl'] ?? "",
                 'audio' => $messageData['audio'] ?? "",
             ]);
-    
+
         return $this->messaging->send($message);
     }
+
     
 }
