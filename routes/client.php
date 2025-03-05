@@ -20,7 +20,9 @@ use App\Http\Controllers\{CategoryController,
     TopicController,
     AvailableSlotController,
     NotificationController,
-    PaymentController
+    PaymentController,
+    ChatController, 
+
 };
 use Illuminate\Support\Facades\Route;
 
