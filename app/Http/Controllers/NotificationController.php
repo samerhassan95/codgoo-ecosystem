@@ -223,7 +223,7 @@ class NotificationController extends Controller
         $messageData = [
             'id' => uniqid(),
             'userId' => $request->sender_id,
-            'chat_id' => $request->sender_id, // أضف chat_id هنا
+            'data' => $request->sender_id, 
             'message' => $request->message ?? "",
             'imageUrl' => $request->imageUrl ?? "",
             'audio' => $request->audio ?? "",
