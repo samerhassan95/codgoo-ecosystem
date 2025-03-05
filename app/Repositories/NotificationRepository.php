@@ -14,7 +14,7 @@ class NotificationRepository
         'title' => $title,
         'message' => $message,
         'token' => $token,
-        'data' => json_encode($data), 
+        'data' => !empty($data) ? json_encode($data) : json_encode([]),
         'is_read' => false,
     ]);
 }
