@@ -242,8 +242,7 @@ class NotificationController extends Controller
         } else {
             $body = str_replace("{message}", "📩 You have a new message", $body);
         }
-        dd($messageData);
-
+        
         if ($request->sender_type === 'client') {
             $admins = Admin::whereNotNull('device_token')->get();
             if ($admins->isEmpty()) {
