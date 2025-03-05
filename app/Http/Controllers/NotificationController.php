@@ -212,7 +212,6 @@ class NotificationController extends Controller
             'message' => 'nullable|string',
             'imageUrl' => 'nullable|string',
             'audio' => 'nullable|string',
-            'chat_id' => 'required|string', // تأكد من استقبال chat_id
         ]);
     
         $template = NotificationTemplate::where('type', 'chat_message')->first();
@@ -224,7 +223,7 @@ class NotificationController extends Controller
         $messageData = [
             'id' => uniqid(),
             'userId' => $request->sender_id,
-            'chat_id' => $request->chat_id, // أضف chat_id هنا
+            'chat_id' => $request->sender_id, // أضف chat_id هنا
             'message' => $request->message ?? "",
             'imageUrl' => $request->imageUrl ?? "",
             'audio' => $request->audio ?? "",
