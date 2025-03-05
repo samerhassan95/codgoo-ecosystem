@@ -139,22 +139,30 @@ class NotificationController extends Controller
     }
 
     public function getNotifications(Request $request)
-    {
-        $user = $request->user(); // Get authenticated user
-    
-        $notifications = Notification::where('notifiable_id', $user->id)
-            ->where('notifiable_type', get_class($user))
-            ->latest()
-            ->get();
-    
-        return response()->json([
-            'status' => true,
-            'data' => NotificationResource::collection($notifications),
-        ]);
-    }
-    
+{
+    $user = $request->user();
 
+    $notifications = Notification::where('notifiable_id', $user->id)
+        ->where('notifiable_type', get_class($user))
+        ->latest()
+        ->get();
 
+    return response()->json([
+        'status' => true,
+        'data' => $notifications->map(function ($notification) {
+            return [
+                'id' => $notification->id,
+                'title' => $notification->title,
+                'message' => $notification->message,
+                'data' => json_decode($notification->data, true), 
+                'is_read' => $notification->is_read,
+                'created_at' => $notification->created_at,
+            ];
+        }),
+    ]);
+}
+
+    
     public function markNotificationAsRead($id, Request $request)
     {
         $client = $request->user();
@@ -196,68 +204,68 @@ class NotificationController extends Controller
 
 
     public function sendChatNotification(Request $request)
-{
-    $request->validate([
-        'receiver_id' => 'nullable|integer',
-        'sender_id' => 'required|integer',
-        'sender_type' => 'required|string|in:client,admin',
-        'message' => 'nullable|string',
-        'imageUrl' => 'nullable|string',
-        'audio' => 'nullable|string',
-    ]);
-
-    // Fetch the chat notification template from the database
-    $template = NotificationTemplate::where('type', 'chat_message')->first();
-
-    if (!$template) {
-        return response()->json(['message' => 'Chat notification template not found.'], 400);
-    }
-
-    // Prepare message data
-    $messageData = [
-        'id' => uniqid(),
-        'userId' => $request->sender_id,
-        'message' => $request->message ?? "",
-        'imageUrl' => $request->imageUrl ?? "",
-        'audio' => $request->audio ?? "",
-    ];
-
-    // Dynamic message formatting using placeholders
-    $title = $template->title;
-    $body = $template->message;
-
-    if ($request->message) {
-        $body = str_replace("{message}", $request->message, $body);
-    } elseif ($request->imageUrl) {
-        $body = str_replace("{message}", "📷 New Image", $body);
-    } elseif ($request->audio) {
-        $body = str_replace("{message}", "🎤 New Voice Message", $body);
-    } else {
-        $body = str_replace("{message}", "📩 You have a new message", $body);
-    }
-
-    if ($request->sender_type === 'client') {
-        $admins = Admin::whereNotNull('device_token')->get();
-        if ($admins->isEmpty()) {
-            return response()->json(['message' => 'No admin found with a valid device token.'], 400);
+    {
+        $request->validate([
+            'receiver_id' => 'nullable|integer',
+            'sender_id' => 'required|integer',
+            'sender_type' => 'required|string|in:client,admin',
+            'message' => 'nullable|string',
+            'imageUrl' => 'nullable|string',
+            'audio' => 'nullable|string',
+            'chat_id' => 'required|string', // تأكد من استقبال chat_id
+        ]);
+    
+        $template = NotificationTemplate::where('type', 'chat_message')->first();
+    
+        if (!$template) {
+            return response()->json(['message' => 'Chat notification template not found.'], 400);
         }
-
-        foreach ($admins as $admin) {
-            $this->firebaseService->sendChatNotification($admin->device_token, $messageData);
-            $this->notificationRepository->createNotification($admin, $title, $body, $admin->device_token);
+    
+        $messageData = [
+            'id' => uniqid(),
+            'userId' => $request->sender_id,
+            'chat_id' => $request->chat_id, // أضف chat_id هنا
+            'message' => $request->message ?? "",
+            'imageUrl' => $request->imageUrl ?? "",
+            'audio' => $request->audio ?? "",
+        ];
+    
+        $title = $template->title;
+        $body = $template->message;
+    
+        if ($request->message) {
+            $body = str_replace("{message}", $request->message, $body);
+        } elseif ($request->imageUrl) {
+            $body = str_replace("{message}", "📷 New Image", $body);
+        } elseif ($request->audio) {
+            $body = str_replace("{message}", "🎤 New Voice Message", $body);
+        } else {
+            $body = str_replace("{message}", "📩 You have a new message", $body);
         }
-    } else {
-        $receiver = Client::find($request->receiver_id);
-        if (!$receiver || !$receiver->device_token) {
-            return response()->json(['message' => 'Receiver not found or missing device token.'], 400);
+    
+        if ($request->sender_type === 'client') {
+            $admins = Admin::whereNotNull('device_token')->get();
+            if ($admins->isEmpty()) {
+                return response()->json(['message' => 'No admin found with a valid device token.'], 400);
+            }
+    
+            foreach ($admins as $admin) {
+                $this->firebaseService->sendChatNotification($admin->device_token, $messageData);
+                $this->notificationRepository->createNotification($admin, $title, $body, $admin->device_token, $messageData);
+            }
+        } else {
+            $receiver = Client::find($request->receiver_id);
+            if (!$receiver || !$receiver->device_token) {
+                return response()->json(['message' => 'Receiver not found or missing device token.'], 400);
+            }
+    
+            $this->firebaseService->sendChatNotification($receiver->device_token, $messageData);
+            $this->notificationRepository->createNotification($receiver, $title, $body, $receiver->device_token, $messageData);
         }
-
-        $this->firebaseService->sendChatNotification($receiver->device_token, $messageData);
-        $this->notificationRepository->createNotification($receiver, $title, $body, $receiver->device_token);
+    
+        return response()->json(['message' => 'Chat notification sent successfully!']);
     }
-
-    return response()->json(['message' => 'Chat notification sent successfully!']);
-}
+    
 
 
 
