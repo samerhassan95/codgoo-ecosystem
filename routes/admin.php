@@ -147,5 +147,6 @@ Route::middleware('admin')->group(function () {
     Route::get('employees', [EmployeeAuthController::class, 'getAllEmployees']);
     Route::delete('products/{product}/media/{media}', [ProductController::class, 'deleteMedia']);
     Route::get('notifications', [NotificationController::class, 'getNotifications']);
-
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
 });
