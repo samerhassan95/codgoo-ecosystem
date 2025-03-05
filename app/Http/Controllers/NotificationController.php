@@ -251,10 +251,8 @@ class NotificationController extends Controller
     
             foreach ($admins as $admin) {
                 $this->firebaseService->sendChatNotification($admin->device_token, $messageData);
-                $this->notificationRepository->createNotification($receiver, $title, $body, $admin->device_token, $messageData);
-            }$this->notificationRepository->createNotification(
-            );
-            
+                $this->notificationRepository->createNotification($admin, $title, $body, $admin->device_token, $messageData);
+            }
         } else {
             $receiver = Client::find($request->receiver_id);
             if (!$receiver || !$receiver->device_token) {
