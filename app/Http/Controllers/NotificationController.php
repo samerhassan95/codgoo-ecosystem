@@ -139,28 +139,29 @@ class NotificationController extends Controller
     }
 
     public function getNotifications(Request $request)
-{
-    $user = $request->user();
-
-    $notifications = Notification::where('notifiable_id', $user->id)
-        ->where('notifiable_type', get_class($user))
-        ->latest()
-        ->get();
-
-    return response()->json([
-        'status' => true,
-        'data' => $notifications->map(function ($notification) {
-            return [
-                'id' => $notification->id,
-                'title' => $notification->title,
-                'message' => $notification->message,
-                'data' => json_decode($notification->data, true), 
-                'is_read' => $notification->is_read,
-                'created_at' => $notification->created_at,
-            ];
-        }),
-    ]);
-}
+    {
+        $user = $request->user();
+    
+        $notifications = Notification::where('notifiable_id', $user->id)
+            ->where('notifiable_type', get_class($user))
+            ->latest()
+            ->get();
+    
+        return response()->json([
+            'status' => true,
+            'data' => $notifications->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                    'data' => $notification->data, // 🟢 بفضل الـ Casting سيتم فك تشفيرها تلقائيًا
+                    'is_read' => $notification->is_read,
+                    'created_at' => $notification->created_at,
+                ];
+            }),
+        ]);
+    }
+    
 
     
     public function markNotificationAsRead($id, Request $request)
@@ -223,12 +224,12 @@ class NotificationController extends Controller
         $messageData = [
             'id' => uniqid(),
             'userId' => $request->sender_id,
-            'data' => $request->sender_id, 
+            'receiver_id' => $request->receiver_id,
             'message' => $request->message ?? "",
             'imageUrl' => $request->imageUrl ?? "",
             'audio' => $request->audio ?? "",
         ];
-    
+        
         $title = $template->title;
         $body = $template->message;
     
@@ -250,8 +251,10 @@ class NotificationController extends Controller
     
             foreach ($admins as $admin) {
                 $this->firebaseService->sendChatNotification($admin->device_token, $messageData);
-                $this->notificationRepository->createNotification($admin, $title, $body, $admin->device_token, $messageData);
-            }
+                $this->notificationRepository->createNotification($receiver, $title, $body, $admin->device_token, $messageData);
+            }$this->notificationRepository->createNotification(
+            );
+            
         } else {
             $receiver = Client::find($request->receiver_id);
             if (!$receiver || !$receiver->device_token) {
