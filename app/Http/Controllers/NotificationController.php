@@ -222,13 +222,9 @@ class NotificationController extends Controller
         }
     
         $messageData = [
-            'id' => uniqid(),
             'userId' => $request->sender_id,
-            'receiver_id' => $request->receiver_id,
-            'message' => $request->message ?? "",
-            'imageUrl' => $request->imageUrl ?? "",
-            'audio' => $request->audio ?? "",
         ];
+        
         
         $title = $template->title;
         $body = $template->message;
