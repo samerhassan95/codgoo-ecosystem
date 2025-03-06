@@ -8,12 +8,16 @@ use App\Http\Resources\SliderResource;
 use App\Models\Admin;
 use App\Models\attachment;
 use App\Models\Client;
+use App\Models\NotificationTemplate;
 use App\Models\Project;
+use App\Repositories\NotificationRepository;
 use App\Repositories\ProjectRepositoryInterface;
 use App\Repositories\SliderRepositoryInterface;
+use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Services\ImageService;
+use Illuminate\Support\Facades\Log;
 
 class ProjectController extends BaseController
 {
@@ -30,45 +34,31 @@ class ProjectController extends BaseController
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'product_id' => 'nullable|exists:products,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'nullable|numeric|min:0',
-            'note' => 'nullable|string|max:1000',
-            'status' => 'string|in:reject,completed,ongoing,requested',
+            'category_id' => 'nullable|exists:categories,id',
             'addons' => 'array',
             'addons.*' => 'exists:addons,id',
             'attachments.*' => 'file|max:10240',
-            'category_id' => 'nullable|exists:categories,id',
         ]);
-    
+
         $user = auth()->user();
-    
+
         if (!$user instanceof \App\Models\Client) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only clients can create projects.',
             ], 403);
         }
-    
-        if (isset($validatedData['price'])) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Admin can set the price.',
-            ], 403);
-        }
-    
-        // Remove 'addons' from the main project data to prevent SQL error
+
         $addons = $validatedData['addons'] ?? [];
         unset($validatedData['addons']);
-    
-        // Add client ID to project data
+        unset($validatedData['attachments']);
+
         $validatedData['client_id'] = $user->id;
-    
-        // Create the project
+
         $project = Project::create($validatedData);
-    
-        // Handle attachments
+
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = ImageService::upload($file, 'attachments');
@@ -78,23 +68,62 @@ class ProjectController extends BaseController
                 ]);
             }
         }
-    
-        // Attach addons to the project (Many-to-Many Relationship)
+
         if (!empty($addons)) {
             $project->addons()->attach($addons);
         }
-    
+
+        $this->sendProjectCreatedNotification($project);
+
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 201);
     }
-    
+
+    private function sendProjectCreatedNotification(Project $project)
+    {
+        $admins = Admin::whereNotNull('device_token')->get();
+
+        if ($admins->isEmpty()) {
+            Log::warning('No admins with device tokens found for project creation notification.');
+            return;
+        }
+
+        $template = NotificationTemplate::where('type', 'project_created')->first();
+        if (!$template) {
+            Log::error('Notification template "project_created" not found.');
+            return;
+        }
+
+        $title = $template->title;
+        $message = str_replace(
+            ['{project_name}', '{client_name}'],
+            [$project->name, $project->client->name],
+            $template->message
+        );
+
+        foreach ($admins as $admin) {
+            try {
+
+                $dataPayload = [
+                    'project_id' => $project->id,
+                    'notification_type' => 'project_created',
+                ];
+                app(FirebaseService::class)->sendNotification($admin->device_token, $title, $message, $dataPayload);
+                app(NotificationRepository::class)->createNotification($admin, $title, $message, $admin->device_token);
+            } catch (\Exception $e) {
+                Log::error('Error sending project creation notification: ' . $e->getMessage());
+            }
+        }
+    }
+
+
     public function update(Request $request, $id)
     {
         $project = Project::find($id);
-    
+
         if (!$project) {
             return response()->json(['message' => 'Project not found.'], 404);
         }
-    
+
         $validatedData = $request->validate([
             'product_id' => 'nullable|exists:products,id',
             'name' => 'nullable|string|max:255',
@@ -107,23 +136,23 @@ class ProjectController extends BaseController
             'attachments.*' => 'file|max:10240',
             'category_id' => 'nullable|exists:categories,id',
         ]);
-    
+
         $user = auth()->user();
-    
+
         if ($user instanceof \App\Models\Client && isset($validatedData['price'])) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Admin can update the price.',
             ], 403);
         }
-    
+
         // Remove 'addons' from the main project data to prevent SQL error
         $addons = $validatedData['addons'] ?? [];
         unset($validatedData['addons']);
-    
+
         // Update the project
         $project->update($validatedData);
-    
+
         // Handle attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
@@ -133,40 +162,40 @@ class ProjectController extends BaseController
                 ]);
             }
         }
-    
+
         // Update addons (Many-to-Many Relationship)
         $project->addons()->sync($addons);
-    
+
         return response()->json(new ProjectResource($project->load(['attachments', 'addons'])), 200);
     }
-    
-    
+
+
 
     public function getStatusCounts()
     {
         $user = auth()->user();
-    
+
         if (!$user || $user instanceof \App\Models\Admin) {
             return response()->json(['message' => 'Access denied.'], 403);
         }
-    
+
         $projects = Project::where('client_id', $user->id)->get();
-    
+
         $statusCounts = [
             'requested' => 0,
             'ongoing' => 0,
             'completed' => 0,
             'reject' => 0,
         ];
-    
+
         foreach ($projects as $project) {
             $status = $project->status;
-    
+
             if (isset($statusCounts[$status])) {
                 $statusCounts[$status]++;
             }
         }
-    
+
         return response()->json([
             'status' => true,
             'data' => $statusCounts,
@@ -217,7 +246,7 @@ class ProjectController extends BaseController
             'data' => ProjectResource::collection($filteredProjects->values()),
         ]);
     }
-    
+
 
     public function getProjectDetails($projectId)
     {
@@ -326,28 +355,28 @@ class ProjectController extends BaseController
     public function getAllAttachments($projectId)
     {
         $user = auth()->user();
-    
+
         $project = Project::where('id', $projectId)
             ->where('client_id', $user->id)
             ->with('attachments')
             ->first();
-    
+
         if (!$project) {
             return response()->json(['status' => false, 'message' => 'Project not found.'], 404);
         }
-    
+
         $attachments = $project->attachments->map(function ($attachment) {
             $uploadedBy = null;
             if ($attachment->uploaded_by_id) {
                 $uploadedBy = Client::find($attachment->uploaded_by_id);
-    
+
                 if (!$uploadedBy) {
                     $uploadedBy = Admin::find($attachment->uploaded_by_id);
                 }
             }
             $filePath =  $attachment->file_path;
             $fileType = file_exists($filePath) ? mime_content_type($filePath) : 'unknown';
-    
+
             return [
                 'id' => $attachment->id,
                 'file_path' => asset($attachment->file_path),
@@ -363,7 +392,7 @@ class ProjectController extends BaseController
                 ] : null,
             ];
         });
-    
+
         return response()->json([
             'status' => true,
             'data' => $attachments,
