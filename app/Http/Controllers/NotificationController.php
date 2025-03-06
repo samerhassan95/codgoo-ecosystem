@@ -145,6 +145,7 @@ class NotificationController extends Controller
         $notifications = Notification::where('notifiable_id', $user->id)
             ->where('notifiable_type', get_class($user))
             ->latest()
+            ->with('template')
             ->get();
     
         return response()->json([
@@ -154,13 +155,15 @@ class NotificationController extends Controller
                     'id' => $notification->id,
                     'title' => $notification->title,
                     'message' => $notification->message,
-                    'data' => $notification->data, // 🟢 بفضل الـ Casting سيتم فك تشفيرها تلقائيًا
+                    'data' => $notification->data, 
                     'is_read' => $notification->is_read,
                     'created_at' => $notification->created_at,
+                    'notification_type' => $notification->template?->type, 
                 ];
             }),
         ]);
     }
+    
     
 
     

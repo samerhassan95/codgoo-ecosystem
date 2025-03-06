@@ -6,25 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->json('data')->nullable();
+            $table->foreignId('notification_template_id')->constrained()->onDelete('cascade')->after('message')->nullable();
         });
-        
     }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    
+    public function down()
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->dropColumn('data');
+            $table->dropForeign(['notification_template_id']);
+            $table->dropColumn('notification_template_id');
         });
-
     }
+    
 };

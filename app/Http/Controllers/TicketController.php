@@ -77,6 +77,7 @@ class TicketController extends BaseController
 
         return response()->json(new TicketResource($ticket), 200);
     }
+    
     public function getTicketsForClient(Request $request)
     {
         $client = $request->user();
@@ -142,10 +143,8 @@ class TicketController extends BaseController
 
     public function getRepliesForTicket($ticket_id)
     {
-        // Find the ticket by its ID
         $ticket = Ticket::find($ticket_id);
 
-        // Check if the ticket exists
         if (!$ticket) {
             return response()->json([
                 'status' => false,
@@ -153,14 +152,12 @@ class TicketController extends BaseController
             ], 404);
         }
 
-        // Get all replies for the specific ticket
-        $replies = $ticket->replies; // Assuming `replies()` relationship is defined in the Ticket model
+        $replies = $ticket->replies;
 
-        // Return the replies wrapped in a resource collection
         return response()->json([
             'status' => true,
             'message' => 'Replies retrieved successfully.',
-            'data' => TicketReplyResource::collection($replies), // Transform the replies
+            'data' => TicketReplyResource::collection($replies),
         ]);
     }
 }

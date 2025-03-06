@@ -9,7 +9,7 @@ class Notification extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'message', 'token', 'is_read','notifiable_id','notifiable_type','data'];
+    protected $fillable = ['title', 'message', 'token', 'is_read','notifiable_id','notifiable_type','data','notification_template_id'];
 
     protected $casts = [
         'data' => 'array', 
@@ -18,4 +18,10 @@ class Notification extends Model
     {
         return $this->morphTo();
     }
+
+    public function template()
+    {
+        return $this->belongsTo(NotificationTemplate::class, 'notification_template_id');
+    }
+
 }

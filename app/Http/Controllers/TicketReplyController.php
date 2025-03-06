@@ -10,7 +10,6 @@ use App\Models\TicketReply;
 use App\Repositories\NotificationRepository;
 use App\Repositories\TicketReplyRepositoryInterface;
 use App\Services\FirebaseService;
-use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -27,7 +26,6 @@ class TicketReplyController extends BaseController
         $this->firebaseService = $firebaseService;
         $this->notificationRepository = $notificationRepository;
     }
-
 
     public function store(Request $request)
     {
@@ -57,8 +55,6 @@ class TicketReplyController extends BaseController
         return new TicketReplyResource($ticketReply);
     }
 
-
-
     private function sendTicketAnsweredNotification(Ticket $ticket)
     {
         $client = $ticket->client;
@@ -81,19 +77,23 @@ class TicketReplyController extends BaseController
         $title = $template->title;
         $message = str_replace(
             ['{ticket_id}'],
-            [$ticket->name],
+            [$ticket->id],
             $template->message
         );
 
-        try {
-            $this->firebaseService->sendNotification($client->device_token, $title, $message);
+        $dataPayload = [
+            'ticket_id' => $ticket->id,
+            'notification_type' => 'ticket_answered',
+        ];
 
-            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+        try {
+            $this->firebaseService->sendNotification($client->device_token, $title, $message, $dataPayload);
+
+            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token, 'ticket_answered');
 
             Log::info('Ticket answered notification sent successfully.', ['client_id' => $client->id]);
         } catch (\Exception $e) {
             Log::error('Error sending ticket answered notification: ' . $e->getMessage());
         }
     }
-
 }

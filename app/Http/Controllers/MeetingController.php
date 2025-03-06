@@ -12,6 +12,9 @@ use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\Admin;
+use App\Models\NotificationTemplate;
+use App\Repositories\NotificationRepository;
 
 class MeetingController extends Controller
 {
@@ -24,51 +27,66 @@ class MeetingController extends Controller
         $this->firebaseService = $firebaseService;
     }
 
+
     public function store(MeetingRequest $request)
     {
         $validated = $request->validated();
-
-        $duration = $validated['duration'] ?? 60;
-
-        $slot = AvailableSlot::findOrFail($validated['slot_id']);
-        $requestedStart = Carbon::parse($validated['start_time']);
-        $requestedEnd = $requestedStart->copy()->addMinutes($duration);
-
-        $existingMeetings = $slot->meetings()
-            ->where(function ($query) use ($requestedStart, $requestedEnd) {
-                $query->where('start_time', '<', $requestedEnd->toTimeString())
-                      ->where('end_time', '>', $requestedStart->toTimeString());
-            })
-            ->exists();
-
-        if ($existingMeetings) {
-            return response()->json([
-                'status' => false,
-                'message' => 'This time slot is already occupied.',
-            ], 400);
-        }
-
-        $jitsiRoom = 'meeting-' . uniqid();
-        $jitsiUrl = config('services.jitsi.base_url') . '/' . $jitsiRoom;
 
         $meeting = $this->repository->create([
             'slot_id' => $validated['slot_id'],
             'client_id' => $validated['client_id'],
             'meeting_name' => $validated['meeting_name'],
             'description' => $validated['description'] ?? null,
-            'start_time' => $requestedStart->toTimeString(),
-            'end_time' => $requestedEnd->toTimeString(),
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
             'project_id' => $validated['project_id'] ?? null,
-            'jitsi_url' => $jitsiUrl,
+            'jitsi_url' => config('services.jitsi.base_url') . '/meeting-' . uniqid(),
             'status' => 'Request Sent',
         ]);
 
-        $slot->meetings()->update([
-            'status' => true
-        ]);
+        // Send notification to all admins
+        $this->sendMeetingCreatedNotification($meeting);
 
         return response()->json(new MeetingResource($meeting), 201);
     }
+
+    private function sendMeetingCreatedNotification(Meeting $meeting)
+    {
+        $admins = Admin::whereNotNull('device_token')->get();
+
+        if ($admins->isEmpty()) {
+            Log::warning('No admins with device tokens found for meeting creation notification.');
+            return;
+        }
+
+        $template = NotificationTemplate::where('type', 'meeting_created')->first();
+        if (!$template) {
+            Log::error('Notification template "meeting_created" not found.');
+            return;
+        }
+
+        $title = $template->title;
+        $message = str_replace(
+            ['{meeting_name}', '{client_name}'],
+            [$meeting->meeting_name, $meeting->client->name],
+            $template->message
+        );
+
+        foreach ($admins as $admin) {
+            try {
+                
+                $dataPayload = [
+                    'meeting_id' => $meeting->id,
+                    'notification_type' => 'meeting_created',
+                ];
+                app(FirebaseService::class)->sendNotification($admin->device_token, $title, $message, $dataPayload);
+                app(NotificationRepository::class)->createNotification($admin, $title, $message, $admin->device_token, 'meeting_created');
+            } catch (\Exception $e) {
+                Log::error('Error sending meeting creation notification: ' . $e->getMessage());
+            }
+        }
+    }
+
 
 
     public function getMeetingsForClient(Request $request)
@@ -173,7 +191,7 @@ class MeetingController extends Controller
             ], 404);
         }
 
-        $oldStatus = $meeting->status; 
+        $oldStatus = $meeting->status;
 
         $meeting->update([
             'slot_id' => $request->slot_id ?? $meeting->slot_id,
@@ -223,9 +241,14 @@ class MeetingController extends Controller
         );
 
         try {
-            $this->firebaseService->sendNotification($client->device_token, $title, $message);
 
-            app(\App\Repositories\NotificationRepository::class)->createNotification($client, $title, $message, $client->device_token);
+            $dataPayload = [
+                'meeting_id' => $meeting->id,
+                'notification_type' => 'meeting_status_updated',
+            ];
+            $this->firebaseService->sendNotification($client->device_token, $title, $message, $dataPayload);
+
+            app(\App\Repositories\NotificationRepository::class)->createNotification($client, $title, $message, $client->device_token, 'meeting_status_updated');
 
             Log::info('Meeting status notification sent successfully.', ['client_id' => $client->id, 'meeting_id' => $meeting->id]);
         } catch (\Exception $e) {

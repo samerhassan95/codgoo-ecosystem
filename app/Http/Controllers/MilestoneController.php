@@ -10,13 +10,11 @@ use App\Models\Project;
 use App\Repositories\MilestoneRepositoryInterface;
 use App\Repositories\NotificationRepository;
 use App\Services\FirebaseService;
-use App\Services\ImageService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 
-class MilestoneController  extends BaseController
+class MilestoneController extends BaseController
 {
     private $repository;
     private $notificationRepository;
@@ -33,17 +31,9 @@ class MilestoneController  extends BaseController
         $this->firebaseService = $firebaseService;
     }
 
-
     public function store(Request $request)
     {
         $validated = $request->validate((new MilestoneRequest)->rules());
-
-        if (!is_array($validated)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed: invalid data structure.'
-            ], 400);
-        }
 
         $project = Project::findOrFail($request->project_id);
         $projectBasePrice = $project->price;
@@ -100,50 +90,42 @@ class MilestoneController  extends BaseController
     }
 
     private function sendMilestoneCreatedNotification(Milestone $milestone)
-{
-    $project = $milestone->project;
-    if (!$project) return;
+    {
+        $project = $milestone->project;
+        if (!$project) return;
 
-    $client = is_object($project->client) ? $project->client : Client::find($project->client_id);
+        $client = is_object($project->client) ? $project->client : Client::find($project->client_id);
+        if (!$client) {
+            Log::warning('No client found for project.', ['project_id' => $project->id]);
+            return;
+        }
 
-    if (!$client) {
-        Log::warning('No client found for project.', ['project_id' => $project->id]);
-        return;
+        $template = NotificationTemplate::where('type', 'create_milestone')->first();
+        if (!$template) {
+            Log::warning('Notification template not found for milestone_created.');
+            return;
+        }
+
+        $title = $template->title;
+        $message = str_replace(
+            ['{milestone}', '{project}'],
+            [$milestone->label, $project->name],
+            $template->message
+        );
+
+        $dataPayload = [
+            'milestone_id' => $milestone->id,
+            'notification_type' => 'create_milestone',
+        ];
+
+        if ($client->device_token) {
+            $this->firebaseService->sendNotification($client->device_token, $title, $message, $dataPayload);
+        } else {
+            Log::warning('Client has no device token.', ['client_id' => $client->id]);
+        }
+
+        $this->notificationRepository->createNotification($client, $title, $message, $client->device_token, 'create_milestone');
     }
-
-    Log::info('Client found:', ['client_id' => $client->id]);
-
-    $template = NotificationTemplate::where('type', 'create_milestone')->first();
-    if (!$template) {
-        Log::warning('Notification template not found for milestone_created.');
-        return;
-    }
-
-    $title = $template->title;
-    $message = str_replace(
-        ['{milestone}', '{project}'],
-        [$milestone->label, $project->name],
-        $template->message
-    );
-
-    if ($client->device_token) {
-        Log::info('Sending Firebase notification...', ['client_id' => $client->id]);
-        $this->firebaseService->sendNotification($client->device_token, $title, $message);
-    } else {
-        Log::warning('Client has no device token.', ['client_id' => $client->id]);
-    }
-
-    $notification = $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
-
-    if ($notification) {
-        Log::info('Notification created successfully.', ['notification_id' => $notification->id]);
-    } else {
-        Log::error('Failed to create notification in database.', ['client_id' => $client->id]);
-    }
-}
-
-
-
 
     private function sendMilestoneStatusUpdatedNotification(Milestone $milestone)
     {
@@ -151,7 +133,6 @@ class MilestoneController  extends BaseController
 
         if ($client && $client->device_token) {
             $template = NotificationTemplate::where('type', 'milestone_status_update')->first();
-
             if ($template) {
                 $title = $template->title;
                 $message = str_replace(
@@ -160,16 +141,19 @@ class MilestoneController  extends BaseController
                     $template->message
                 );
 
-                $this->firebaseService->sendNotification($client->device_token, $title, $message);
-                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+                $dataPayload = [
+                    'milestone_id' => $milestone->id,
+                    'notification_type' => 'milestone_status_update',
+                ];
+
+                $this->firebaseService->sendNotification($client->device_token, $title, $message, $dataPayload);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token, 'milestone_status_update');
             }
         }
     }
 
-
     public function getMilestonesForProject($projectId)
     {
-        // Retrieve the project
         $project = Project::find($projectId);
 
         if (!$project) {
@@ -180,25 +164,12 @@ class MilestoneController  extends BaseController
             ], 404);
         }
 
-        // Retrieve all milestones related to the project
         $milestones = Milestone::where('project_id', $projectId)->get();
 
-        // Check if there are any milestones
-        if ($milestones->isEmpty()) {
-            return response()->json([
-                'status' => true,
-                'message' => 'No milestones found for this project.',
-                'data' => []
-            ], 200);
-        }
-
-        // Return milestones with a success response
         return response()->json([
             'status' => true,
             'message' => 'Milestones retrieved successfully.',
-            'data' => $milestones
+            'data' => MilestoneResource::collection($milestones)
         ], 200);
     }
-
-
 }

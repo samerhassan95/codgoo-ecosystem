@@ -86,7 +86,7 @@ class ProductController extends BaseController
                 $this->firebaseService->sendNotification($client->device_token, $title, $message, [
                     'notification_type' => $template->type
                 ]);
-                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token, $template->type);
             }
         }
     

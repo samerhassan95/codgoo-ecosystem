@@ -26,56 +26,6 @@ class TaskController extends BaseController
         $this->firebaseService = $firebaseService;
     }
 
-    public function store(Request $request)
-    {
-        $validatedData = $request->validate((new TaskRequest())->rules());
-
-        $task = $this->repository->create($validatedData);
-
-        $milestone = $task->milestone;
-        $client = $milestone->project->client ?? null; 
-
-
-        if ($client && $client->device_token) {
-            $template = NotificationTemplate::where('type', 'create_task')->first();
-            if ($template) {
-                $title = $template->title;
-                $message = str_replace(
-                    ['{label}', '{milestone}'],
-                    [$task->label, $milestone->label],
-                    $template->message
-                );
-
-                $this->firebaseService->sendNotification($client->device_token, $title, $message);
-                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
-            }
-        }
-
-        if ($task->assigned_to) {
-            $employee = Employee::find($task->assigned_to);
-            if ($employee && $employee->device_token) {
-                $template = NotificationTemplate::where('type', 'assigne_task')->first();
-                if ($template) {
-                    $title = $template->title;
-                    $message = str_replace(
-                        ['{label}', '{milestone}'],
-                        [$task->label, $milestone->name],
-                        $template->message
-                    );
-
-                    $this->firebaseService->sendNotification($employee->device_token, $title, $message);
-                    $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token);
-                }
-            }
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Task created successfully, and notifications sent.',
-            'data' => new TaskResource($task),
-        ], 201);
-    }
-
     public function getTasksByMilestone($milestone_id)
     {
         $tasks = Task::where('milestone_id', $milestone_id)->get();
@@ -105,6 +55,65 @@ class TaskController extends BaseController
             'message' => 'Tasks fetched successfully for the project.',
             'data' => TaskResource::collection($tasks)
         ], 200);
+    }
+
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate((new TaskRequest())->rules());
+
+        $task = $this->repository->create($validatedData);
+
+        $milestone = $task->milestone;
+        $client = $milestone->project->client ?? null; 
+
+        if ($client && $client->device_token) {
+            $template = NotificationTemplate::where('type', 'create_task')->first();
+            if ($template) {
+                $title = $template->title;
+                $message = str_replace(
+                    ['{label}', '{milestone}'],
+                    [$task->label, $milestone->label],
+                    $template->message
+                );
+
+                $dataPayload = [
+                    'task_id' => $task->id,
+                    'notification_type' => 'create_task',
+                ];
+
+                $this->firebaseService->sendNotification($client->device_token, $title, $message, $dataPayload);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token, 'create_task');
+            }
+        }
+
+        if ($task->assigned_to) {
+            $employee = Employee::find($task->assigned_to);
+            if ($employee && $employee->device_token) {
+                $template = NotificationTemplate::where('type', 'assigne_task')->first();
+                if ($template) {
+                    $title = $template->title;
+                    $message = str_replace(
+                        ['{label}', '{milestone}'],
+                        [$task->label, $milestone->name],
+                        $template->message
+                    );
+
+                    $dataPayload = [
+                        'task_id' => $task->id,
+                        'notification_type' => 'assigne_task',
+                    ];
+
+                    $this->firebaseService->sendNotification($employee->device_token, $title, $message, $dataPayload);
+                    $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token, 'assigne_task');
+                }
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Task created successfully, and notifications sent.',
+            'data' => new TaskResource($task),
+        ], 201);
     }
 
     public function update(Request $request, $id)
@@ -144,14 +153,19 @@ class TaskController extends BaseController
                 $template->message
             );
 
+            $dataPayload = [
+                'task_id' => $task->id,
+                'notification_type' => 'update_task_status',
+            ];
+
             if ($client && $client->device_token) {
-                $this->firebaseService->sendNotification($client->device_token, $title, $message);
-                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
+                $this->firebaseService->sendNotification($client->device_token, $title, $message, $dataPayload);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->device_token, 'update_task_status');
             }
 
             if ($employee && $employee->device_token) {
-                $this->firebaseService->sendNotification($employee->device_token, $title, $message);
-                $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token);
+                $this->firebaseService->sendNotification($employee->device_token, $title, $message, $dataPayload);
+                $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token, 'update_task_status');
             }
         }
     }

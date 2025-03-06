@@ -82,7 +82,12 @@ class Milestone extends Model
         );
     
         try {
-            app(\App\Services\FirebaseService::class)->sendNotification($client->device_token, $title, $message);
+
+            $dataPayload = [
+                'invoice_id' => $invoice->id,
+                'notification_type' => 'invoice_created',
+            ];
+            app(\App\Services\FirebaseService::class)->sendNotification($client->device_token, $title, $message, $dataPayload);
     
             app(\App\Repositories\NotificationRepository::class)->createNotification($client, $title, $message, $client->device_token);
     

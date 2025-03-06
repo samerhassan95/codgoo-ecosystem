@@ -88,15 +88,30 @@ class FirebaseService
         return array_values($chatSummaries);
     }
 
-    public function sendNotification($token, $title, $body)
+    public function sendNotification($deviceToken, $title, $message, $type)
     {
-        $notification = Notification::create($title, $body);
-        $message = CloudMessage::withTarget('token', $token)
-            ->withNotification($notification)
-            ->withData(['click_action' => 'FLUTTER_NOTIFICATION_CLICK']);
+        $serverKey = config('services.firebase.server_key');
 
-        return $this->messaging->send($message);
+        $data = [
+            'to' => $deviceToken,
+            'notification' => [
+                'title' => $title,
+                'body' => $message,
+                'sound' => 'default',
+            ],
+            'data' => [
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                'status' => 'done',
+                'type' => $type, // إرسال النوع
+            ],
+        ];
+
+        Http::withHeaders([
+            'Authorization' => 'key=' . $serverKey,
+            'Content-Type' => 'application/json',
+        ])->post('https://fcm.googleapis.com/fcm/send', $data);
     }
+
 
     public function markMessagesAsSeen($chatId)
     {

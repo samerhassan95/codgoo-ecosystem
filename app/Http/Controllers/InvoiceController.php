@@ -84,9 +84,13 @@ class InvoiceController extends BaseController
         );
 
         try {
-            $this->firebaseService->sendNotification($client->device_token, $title, $message);
+            $dataPayload = [
+                'invoice_id' => $invoice->id,
+                'notification_type' => 'invoice_created',
+            ];
+            $this->firebaseService->sendNotification($client->device_token, $title, $message,$dataPayload );
 
-            app(\App\Repositories\NotificationRepository::class)->createNotification($client, $title, $message, $client->device_token);
+            app(\App\Repositories\NotificationRepository::class)->createNotification($client, $title, $message, $client->device_token, 'invoice_created');
 
             Log::info('Invoice notification sent successfully.', ['client_id' => $client->id, 'invoice_id' => $invoice->id]);
         } catch (\Exception $e) {
