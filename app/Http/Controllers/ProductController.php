@@ -83,7 +83,9 @@ class ProductController extends BaseController
     
         if ($clients->isNotEmpty()) {
             foreach ($clients as $client) {
-                $this->firebaseService->sendNotification($client->device_token, $title, $message);
+                $this->firebaseService->sendNotification($client->device_token, $title, $message, [
+                    'notification_type' => $template->type
+                ]);
                 $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
             }
         }
