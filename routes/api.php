@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Client\ClientAuthController;
 use App\Http\Controllers\Employee\EmployeeAuthController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\NotificationController;
@@ -49,3 +50,6 @@ Route::prefix('employee')->group(function() {
 //     return 'Email has been sent!';
 // });
 Route::post('send-chat-notification', [NotificationController::class, 'sendChatNotification']);
+Route::get('payment/success', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
+Route::get('payment/cancel', [PaymentController::class, 'paymentCancel'])->name('payment.cancel');
+Route::post('opay/callback', [PaymentController::class, 'opayCallback'])->name('opay.callback');

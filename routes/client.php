@@ -159,6 +159,8 @@ Route::middleware('client')->group(function ()  {
     Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
 
-    Route::post('pay', [PaymentController::class, 'initiatePayment'])->name('payment.initiate');
-    Route::post('payment/callback', [PaymentController::class, 'handleCallback'])->name('payment.callback');
+    Route::post('pay-invoice/{invoiceId}', [PaymentController::class, 'payInvoice']);
+   
+    
+
 });

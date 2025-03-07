@@ -38,8 +38,15 @@ return [
     'base_url' => env('JITSI_BASE_URL', 'https://meet.jit.si'),
     ],
 
-'firebase' => [
-    'credentials' => env('FIREBASE_CREDENTIALS'),
-],
+    'firebase' => [
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+    ],
 
+
+    'opay' => [
+        'public_key' => env('OPAY_PUBLIC_KEY'),
+        'secret_key' => env('OPAY_SECRET_KEY'),
+        'merchant_id' => env('OPAY_MERCHANT_ID'),
+        'base_url' => 'https://sandboxapi.opaycheckout.com/api/v1',
+            ],
 ];
