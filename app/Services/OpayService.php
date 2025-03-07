@@ -5,7 +5,7 @@ namespace App\Services;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 
-class OPayService
+class OpayService
 {
     protected $client;
     protected $merchantId;
@@ -17,7 +17,7 @@ class OPayService
     {
         $this->client = new Client();
         $this->merchantId = config('services.opay.merchant_id');
-        $this->publicKey = config('services.opay.public_key'); 
+        $this->publicKey = config('services.opay.public_key');
         $this->privateKey = config('services.opay.secret_key');
         $this->baseUrl = config('services.opay.base_url');
     }
@@ -25,7 +25,7 @@ class OPayService
     public function initiatePayment($invoice)
     {
         $reference = 'INV-' . time();
-        $invoice->update(['reference' => $reference]); 
+        $invoice->update(['reference' => $reference]);
 
         $payload = [
             "country" => "EG",

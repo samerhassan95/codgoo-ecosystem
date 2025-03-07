@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
-use App\Services\OPayService;
+use App\Services\OpayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -11,7 +11,7 @@ class PaymentController extends Controller
 {
     protected $opayService;
 
-    public function __construct(OPayService $opayService)
+    public function __construct(OpayService $opayService)
     {
         $this->opayService = $opayService;
     }
@@ -53,7 +53,7 @@ class PaymentController extends Controller
     Log::info('Payment Data from OPay: ', (array) $paymentData);
 
     if (isset($paymentData['status']) && $paymentData['status'] === 'SUCCESS') {
-        $invoice = Invoice::where('reference', $orderNo)->first(); 
+        $invoice = Invoice::where('reference', $orderNo)->first();
 
         if (!$invoice) {
             Log::error("Invoice not found for reference: {$orderNo}");
@@ -72,10 +72,10 @@ class PaymentController extends Controller
 
 public function handleCallback(Request $request)
 {
-    return $this->opayCallback($request); 
+    return $this->opayCallback($request);
 }
 
-    
+
 
     public function paymentSuccess()
     {
