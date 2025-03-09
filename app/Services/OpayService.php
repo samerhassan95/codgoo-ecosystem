@@ -83,37 +83,57 @@ class OpayService
         }
     }
 
+    private function generateSignature(array $payload): string
+    {
+        $payloadString = json_encode($payload, JSON_UNESCAPED_SLASHES);
+    
+        return hash_hmac('sha512', $payloadString, $this->privateKey);
+    }
+    
     public function verifyPayment($orderNo)
     {
         try {
             Log::info("Verifying payment for orderNo: {$orderNo}");
-
-            $response = $this->client->post("{$this->baseUrl}/international/cashier/query", [
-                'json' => ['orderNo' => $orderNo],
+    
+            $payload = [
+                'orderNo' => $orderNo,
+                'country' => "EG",
+            ];
+    
+            $signature = $this->generateSignature($payload);
+    
+            $response = $this->client->post("{$this->baseUrl}/international/cashier/status", [
+                'json' => $payload,
                 'headers' => [
                     'MerchantId' => $this->merchantId,
-                    'Authorization' => 'Bearer ' . $this->publicKey,
+                    'Authorization' => 'Bearer ' . $signature,
                     'Content-Type' => 'application/json',
                 ],
             ]);
-
+    
             $body = $response->getBody()->getContents();
             Log::info("OPay Raw Response: " . $body);
-
+    
             $data = json_decode($body, true);
-
-            if (!$data || !isset($data['data'])) {
-                Log::error("Invalid response from OPay API.");
+    
+            if (isset($data['code']) && $data['code'] !== '00000') { 
+                Log::error("OPay API Error: {$data['message']} (Code: {$data['code']})");
                 return null;
             }
-
+    
+            if (!isset($data['data'])) {
+                Log::error("Invalid response structure from OPay.");
+                return null;
+            }
+    
             Log::info('OPay Verification Response:', $data['data']);
-
             return $data['data'];
+    
         } catch (\Exception $e) {
             Log::error('OPay Verification Error: ' . $e->getMessage());
             return null;
         }
     }
+    
 
 }

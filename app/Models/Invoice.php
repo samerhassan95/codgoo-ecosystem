@@ -18,6 +18,7 @@ class Invoice extends Model
         'due_date',
         'amount',
         'reference',
+        'order_no'
     ];
 
     public function milestone()

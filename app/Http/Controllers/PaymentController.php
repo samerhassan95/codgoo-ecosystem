@@ -33,42 +33,41 @@ class PaymentController extends Controller
     }
 
     public function opayCallback(Request $request)
-{
-    $orderNo = $request->orderNo ?? $request->input('orderNo');
-
-    Log::info("Received callback with orderNo: " . json_encode($request->all()));
-
-    if (!$orderNo) {
-        Log::error('Callback received without orderNo');
-        return response()->json(['message' => 'Order number not found'], 400);
-    }
-
-    $paymentData = $this->opayService->verifyPayment($orderNo);
-
-    if (!$paymentData) {
-        Log::error('OPay Verification Failed: No data received for orderNo: ' . $orderNo);
-        return response()->json(['message' => 'Payment verification failed'], 400);
-    }
-
-    Log::info('Payment Data from OPay: ', (array) $paymentData);
-
-    if (isset($paymentData['status']) && $paymentData['status'] === 'SUCCESS') {
-        $invoice = Invoice::where('reference', $orderNo)->first();
-
-        if (!$invoice) {
-            Log::error("Invoice not found for reference: {$orderNo}");
-            return response()->json(['message' => 'Invoice not found'], 404);
+    {
+        $callbackData = $request->all();
+        Log::info("Received callback: " . json_encode($callbackData));
+    
+        $orderNo = $callbackData['orderNo'] ?? ($callbackData['data']['orderNo'] ?? null);
+    
+        if (!$orderNo) {
+            Log::error('Callback received without orderNo');
+            return response()->json(['message' => 'Order number not found'], 400);
         }
-
-        $invoice->update(['status' => 'paid']);
-        Log::info("Invoice #{$invoice->id} updated to paid.");
-
-        return response()->json(['message' => 'Payment has been completed successfully!']);
+    
+        $paymentData = $this->opayService->verifyPayment($orderNo);
+    
+        if (!$paymentData) {
+            Log::error('OPay Verification Failed: No data received for orderNo: ' . $orderNo);
+            return response()->json(['message' => 'Payment verification failed'], 400);
+        }
+    
+        // معالجة الحالة الناجحة
+        if (isset($paymentData['status']) && $paymentData['status'] === 'SUCCESS') {
+            $invoice = Invoice::where('order_no', $orderNo)->first();
+            if (!$invoice) {
+                Log::error("Invoice not found for order_no: {$orderNo}");
+                return response()->json(['message' => 'Invoice not found'], 404);
+            }
+            $invoice->update(['status' => 'paid']);
+            Log::info("Invoice #{$invoice->id} updated to paid.");
+            return response()->json(['message' => 'Payment completed successfully!']);
+        }
+    
+        Log::error("Payment failed. Status: " . ($paymentData['status'] ?? 'UNKNOWN'));
+        return response()->json(['message' => 'Payment failed'], 400);
     }
 
-    Log::error("Payment verification failed. Status: " . ($paymentData['status'] ?? 'UNKNOWN'));
-
-    return response()->json(['message' => 'Payment verification failed'], 400);}
+    
 
 public function handleCallback(Request $request)
 {
