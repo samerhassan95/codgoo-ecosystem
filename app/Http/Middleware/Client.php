@@ -53,7 +53,7 @@ class Client
             if ($e instanceof TokenInvalidException ) {
                 return response()->json([
                     'status'=>false,
-                    'message'=>$e->getMessage(),
+                    'message'=>'Token is Invalid',
                 ],400);
             } else if ($e instanceof TokenExpiredException) {
                 return response()->json([
