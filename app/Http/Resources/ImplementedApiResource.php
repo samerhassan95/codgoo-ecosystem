@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class ImplementedApiResource extends JsonResource
+{
+    
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'requested_api' => new RequestedApiResource($this->whenLoaded('requestedApi')),
+            'postman_collection_url' => $this->postman_collection_url,
+            'status' => $this->status,
+        ];
+    }
+}
