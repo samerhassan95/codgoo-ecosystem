@@ -234,11 +234,14 @@ class NotificationController extends Controller
             // 'userId' => $request->sender_id,
         ];
         
-        
-        if ($request->sender_type === 'client') {
-            $sender = Client::find($request->sender_id);
+        if ($messageData['sender_type'] === 'client') {
+            $sender = Client::find($messageData['sender_id']);
+            $title = $sender ? $sender->name : 'Unknown Sender';
+
         } else {
-            $sender = Admin::find($request->sender_id);
+            $sender = Admin::find($messageData['sender_id']);
+            $title = $sender ? $sender->username : 'Unknown Sender';
+
         }
     
         $title = $sender ? $sender->username : 'Unknown Sender';
