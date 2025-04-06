@@ -181,7 +181,4 @@ class FirebaseService
         return $this->messaging->send($firebaseMessage);
     }
 
-
-
-
 }

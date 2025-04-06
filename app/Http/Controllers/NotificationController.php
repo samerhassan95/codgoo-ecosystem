@@ -227,11 +227,12 @@ class NotificationController extends Controller
         $messageData = [
             // 'receiver_id' => $request->receiver_id,
             'sender_id' =>$request->sender_id,
+            'chat_id ' =>$request->sender_id,
             'sender_type' => $request->sender_type,
             'message' =>$request->message,
             // 'imageUrl' => $request->sender_id,
             // 'audio' => $request->sender_id,
-            // 'userId' => $request->sender_id,
+            'userId' => $request->sender_id,
         ];
         
         if ($messageData['sender_type'] === 'client') {
