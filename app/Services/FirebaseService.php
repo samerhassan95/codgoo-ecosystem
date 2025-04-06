@@ -157,11 +157,11 @@ class FirebaseService
         $body = "🎤 New Voice Message";
     }
 
-    $notification = Notification::create([
-        'title' => $title,
-        'message' => $body,
-        'data' => json_encode($messageData),
-    ]);
+    // $notification = Notification::create([
+    //     'title' => $title,
+    //     'message' => $body,
+    //     'data' => json_encode($messageData),
+    // ]);
 
     $firebaseMessage = CloudMessage::withTarget('token', $token)
     ->withNotification(new \Kreait\Firebase\Messaging\Notification($title, $body))  // <-- Corrected this line
