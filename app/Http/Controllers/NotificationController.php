@@ -229,7 +229,7 @@ class NotificationController extends Controller
         ];
         
         
-        $title =$request->receiver_id->username;
+        $title =$request->sender_id->username;
         $body = $request->message;
     
         // if ($request->message) {
