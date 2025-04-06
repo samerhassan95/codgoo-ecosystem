@@ -229,18 +229,18 @@ class NotificationController extends Controller
         ];
         
         
-        $title = $template->title;
-        $body = $template->message;
+        $title =$request->receiver_id->username;
+        $body = $request->message;
     
-        if ($request->message) {
-            $body = str_replace("{message}", $request->message, $body);
-        } elseif ($request->imageUrl) {
-            $body = str_replace("{message}", "📷 New Image", $body);
-        } elseif ($request->audio) {
-            $body = str_replace("{message}", "🎤 New Voice Message", $body);
-        } else {
-            $body = str_replace("{message}", "📩 You have a new message", $body);
-        }
+        // if ($request->message) {
+        //     $body = str_replace("{message}", $request->message, $body);
+        // } elseif ($request->imageUrl) {
+        //     $body = str_replace("{message}", "📷 New Image", $body);
+        // } elseif ($request->audio) {
+        //     $body = str_replace("{message}", "🎤 New Voice Message", $body);
+        // } else {
+        //     $body = str_replace("{message}", "📩 You have a new message", $body);
+        // }
         
         if ($request->sender_type === 'client') {
             $admins = Admin::whereNotNull('device_token')->get();
