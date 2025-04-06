@@ -142,8 +142,12 @@ class FirebaseService
     {
         if ($messageData['sender_type'] === 'client') {
             $sender = Client::find($messageData['sender_id']);
+            $title = $sender ? $sender->name : 'Unknown Sender';
+
         } else {
             $sender = Admin::find($messageData['sender_id']);
+            $title = $sender ? $sender->username : 'Unknown Sender';
+
         }
     
         $title = $sender ? $sender->username : 'Unknown Sender';
