@@ -139,44 +139,42 @@ class FirebaseService
     }
 
     public function sendChatNotification($token, $messageData)
-{
-    if ($messageData['sender_type'] === 'client') {
-        $sender = Client::find($messageData['sender_id']);
-    } else {
-        $sender = Admin::find($messageData['sender_id']);
+    {
+        if ($messageData['sender_type'] === 'client') {
+            $sender = Client::find($messageData['sender_id']);
+        } else {
+            $sender = Admin::find($messageData['sender_id']);
+        }
+    
+        $title = $sender ? $sender->username : 'Unknown Sender';
+        $body = $messageData['message'] ?? '📩 You have a new message';
+    
+        // If there is an image or audio, modify the message body accordingly
+        if (!empty($messageData['imageUrl'])) {
+            $body = "📷 New Image";
+        } elseif (!empty($messageData['audio'])) {
+            $body = "🎤 New Voice Message";
+        }
+    
+        $notification = \Kreait\Firebase\Messaging\Notification::fromArray([
+            'title' => $title,
+            'body' => $body,
+        ]);
+    
+        $firebaseMessage = CloudMessage::withTarget('token', $token)
+            ->withNotification($notification)
+            ->withData([
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                'chat_id' => $messageData['chat_id'] ?? '',
+                'user_id' => $messageData['userId'] ?? '',
+                'message' => $messageData['message'] ?? '',
+                'imageUrl' => $messageData['imageUrl'] ?? '',
+                'audio' => $messageData['audio'] ?? '',
+            ]);
+    
+        return $this->messaging->send($firebaseMessage);
     }
-
-    $title = $sender ? $sender->username : 'Unknown Sender';
-
-    $body = $messageData['message'] ?? '📩 You have a new message';
-
-    // If there is an image or audio, modify the message body accordingly
-    if (!empty($messageData['imageUrl'])) {
-        $body = "📷 New Image";
-    } elseif (!empty($messageData['audio'])) {
-        $body = "🎤 New Voice Message";
-    }
-
-    // $notification = Notification::create([
-    //     'title' => $title,
-    //     'message' => $body,
-    //     'data' => json_encode($messageData),
-    // ]);
-
-    $firebaseMessage = CloudMessage::withTarget('token', $token)
-    ->withNotification(new \Kreait\Firebase\Messaging\Notification($title, $body))  // <-- Corrected this line
-    ->withData([
-        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-        'chat_id' => $messageData['chat_id'] ?? '',
-        'user_id' => $messageData['userId'] ?? '',
-        'message' => $messageData['message'] ?? '',
-        'imageUrl' => $messageData['imageUrl'] ?? '',
-        'audio' => $messageData['audio'] ?? '',
-    ]);
-
-
-    return $this->messaging->send($firebaseMessage);
-}
+    
 
 
 
