@@ -89,10 +89,10 @@ class NotificationController extends Controller
     public function sendNotification(Request $request)
     {
         $request->validate([
-            'type' => 'required|string|exists:notification_templates,type', // Fetch from DB
+            'type' => 'required|string|exists:notification_templates,type',
             'notifiable_id' => 'nullable|integer',
             'notifiable_type' => 'nullable|in:admin,client',
-            'data' => 'nullable|array' // Dynamic placeholders
+            'data' => 'nullable|array'
         ]);
 
         $template = NotificationTemplate::where('type', $request->type)->first();
@@ -280,7 +280,4 @@ class NotificationController extends Controller
         return response()->json(['message' => 'Chat notification sent successfully!']);
     }
     
-
-
-
 }

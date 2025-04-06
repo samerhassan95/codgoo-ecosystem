@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Admin;
 use App\Models\NotificationTemplate;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
@@ -102,7 +103,7 @@ class FirebaseService
             'data' => [
                 'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                 'status' => 'done',
-                'type' => $type, // إرسال النوع
+                'type' => $type,
             ],
         ];
 
@@ -149,22 +150,22 @@ class FirebaseService
             $title = $sender ? $sender->username : 'Unknown Sender';
 
         }
-    
+
         // $title = $sender ? $sender->username : 'Unknown Sender';
         $body = $messageData['message'] ?? '📩 You have a new message';
-    
+
         // If there is an image or audio, modify the message body accordingly
         if (!empty($messageData['imageUrl'])) {
             $body = "📷 New Image";
         } elseif (!empty($messageData['audio'])) {
             $body = "🎤 New Voice Message";
         }
-    
+
         $notification = \Kreait\Firebase\Messaging\Notification::fromArray([
             'title' => $title,
             'body' => $body,
         ]);
-    
+
         $firebaseMessage = CloudMessage::withTarget('token', $token)
             ->withNotification($notification)
             ->withData([
@@ -174,11 +175,12 @@ class FirebaseService
                 'message' => $messageData['message'] ?? '',
                 'imageUrl' => $messageData['imageUrl'] ?? '',
                 'audio' => $messageData['audio'] ?? '',
+                'type' => 'chat_message',
             ]);
-    
+
         return $this->messaging->send($firebaseMessage);
     }
-    
+
 
 
 
