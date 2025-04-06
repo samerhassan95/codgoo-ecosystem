@@ -140,7 +140,6 @@ class FirebaseService
 
     public function sendChatNotification($token, $messageData)
 {
-    dd($messageData);
     if ($messageData['sender_type'] === 'client') {
         $sender = Client::find($messageData['sender_id']);
     } else {
