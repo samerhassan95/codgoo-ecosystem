@@ -3,18 +3,19 @@
 namespace App\Repositories;
 
 use App\Models\Notification;
+use App\Models\NotificationTemplate;
 
 class NotificationRepository
 {
     public function createNotification($notifiable, $title, $message, $deviceToken, $notificationType)
     {
         $template = NotificationTemplate::where('type', $notificationType)->first();
-    
+
         if (!$template) {
             \Log::error('Notification template not found for type: ' . $notificationType);
             return null;
         }
-    
+
         return Notification::create([
             'notifiable_id' => $notifiable->id,
             'notifiable_type' => get_class($notifiable),
@@ -25,6 +26,6 @@ class NotificationRepository
             'notification_template_id' => $template->id,
         ]);
     }
-    
+
 
 }
