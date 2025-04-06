@@ -13,7 +13,7 @@ class NotificationRepository
         $template = NotificationTemplate::where('type', $notificationType)->first();
 
         if (!$template) {
-             Log::error('Notification template not found for type: ' . $notificationType);
+            //  Log::error('Notification template not found for type: ' . $notificationType);
             return null;
         }
 
