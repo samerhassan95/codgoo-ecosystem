@@ -164,15 +164,16 @@ class FirebaseService
     ]);
 
     $firebaseMessage = CloudMessage::withTarget('token', $token)
-        ->withNotification(Notification::create($title, $body))
-        ->withData([
-            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-            'chat_id' => $messageData['chat_id'] ?? '',
-            'user_id' => $messageData['userId'] ?? '',
-            'message' => $messageData['message'] ?? '',
-            'imageUrl' => $messageData['imageUrl'] ?? '',
-            'audio' => $messageData['audio'] ?? '',
-        ]);
+    ->withNotification(new \Kreait\Firebase\Messaging\Notification($title, $body))  // <-- Corrected this line
+    ->withData([
+        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+        'chat_id' => $messageData['chat_id'] ?? '',
+        'user_id' => $messageData['userId'] ?? '',
+        'message' => $messageData['message'] ?? '',
+        'imageUrl' => $messageData['imageUrl'] ?? '',
+        'audio' => $messageData['audio'] ?? '',
+    ]);
+
 
     return $this->messaging->send($firebaseMessage);
 }
