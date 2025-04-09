@@ -151,10 +151,8 @@ class FirebaseService
 
         }
 
-        // $title = $sender ? $sender->username : 'Unknown Sender';
         $body = $messageData['message'] ?? '📩 You have a new message';
 
-        // If there is an image or audio, modify the message body accordingly
         if (!empty($messageData['imageUrl'])) {
             $body = "📷 New Image";
         } elseif (!empty($messageData['audio'])) {

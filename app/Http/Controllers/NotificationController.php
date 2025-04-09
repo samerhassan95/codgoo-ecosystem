@@ -227,7 +227,7 @@ class NotificationController extends Controller
         $messageData = [
             // 'receiver_id' => $request->receiver_id,
             'sender_id' =>$request->sender_id,
-            'chat_id ' =>$request->sender_id,
+            'chat_id' =>$request->receiver_id,
             'sender_type' => $request->sender_type,
             'message' =>$request->message,
             // 'imageUrl' => $request->sender_id,
@@ -236,16 +236,18 @@ class NotificationController extends Controller
         ];
         
         if ($messageData['sender_type'] === 'client') {
+
             $sender = Client::find($messageData['sender_id']);
             $title = $sender ? $sender->name : 'Unknown Sender';
 
         } else {
+            
             $sender = Admin::find($messageData['sender_id']);
             $title = $sender ? $sender->username : 'Unknown Sender';
 
         }
     
-        $title = $sender ? $sender->username : 'Unknown Sender';
+        // $title = $sender ? $sender->username : 'Unknown Sender';
         $body = $request->message;
     
         // if ($request->message) {
