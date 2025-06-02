@@ -124,7 +124,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ProjectGeneralNoteRepositoryInterface::class, ProjectGeneralNoteRepository::class);
         $this->app->bind(AddressRepositoryInterface::class, AddressRepository::class);
         $this->app->bind(ScreenRepositoryInterface::class, ScreenRepository::class);
-        $this->app->bind(ScreenReviewRepositoryInterface::class, ScreenReviewRepository::Repository::class);
+        $this->app->bind(ScreenReviewRepositoryInterface::class, ScreenReviewRepository::class);
         $this->app->bind(RequestedApiRepositoryInterface::class, RequestedApiRepository::class);
         $this->app->bind(ImplementedApiRepositoryInterface::class, ImplementedApiRepository::class);
         $this->app->bind(ImplementedApiReviewRepositoryInterface::class, ImplementedApiReviewRepository::class);
