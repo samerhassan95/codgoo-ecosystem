@@ -11,7 +11,7 @@ class Achievement extends Model
 
     protected $fillable = [
         'task_id',
-        'created_by',
+         'created_by',
         'attendance_id',
         'achievement_description',
         'submitted_at',
@@ -23,13 +23,18 @@ class Achievement extends Model
         return $this->belongsTo(Task::class);
     }
 
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
+    // public function creator()
+    // {
+    //     return $this->morphTo();
+    // }
 
     public function attendance()
     {
         return $this->belongsTo(Attendance::class);
+    }
+
+    public function achievementType()
+    {
+        return $this->belongsTo(AchievementType::class);
     }
 }

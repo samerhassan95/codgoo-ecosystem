@@ -14,6 +14,8 @@ class AttendanceResource extends JsonResource
             'total_hours' => $this->total_hours,
             'date' => $this->date,
             'employee' => new UserResource($this->whenLoaded('employee')),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

@@ -16,6 +16,8 @@ class AttendanceSessionResource extends JsonResource
             'check_in_time' => $this->check_in_time,
             'check_out_time' => $this->check_out_time,
             'is_in_office' => $this->is_in_office,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

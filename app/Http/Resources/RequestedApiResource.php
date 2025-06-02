@@ -16,6 +16,9 @@ class RequestedApiResource extends JsonResource
             'method' => $this->method,
             'request_body' => $this->request_body,
             'response_structure' => $this->response_structure,
+            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
+
         ];
     }
 }

@@ -12,7 +12,8 @@ class ImplementedApiReview extends Model
     protected $fillable = [
         'implemented_api_id',
         'review',
-        'created_by',
+        'creator_id',
+        'creator_type',
     ];
 
     public function implementedApi()
@@ -22,6 +23,6 @@ class ImplementedApiReview extends Model
 
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->morphTo();
     }
 }

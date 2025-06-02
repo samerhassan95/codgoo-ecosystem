@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens; 
 use Spatie\Translatable\HasTranslations; 
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 
 class Admin extends Authenticatable implements JWTSubject
@@ -41,7 +42,10 @@ class Admin extends Authenticatable implements JWTSubject
     // }
     
     
-    
+    public function taskDiscussions(): MorphMany
+    {
+        return $this->morphMany(TaskDiscussion::class, 'createdBy');
+    }
 
     
     public function ticketReplies()

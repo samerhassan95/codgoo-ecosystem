@@ -13,7 +13,11 @@ class ImplementedApiReviewResource extends JsonResource
             'id' => $this->id,
             'implemented_api' => new ImplementedApiResource($this->whenLoaded('implementedApi')),
             'review' => $this->review,
-            'creator' => new UserResource($this->whenLoaded('creator')),
+            'creator' => [
+                'id' => $this->creator_id,
+                'type' => class_basename($this->creator_type),
+            ], 
+            'created_at' => $this->created_at->toDateTimeString(),
         ];
     }
 }

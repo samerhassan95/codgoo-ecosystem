@@ -1,0 +1,9 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Repositories\Common\CommonRepositoryInterface;
+
+interface AddressRepositoryInterface extends CommonRepositoryInterface
+{
+}

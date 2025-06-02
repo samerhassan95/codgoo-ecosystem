@@ -15,6 +15,8 @@ class ImplementedApiResource extends JsonResource
             'requested_api' => new RequestedApiResource($this->whenLoaded('requestedApi')),
             'postman_collection_url' => $this->postman_collection_url,
             'status' => $this->status,
+            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];
     }
 }

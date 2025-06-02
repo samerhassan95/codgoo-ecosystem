@@ -17,6 +17,8 @@ class AchievementResource extends JsonResource
             'achievement_description' => $this->achievement_description,
             'submitted_at' => $this->submitted_at,
             'achievement_type' => $this->achievement_type,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

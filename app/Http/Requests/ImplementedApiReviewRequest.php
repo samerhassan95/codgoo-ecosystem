@@ -15,7 +15,8 @@ class ImplementedApiReviewRequest extends FormRequest
         return [
             'implemented_api_id' => 'required|exists:implemented_apis,id',
             'review' => 'required|string',
-            'created_by' => 'required|exists:users,id',
+            'creator_id' => 'required|integer',
+            'creator_type' => 'required|string|in:App\Models\Admin,App\Models\Employee',
         ];
     }
 }

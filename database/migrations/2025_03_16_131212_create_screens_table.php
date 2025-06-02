@@ -19,6 +19,7 @@ return new class extends Migration
             $table->boolean('implemented')->default(false);
             $table->boolean('integrated')->default(false);
             $table->string('screen_code')->nullable();
+            $table->integer('estimated_hours')->nullable();
             $table->timestamps();
         });
     }

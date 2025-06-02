@@ -19,7 +19,8 @@ class ScreenRequest extends FormRequest
             'dev_mode' => 'boolean',
             'implemented' => 'boolean',
             'integrated' => 'boolean',
-            'screen_code' => 'nullable|string',
+            'screen_code' => 'nullable|string|max:255',
+            'estimated_hours' => 'nullable|integer|min:0',
         ];
     }
 }

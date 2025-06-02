@@ -17,8 +17,8 @@ class AttendanceSessionRequest extends FormRequest
             'attendance_id' => 'required|exists:attendances,id',
             'ip_address' => 'required|ip',
             'check_in_time' => 'required|date',
-            'check_out_time' => 'nullable|date',
-            'is_in_office' => 'boolean'
+            'check_out_time' => 'nullable|date|after_or_equal:check_in_time',
+            'is_in_office' => 'required|boolean',
         ];
     }
 }

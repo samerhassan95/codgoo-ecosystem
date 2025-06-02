@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('implemented_api_id')->constrained('implemented_apis')->onDelete('cascade');
             $table->text('review');
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->morphs('creator');
             $table->timestamps();
         });
     }

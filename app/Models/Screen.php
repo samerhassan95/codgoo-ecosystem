@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Screen extends Model
 {
@@ -16,10 +16,16 @@ class Screen extends Model
         'implemented',
         'integrated',
         'screen_code',
+        'estimated_hours',
     ];
 
     public function task()
     {
         return $this->belongsTo(Task::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(ScreenReview::class);
     }
 }

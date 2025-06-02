@@ -15,10 +15,10 @@ class AchievementRequest extends FormRequest
     {
         return [
             'task_id' => 'required|exists:tasks,id',
-            'created_by' => 'required|exists:users,id',
+            'created_by' => 'required|exists:employees,id',
             'attendance_id' => 'required|exists:attendances,id',
             'achievement_description' => 'required|string',
-            'submitted_at' => 'date',
+            'submitted_at' => 'nullable|date',
             'achievement_type' => 'required|exists:achievement_types,id',
         ];
     }

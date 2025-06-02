@@ -15,7 +15,7 @@ class AttendanceRequest extends FormRequest
         return [
             'total_hours' => 'required|numeric|min:0|max:24',
             'date' => 'required|date',
-            'employee_id' => 'required|exists:users,id',
+            'employee_id' => 'required|exists:employees,id',
         ];
     }
 }
