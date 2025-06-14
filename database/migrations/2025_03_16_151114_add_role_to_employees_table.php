@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('employees', function (Blueprint $table) {
-            $table->unsignedTinyInteger('role')->nullable();
+            $table->enum('role', ['ui_ux', 'front_end', 'back_end', 'tester','mobile'])->nullable();
         });
     }
 
