@@ -30,15 +30,15 @@ class EmployeeAuthController extends Controller
 
     public function register(Request $request)
     {
-        // Validate Employee data
         $validator = Validator::make($request->all(), [
             'phone' => 'required|unique:employees,phone',
             'password' => 'required|min:6|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            // 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            // 'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:employees,email',
-            'intro' => 'nullable|string|max:1000', 
+            'email' => 'nullable|email|unique:employees,email',
+            // 'intro' => 'nullable|string|max:1000',
+            'role' => 'required|in:ui_ux,front_end,back_end,tester,mobile',
         ]);
 
         if ($validator->fails()) {
@@ -50,52 +50,37 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        if (!$request->hasFile('image') && !$request->hasFile('cover_photo')) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No image or cover photo uploaded',
-                'data' => null
-            ], 400);
-        }
-    
-        $imagePath = $request->hasFile('image') ? ImageService::upload($request->file('image'), 'employee_images') : null;
-        $coverPhotoPath = $request->hasFile('cover_photo') ? ImageService::upload($request->file('cover_photo'), 'employee_cover_photos') : null;
+        // $imagePath = $request->hasFile('image') ? ImageService::upload($request->file('image'), 'employee_images') : null;
+        // $coverPhotoPath = $request->hasFile('cover_photo') ? ImageService::upload($request->file('cover_photo'), 'employee_cover_photos') : null;
 
-    
-        // Generate OTP (Example, you can use a random generator)
-        $otp = 1234;  // Generate a random OTP
-    
-        // Create the Employee user in the database (without OTP verification at this point)
-        $employee = Employee::create([
+        $otp = 1234;
+
+        $cachedData = [
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'name' => $request->name,
             'email' => $request->email,
-            'image' => $imagePath ? asset( $imagePath) : null,
-            'cover_photo' => $coverPhotoPath ? asset($coverPhotoPath) : null,
+            // 'image' => $imagePath,
+            // 'cover_photo' => $coverPhotoPath,
             'intro' => $request->intro,
-           
-        ]);
-    
-        // Store the OTP temporarily in cache (for example, with 10 minutes expiration)
-        Cache::put('otp_' . $employee->phone, $otp, now()->addMinutes(10));
-    
-        // Send OTP to the user (simulated, for example via email or SMS)
-        // You can use a service to send an OTP here
-    
+            'role' => $request->role,
+        ];
+
+        Cache::put('employee_register_' . $request->phone, $cachedData, now()->addMinutes(10));
+        Cache::put('otp_' . $request->phone, $otp, now()->addMinutes(1));
+
         return response()->json([
             'status' => true,
             'message' => "OTP sent successfully, please verify.",
             'data' => null,
         ]);
     }
-    
+
     public function verifyOtpAndCreateEmployee(Request $request)
     {
-        // Validate OTP in the request
         $validator = Validator::make($request->all(), [
             'otp' => 'required|numeric',
-            'phone' => 'required|exists:employees,phone',
+            'phone' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -108,65 +93,69 @@ class EmployeeAuthController extends Controller
         }
 
         $storedOtp = Cache::get('otp_' . $request->phone);
+        $cachedEmployee = Cache::get('employee_register_' . $request->phone);
 
-        if (!$storedOtp) {
+        if (!$storedOtp || !$cachedEmployee) {
             return response()->json([
                 "status" => false,
                 'code' => 402,
-                'message' => 'OTP has expired or is invalid.',
+                'message' => 'OTP has expired or registration data not found.',
                 'data' => null,
             ], 402);
         }
 
         if ($storedOtp != $request->otp) {
-            $Employee = Employee::where('phone', $request->phone)->first();
-            if ($Employee) {
-                $Employee->delete();
-            }
+            Cache::forget('otp_' . $request->phone);
+            Cache::forget('employee_register_' . $request->phone);
 
             return response()->json([
                 "status" => false,
                 'code' => 402,
-                'message' => 'Invalid OTP. User has been deleted.',
+                'message' => 'Invalid OTP.',
                 'data' => null,
             ], 402);
         }
 
-        $Employee = Employee::where('phone', $request->phone)->first();
-        $token = auth('employee')->login($Employee);
+        $employee = Employee::create([
+            ...$cachedEmployee
+        ]);
+
+        Cache::forget('otp_' . $request->phone);
+        Cache::forget('employee_register_' . $request->phone);
+
+        $token = auth('employee')->login($employee);
 
         return response()->json([
             'status' => true,
             'message' => "OTP verified successfully.",
             'data' => [
-                'id' => $Employee->id,
-                'phone' => $Employee->phone,
-                'email' => $Employee->email,
-                'name' => $Employee->name,
-                'image' => asset($Employee->image),
-                'type' =>"Employee",
-                'token'=>$token
-
+                'id' => $employee->id,
+                'phone' => $employee->phone,
+                'email' => $employee->email,
+                'name' => $employee->name,
+                'image' => asset($employee->image),
+                'role' => $employee->role,
+                'token' => $token,
             ],
         ]);
     }
+
 
     public function updateProfile(Request $request)
     {
         $employee = auth()->user(); 
     
-        // Validation rules aligned with schema
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'phone' => 'sometimes|required|string|max:255|unique:employees,phone,' . $employee->id,
             'email' => 'sometimes|required|email|max:255|unique:employees,email,' . $employee->id,
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'intro' => 'nullable|string|max:1000', 
+            'intro' => 'nullable|string|max:1000',
+            'role' => 'sometimes|required|in:ui_ux,front_end,back_end,tester,mobile',
         ]);
-    
-        // Handle image updates (replace existing if new one is uploaded)
-        $imagePath = $request->hasFile('image') 
+
+        $imagePath = $request->hasFile('image')
             ? ImageService::update($request->file('image'), $employee->image, 'employee_images') 
             : $employee->image;
     
@@ -174,7 +163,6 @@ class EmployeeAuthController extends Controller
             ? ImageService::update($request->file('cover_photo'), $employee->cover_photo, 'employee_cover_photos') 
             : $employee->cover_photo;
     
-        // Update Employee profile
         $updated = $employee->update([
             'name' => $request->name ?? $employee->name,
             'phone' => $request->phone ?? $employee->phone,
@@ -182,8 +170,9 @@ class EmployeeAuthController extends Controller
             'image' => $imagePath ? asset($imagePath) : $employee->image,
             'cover_photo' => $coverPhotoPath ? asset($coverPhotoPath) : $employee->cover_photo,
             'intro' => $request->intro ?? $employee->intro,
+            'role' => $request->role ?? $employee->role,
         ]);
-    
+
         if ($updated) {
             return response()->json([
                 'status' => true,
@@ -323,10 +312,6 @@ class EmployeeAuthController extends Controller
 
         Cache::put('otp', $otp,  now()->addMinutes(10));  
 
-        // Simulate sending OTP (you can integrate an SMS service here)
-        // For now, we'll just log the OTP (In production, send via SMS)
-        // Log::info("OTP for phone {$phone}: {$otp}");
-
         return response()->json([
             'status' => true,
             'message' => 'OTP sent successfully. Please check your phone.',
@@ -354,7 +339,7 @@ class EmployeeAuthController extends Controller
         $otp = $request->otp;
 
         $storedOtp = Cache::get('otp');
-        // dd($storedOtp);
+
         if (!$storedOtp || $storedOtp != $otp) {
             return response()->json([
                 'status' => false,
@@ -374,7 +359,6 @@ class EmployeeAuthController extends Controller
 
     public function resetPassword(Request $request)
     {
-        // Validate password and phone number
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:Employees,phone',
             'password' => 'required|min:6|confirmed',  
@@ -388,11 +372,9 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Retrieve phone and new password from request
         $phone = $request->phone;
         $newPassword = $request->password;
 
-        // Retrieve the stored OTP from cache (ensure it's verified before)
         $storedOtp = Cache::get('otp');
 
         if (!$storedOtp) {
@@ -403,7 +385,6 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Find Employee by phone
         $Employee = Employee::where('phone', $phone)->first();
 
         if (!$Employee) {
@@ -414,7 +395,6 @@ class EmployeeAuthController extends Controller
             ], 404);
         }
 
-        // Update password
         $Employee->password = Hash::make($newPassword);
         $Employee->save();
 
@@ -428,7 +408,7 @@ class EmployeeAuthController extends Controller
     public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'new_password' => 'required|min:6|confirmed', // Must match new_password_confirmation
+            'new_password' => 'required|min:6|confirmed', 
         ]);
 
         if ($validator->fails()) {
@@ -439,7 +419,6 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Get the authenticated Employee
         $Employee = auth('Employee')->user();
 
         if (!$Employee) {
@@ -450,7 +429,6 @@ class EmployeeAuthController extends Controller
             ], 401);
         }
 
-        // Update the password
         $Employee->password = Hash::make($request->new_password);
         $Employee->save();
 
@@ -464,9 +442,9 @@ class EmployeeAuthController extends Controller
 
     public function changePhoneRequest(Request $request)
     {
-        // Validate the new phone number
+
         $validator = Validator::make($request->all(), [
-            'new_phone' => 'required|unique:Employees,phone', // Ensure it's unique in the Employees table
+            'new_phone' => 'required|unique:Employees,phone', 
         ]);
 
         if ($validator->fails()) {
@@ -477,7 +455,6 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Get the authenticated Employee
         $Employee = auth('Employee')->user();
 
         if (!$Employee) {
@@ -488,19 +465,15 @@ class EmployeeAuthController extends Controller
             ], 401);
         }
 
-        // Generate OTP
-        $otp = 1234; // Generate a 4-digit OTP
+        $otp = 1234;
 
-        // Store the OTP and new phone in cache (with a unique key, e.g., phone + Employee ID)
+
         Cache::put('otp_change_phone_' . $Employee->id, [
             'otp' => $otp,
             'new_phone' => $request->new_phone,
-        ], now()->addMinutes(10)); // OTP valid for 10 minutes
+        ], now()->addMinutes(10)); 
 
-        // Simulate sending the OTP (you can integrate an SMS service here)
-        // Log::info("OTP for phone {$request->new_phone}: {$otp}"); // For debugging only
-        // Send SMS or notification here
-
+       
         return response()->json([
             'status' => true,
             'message' => 'OTP sent to the new phone number.',
@@ -510,7 +483,6 @@ class EmployeeAuthController extends Controller
 
     public function verifyChangePhone(Request $request)
     {
-        // Validate the OTP
         $validator = Validator::make($request->all(), [
             'otp' => 'required|numeric',
         ]);
@@ -523,7 +495,6 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Get the authenticated Employee
         $Employee = auth('Employee')->user();
 
         if (!$Employee) {
@@ -534,7 +505,6 @@ class EmployeeAuthController extends Controller
             ], 401);
         }
 
-        // Retrieve the OTP and new phone from cache
         $cachedData = Cache::get('otp_change_phone_' . $Employee->id);
 
         if (!$cachedData || $cachedData['otp'] != $request->otp) {
@@ -545,11 +515,10 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // Update the phone number
+        
         $Employee->phone = $cachedData['new_phone'];
         $Employee->save();
 
-        // Remove the cached OTP after successful verification
         Cache::forget('otp_change_phone_' . $Employee->id);
 
         return response()->json([

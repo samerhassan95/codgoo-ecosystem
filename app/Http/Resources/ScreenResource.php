@@ -18,6 +18,7 @@ class ScreenResource extends JsonResource
             'integrated' => $this->integrated,
             'screen_code' => $this->screen_code,
             'estimated_hours' => $this->estimated_hours,
+            'comment' => $this->comment,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
         ];
     }

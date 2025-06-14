@@ -1,7 +1,6 @@
 <?php
 
-use App\Http\Controllers\{
-    EarlyLeaveRequestController,
+use App\Http\Controllers\{EarlyLeaveRequestController,
     Employee\EmployeeAuthController,
     ExtendTaskTimeRequestController,
     HolidayRequestController,
@@ -17,8 +16,8 @@ use App\Http\Controllers\{
     ImplementedApiController,
     ImplementedApiReviewController,
     AchievementController,
-    AttendanceController
-};
+    AttendanceController,
+    TaskController};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:employee')->group(function () {
@@ -47,6 +46,8 @@ Route::middleware('auth:employee')->group(function () {
     Route::apiResource('implemented-api-reviews', ImplementedApiReviewController::class);
     Route::apiResource('achievements', AchievementController::class);
     Route::apiResource('attendances', AttendanceController::class);
+    Route::get('employee-tasks', [TaskController::class, 'employeeTasks']);
+    Route::get('ui-task-details/{id}', [TaskController::class, 'showTaskWithScreens']);
 
 
 });

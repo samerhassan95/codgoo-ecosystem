@@ -18,5 +18,14 @@ class Task extends Model
     {
         return $this->belongsTo(Employee::class, 'assigned_to');
     }
-    
+    public function assignments()
+    {
+        return $this->hasMany(TaskAssignment::class);
+    }
+
+    public function screens()
+    {
+        return $this->hasMany(Screen::class);
+    }
+
 }

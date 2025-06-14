@@ -170,4 +170,105 @@ class TaskController extends BaseController
         }
     }
 
+
+    public function employeeTasks(Request $request)
+    {
+        $employee = auth('employee')->user();
+
+        $query = Task::whereHas('assignments', function ($q) use ($employee) {
+            $q->where('employee_id', $employee->id);
+        })
+        ->with([
+            'assignments' => function ($q) use ($employee) {
+                $q->where('employee_id', $employee->id);
+            },
+            'milestone.project',
+        ]);
+
+        if ($request->filled('date')) {
+            $query->whereDate('start_date', '<=', $request->date)
+                ->whereDate('due_date', '>=', $request->date);
+        }
+
+        if ($request->filled('project_id')) {
+            $query->whereHas('milestone.project', function ($q) use ($request) {
+                $q->where('id', $request->project_id);
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->whereHas('assignments', function ($q) use ($employee, $request) {
+                $q->where('employee_id', $employee->id)
+                ->where('status', $request->status);
+            });
+        }
+
+        if ($request->filled('from_date') && $request->filled('to_date')) {
+            $query->where(function ($q) use ($request) {
+                $q->whereDate('start_date', '>=', $request->from_date)
+                ->whereDate('due_date', '<=', $request->to_date);
+            });
+        }
+
+        $tasks = $query->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Tasks retrieved successfully.',
+            'data' => $tasks->map(function ($task) {
+                $assignment = $task->assignments->first();
+
+                return [
+                    'id' => $task->id,
+                    'label' => $task->label,
+                    'description' => $task->description,
+                    'start_date' => $task->start_date,
+                    'due_date' => $task->due_date,
+                    'priority' => $task->priority,
+                    'status' => $assignment?->status ?? $task->status,
+                    'estimated_hours' => $assignment?->estimated_hours,
+                    'header' => $assignment?->header,
+                    'project' => $task->milestone->project->name ?? null,
+                ];
+            }),
+        ]);
+    }
+
+
+    public function showTaskWithScreens($id)
+    {
+        $task = Task::with(['screens', 'milestone.project'])->find($id);
+
+        if (!$task) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Task not found.',
+                'data' => null,
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Task details retrieved successfully.',
+            'data' => [
+                'id' => $task->id,
+                'label' => $task->label,
+                'description' => $task->description,
+                'start_date' => $task->start_date,
+                'due_date' => $task->due_date,
+                'priority' => $task->priority,
+                'status' => $task->status,
+                'project' => $task->milestone->project->name ?? null,
+                'screens' => $task->screens->map(function ($screen) {
+                    return [
+                        'id' => $screen->id,
+                        'name' => $screen->name,
+                        'screen_code' => $screen->screen_code,
+                        'comment' => $screen->comment,
+                    ];
+                }),
+            ],
+        ]);
+    }
+
 }

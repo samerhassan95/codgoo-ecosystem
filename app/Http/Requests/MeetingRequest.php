@@ -43,14 +43,11 @@ class MeetingRequest extends FormRequest
         if ($this->isMethod('put') || $this->isMethod('patch')) {
             foreach ($rules as $key => $rule) {
                 if (is_array($rule)) {
-                    // Separate closures from string-based validation rules
                     $closures = array_filter($rule, fn($item) => $item instanceof \Closure);
                     $nonClosures = array_filter($rule, fn($item) => !$item instanceof \Closure);
         
-                    // Remove 'required' from non-closure rules
                     $nonClosures = array_diff($nonClosures, ['required']);
         
-                    // Merge closures back
                     $rules[$key] = array_merge(['nullable'], $nonClosures, $closures);
                 } else {
                     $rules[$key] = str_replace('required|', '', $rule);
