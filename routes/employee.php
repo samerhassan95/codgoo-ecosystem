@@ -1,7 +1,9 @@
 <?php
 
-use App\Http\Controllers\{EarlyLeaveRequestController,
+use App\Http\Controllers\{DocumentTypeController,
+    EarlyLeaveRequestController,
     Employee\EmployeeAuthController,
+    EmployeeDocumentController,
     EmployeeMeetingController,
     ExtendTaskTimeRequestController,
     HolidayRequestController,
@@ -50,6 +52,13 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('employee-tasks', [TaskController::class, 'employeeTasks']);
     Route::get('ui-task-details/{id}', [TaskController::class, 'showTaskWithScreens']);
     Route::post('employee-meetings', [EmployeeMeetingController::class, 'store']);
+    Route::prefix('employee-documents')->group(function () {
+    Route::get('/{employeeId}', [EmployeeDocumentController::class, 'index']);
+    Route::post('/', [EmployeeDocumentController::class, 'store']);
+    Route::get('/show/{id}', [EmployeeDocumentController::class, 'show']);
+    Route::delete('/{id}', [EmployeeDocumentController::class, 'destroy']);
+    });
+    Route::get('document-types', [DocumentTypeController::class, 'index']);
 
 
 });

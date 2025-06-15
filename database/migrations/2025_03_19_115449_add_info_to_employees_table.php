@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::table('employees', function (Blueprint $table) {
             Schema::table('employees', function (Blueprint $table) {
                 $table->date('birth_date')->nullable(); 
+                $table->date('join_date')->nullable(); 
                 $table->year('graduation_year')->nullable();
                 $table->unsignedTinyInteger('experience_years')->nullable();
              });

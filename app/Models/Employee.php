@@ -28,6 +28,7 @@ class Employee extends Authenticatable implements JWTSubject
         'graduation_year',
         'birth_date',
         'role',
+        'join_date',
     ];
 
     public function galleries()
@@ -74,6 +75,11 @@ class Employee extends Authenticatable implements JWTSubject
         return $this->belongsToMany(Task::class, 'task_assignments')
                     ->withPivot(['status', 'estimated_hours', 'header'])
                     ->withTimestamps();
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(EmployeeDocument::class);
     }
 
 }

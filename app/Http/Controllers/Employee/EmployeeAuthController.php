@@ -153,6 +153,9 @@ class EmployeeAuthController extends Controller
             'cover_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'intro' => 'nullable|string|max:1000',
             'role' => 'sometimes|required|in:ui_ux,front_end,back_end,tester,mobile',
+            'join_date' => 'nullable|date',
+            'birth_date' => 'nullable|date',
+            'graduation_year' => 'nullable|integer|min:1900|max:' . date('Y'),
         ]);
 
         $imagePath = $request->hasFile('image')
@@ -171,6 +174,9 @@ class EmployeeAuthController extends Controller
             'cover_photo' => $coverPhotoPath ? asset($coverPhotoPath) : $employee->cover_photo,
             'intro' => $request->intro ?? $employee->intro,
             'role' => $request->role ?? $employee->role,
+            'join_date' => $request->join_date ?? $employee->join_date,
+            'birth_date' => $request->birth_date ?? $employee->birth_date,
+            'graduation_year' => $request->graduation_year ?? $employee->graduation_year,
         ]);
 
         if ($updated) {
