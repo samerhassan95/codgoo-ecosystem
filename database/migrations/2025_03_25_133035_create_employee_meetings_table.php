@@ -18,9 +18,11 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->enum('visibility', ['private', 'public'])->default('private');
             $table->string('meeting_url')->nullable();
-            $table->timestamp('start_time');
-            $table->timestamp('end_time')->nullable();
+            $table->time('start_time');
+            $table->time('end_time')->nullable();
             $table->date('date')->nullable();
+            $table->string('zoom_meeting_id')->nullable();
+            $table->string('zoom_meeting_passcode')->nullable();
             $table->enum('status', ['not_started', 'scheduled', 'completed', 'canceled'])->default('not_started');
             $table->timestamps();
         });

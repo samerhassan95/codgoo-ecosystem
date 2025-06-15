@@ -14,6 +14,8 @@ class EmployeeMeetingResource extends JsonResource
             'description' => $this->description,
             'visibility' => $this->visibility,
             'meeting_url' => $this->meeting_url,
+            'zoom_meeting_id' => $this->zoom_meeting_id,
+            'zoom_meeting_passcode' => $this->zoom_meeting_passcode,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'date' => $this->date,

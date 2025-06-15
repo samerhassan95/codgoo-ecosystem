@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreEmployeeMeetingRequest;
+use App\Http\Requests\EmployeeMeetingRequest;
 use App\Models\EmployeeMeeting;
 use App\Http\Resources\EmployeeMeetingResource;
+use App\Services\ZoomService;
 
 class EmployeeMeetingController extends Controller
 {
-    public function store(StoreEmployeeMeetingRequest $request)
+
+    public function store(EmployeeMeetingRequest $request, ZoomService $zoomService)
     {
         $user = auth('employee')->user() ?? auth('admin')->user();
 
@@ -19,27 +21,43 @@ class EmployeeMeetingController extends Controller
             ], 401);
         }
 
-        $meeting = EmployeeMeeting::create([
-            'created_by_type' => get_class($user),
-            'created_by_id' => $user->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'visibility' => $request->visibility,
-            'meeting_url' => $request->meeting_url,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'date' => $request->date,
-            'status' => $request->status ?? 'not_started',
-        ]);
+        $data = $request->validated();
+        $data['created_by_type'] = get_class($user);
+        $data['created_by_id'] = $user->id;
 
-        if ($request->filled('participant_ids')) {
-            $meeting->participants()->sync($request->participant_ids);
+        try {
+            $startTime = now()->addMinutes(5)->toIso8601String();
+            $zoomTitle = is_array($data['title']) ? ($data['title']['en'] ?? reset($data['title'])) : $data['title'];
+
+            $zoomMeeting = $zoomService->createMeeting(
+                $zoomTitle,
+                $startTime,
+                60
+            );
+
+            if (isset($zoomMeeting['join_url'])) {
+                $data['meeting_url'] = $zoomMeeting['join_url'];
+                $data['zoom_meeting_id'] = $zoomMeeting['id'] ?? null;
+                $data['zoom_meeting_passcode'] = $zoomMeeting['password'] ?? null;
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Zoom meeting creation failed: ' . $e->getMessage(),
+            ], 500);
+        }
+
+        $meeting = EmployeeMeeting::create($data);
+
+        if (!empty($data['participant_ids'])) {
+            $meeting->participants()->sync($data['participant_ids']);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'Meeting created successfully',
+            'message' => 'Meeting created successfully with Zoom link.',
             'data' => new EmployeeMeetingResource($meeting->load('participants')),
         ]);
     }
+
 }

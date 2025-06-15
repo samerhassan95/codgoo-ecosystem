@@ -20,6 +20,8 @@ class EmployeeMeeting extends Model
         'end_time',
         'date',
         'status',
+        'zoom_meeting_id',
+        'zoom_meeting_passcode',
     ];
 
  

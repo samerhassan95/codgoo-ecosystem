@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\{EarlyLeaveRequestController,
     Employee\EmployeeAuthController,
+    EmployeeMeetingController,
     ExtendTaskTimeRequestController,
     HolidayRequestController,
     MoneyRequestController,
@@ -48,6 +49,7 @@ Route::middleware('auth:employee')->group(function () {
     Route::apiResource('attendances', AttendanceController::class);
     Route::get('employee-tasks', [TaskController::class, 'employeeTasks']);
     Route::get('ui-task-details/{id}', [TaskController::class, 'showTaskWithScreens']);
+    Route::post('employee-meetings', [EmployeeMeetingController::class, 'store']);
 
 
 });
