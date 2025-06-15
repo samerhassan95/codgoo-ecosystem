@@ -12,6 +12,8 @@ use App\Repositories\Employee\EmployeeRepository;
 use App\Repositories\Employee\EmployeeRepositoryInterface;
 use App\Repositories\MoneyRequestRepository;
 use App\Repositories\MoneyRequestRepositoryInterface;
+use App\Repositories\OvertimeRequestRepository;
+use App\Repositories\OvertimeRequestRepositoryInterface;
 use App\Repositories\PaperRequestRepository;
 use App\Repositories\PaperRequestRepositoryInterface;
 use App\Repositories\ProductAddonRepository;
@@ -130,6 +132,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ImplementedApiReviewRepositoryInterface::class, ImplementedApiReviewRepository::class);
         $this->app->bind(AchievementRepositoryInterface::class, AchievementRepository::class);
         $this->app->bind(AttendanceRepositoryInterface::class, AttendanceRepository::class);
+        $this->app->bind(OvertimeRequestRepositoryInterface::class, OvertimeRequestRepository::class);
 
 
     }

@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('holiday_requests', function (Blueprint $table) {
+        Schema::create('overtime_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->text('description')->nullable();
-            $table->date('date_from');
-            $table->date('date_to');
+            $table->date('date');
+            $table->integer('number_of_hours');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->text('work_description')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('holiday_requests');
+        Schema::dropIfExists('overtime_requests');
     }
 };

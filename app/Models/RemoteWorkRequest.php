@@ -10,7 +10,7 @@ class RemoteWorkRequest extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['employee_id', 'date', 'reason', 'status'];
+    protected $fillable = ['employee_id', 'date_from', 'date_to', 'reason', 'status'];
 
     public function employee(): BelongsTo
     {

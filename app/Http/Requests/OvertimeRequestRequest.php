@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class MoneyRequestRequest extends FormRequest
+class OvertimeRequestRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,10 +14,11 @@ class MoneyRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'due_date' => 'required|date|after_or_equal:today',
-            'description' => 'nullable|string',
-            'amount' => 'required|numeric|min:0',
             'employee_id' => 'required|exists:employees,id',
+            'date' => 'required|date|after_or_equal:today',
+            'number_of_hours' => 'required|integer|min:1',
+            'status' => 'nullable|in:pending,approved,rejected',
+            'work_description' => 'nullable|string',
         ];
     }
 }

@@ -16,7 +16,8 @@ class RemoteWorkRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date' => 'required|date|after_or_equal:today',
+            'date_from' => 'required|date|after_or_equal:today',
+            'date_to' => 'required|date|after_or_equal:date_from',
             'reason' => 'nullable|string|max:500',
             'status' => 'nullable|in:pending,approved,rejected',
             'employee_id' => 'required|exists:employees,id',

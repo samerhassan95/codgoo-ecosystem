@@ -18,6 +18,22 @@ class HolidayRequestController extends BaseController
         parent::__construct($repository);
         $this->repository = $repository;
     }
+
+    public function myRequests(): JsonResponse
+    {
+        $employeeId = auth()->id();
+
+        $requests = HolidayRequest::where('employee_id', $employeeId)
+            ->with('employee', 'holidayRequestType')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => HolidayRequestResource::collection($requests),
+        ]);
+    }
+
     // public function index(): JsonResponse
     // {
     //     $requests = HolidayRequest::with('employee')->get();

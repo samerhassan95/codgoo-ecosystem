@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('money_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->string('header');
+            $table->date('due_date');
             $table->text('description')->nullable();
             $table->decimal('amount', 10, 2);
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');

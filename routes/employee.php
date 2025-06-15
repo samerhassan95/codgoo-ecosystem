@@ -8,6 +8,7 @@ use App\Http\Controllers\{DocumentTypeController,
     ExtendTaskTimeRequestController,
     HolidayRequestController,
     MoneyRequestController,
+    OvertimeRequestController,
     PaperRequestController,
     RemoteWorkRequestController,
     TaskAssignmentController,
@@ -59,6 +60,12 @@ Route::middleware('auth:employee')->group(function () {
     Route::delete('/{id}', [EmployeeDocumentController::class, 'destroy']);
     });
     Route::get('document-types', [DocumentTypeController::class, 'index']);
-
+    Route::get('holiday-request/my-requests', [HolidayRequestController::class, 'myRequests']);
+    Route::get('remote-work-request/my-requests', [RemoteWorkRequestController::class, 'myRequests']);
+    Route::get('early-leave-request/my-requests', [EarlyLeaveRequestController::class, 'myRequests']);
+    Route::get('paper-request/my-requests', [PaperRequestController::class, 'myRequests']);
+    Route::get('money-request/my-requests', [MoneyRequestController::class, 'myRequests']);
+    Route::get('overtime-request/my-requests', [OvertimeRequestController::class, 'myRequests']);
+    Route::apiResource('overtime-requests', OvertimeRequestController::class);
 
 });

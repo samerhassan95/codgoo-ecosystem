@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('remote_work_requests', function (Blueprint $table) {
+        Schema::create('holiday_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade'); 
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
+            $table->foreignId('holiday_request_type_id')->constrained('holiday_request_types')->onDelete('cascade');
+            $table->text('description')->nullable();
             $table->date('date_from');
             $table->date('date_to');
-            $table->text('reason')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
+        
         });
     }
 
@@ -27,6 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('remote_work_requests');
+        Schema::dropIfExists('holiday_requests');
     }
 };
+

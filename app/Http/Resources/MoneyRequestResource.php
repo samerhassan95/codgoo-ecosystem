@@ -11,8 +11,8 @@ class MoneyRequestResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'employee' => new EmployeeResource($this->employee),
-            'header' => $this->header,
+            // 'employee' => new EmployeeResource($this->employee),
+            'due_date' => $this->due_date,
             'description' => $this->description,
             'amount' => $this->amount,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),

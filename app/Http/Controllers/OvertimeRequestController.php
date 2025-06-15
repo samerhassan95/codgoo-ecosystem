@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\MoneyRequestRequest;
-use App\Http\Resources\MoneyRequestResource;
-use App\Models\MoneyRequest;
+use App\Http\Requests\OvertimeRequestRequest;
+use App\Http\Resources\OvertimeRequestResource;
+use App\Models\OvertimeRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Repositories\MoneyRequestRepositoryInterface;
+use App\Repositories\OvertimeRequestRepositoryInterface;
 
-class MoneyRequestController extends BaseController
+class OvertimeRequestController extends BaseController
 {
     private $repository;
 
-    public function __construct(MoneyRequestRepositoryInterface $repository)
+    public function __construct(OvertimeRequestRepositoryInterface $repository)
     {
         parent::__construct($repository);
         $this->repository = $repository;
@@ -22,13 +22,13 @@ class MoneyRequestController extends BaseController
     {
         $employee = auth()->user();
 
-        $requests = MoneyRequest::where('employee_id', $employee->id)
+        $requests = OvertimeRequest::where('employee_id', $employee->id)
             ->orderByDesc('created_at')
             ->get();
 
         return response()->json([
             'status' => true,
-            'data' => MoneyRequestResource::collection($requests),
+            'data' => OvertimeRequestResource::collection($requests),
         ]);
     }
 }

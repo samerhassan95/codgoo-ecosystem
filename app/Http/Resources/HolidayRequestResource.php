@@ -24,6 +24,10 @@ class HolidayRequestResource extends JsonResource
             'date_from' => $this->date_from,
             'date_to' => $this->date_to,
             'status' => $this->status,
+            'holiday_request_type' => $this->holidayRequestType ? [
+                'id' => $this->holidayRequestType->id,
+                'name' => $this->holidayRequestType->name,
+            ] : null,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
         ];
     }
