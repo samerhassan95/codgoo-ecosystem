@@ -297,7 +297,7 @@ class EmployeeAuthController extends Controller
     public function forgotPasswordRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|exists:Employees,phone',
+            'phone' => 'required|exists:employees,phone',
         ]);
 
         if ($validator->fails()) {
