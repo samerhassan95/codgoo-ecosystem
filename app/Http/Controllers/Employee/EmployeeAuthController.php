@@ -324,7 +324,7 @@ class EmployeeAuthController extends Controller
     public function verifyOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|exists:Employees,phone',
+            'phone' => 'required|exists:employees,phone',
             'otp' => 'required|numeric',
         ]);
 
@@ -361,7 +361,7 @@ class EmployeeAuthController extends Controller
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|exists:Employees,phone',
+            'phone' => 'required|exists:employees,phone',
             'password' => 'required|min:6|confirmed',  
         ]);
 
@@ -444,7 +444,7 @@ class EmployeeAuthController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'new_phone' => 'required|unique:Employees,phone', 
+            'new_phone' => 'required|unique:employees,phone', 
         ]);
 
         if ($validator->fails()) {
