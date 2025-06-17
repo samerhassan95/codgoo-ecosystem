@@ -140,7 +140,6 @@ class EmployeeAuthController extends Controller
         ]);
     }
 
-
     public function updateProfile(Request $request)
     {
         $employee = auth()->user(); 
@@ -192,9 +191,7 @@ class EmployeeAuthController extends Controller
             'message' => 'Failed to update profile.',
         ]);
     }
-    
-
-    
+     
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -297,7 +294,6 @@ class EmployeeAuthController extends Controller
         ]);
     }
 
-
     public function forgotPasswordRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -324,7 +320,6 @@ class EmployeeAuthController extends Controller
             'data' => null
         ], 200);
     }
-
 
     public function verifyOtp(Request $request)
     {
@@ -444,7 +439,6 @@ class EmployeeAuthController extends Controller
             'data' => null
         ], 200);
     }
-
 
     public function changePhoneRequest(Request $request)
     {
