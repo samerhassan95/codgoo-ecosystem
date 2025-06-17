@@ -14,7 +14,9 @@ class ScreenReview extends Model
         'screen_id',
         'comment',
         'review_type',
-        'created_by',
+        'creator_type',
+        'creator_id',
+        
     ];
 
     public function screen(): BelongsTo

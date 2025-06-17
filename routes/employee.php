@@ -72,5 +72,5 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('screen-details/{id}', [ScreenController::class, 'showWithRequestedApis']);
     Route::get('back-task-details/{id}', [TaskController::class, 'showTaskWithScreensback']);
     Route::post('implemented-apis/bulk-store', [ImplementedApiController::class, 'bulkStore']);
-
+    Route::get('home-overview', [TaskController::class, 'homeOverview']);
 });

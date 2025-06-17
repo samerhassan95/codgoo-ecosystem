@@ -11,6 +11,9 @@ use App\Repositories\NotificationRepository;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\QueryBuilder;
+use App\Models\TaskAssignment;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends BaseController
 {
@@ -353,6 +356,57 @@ class TaskController extends BaseController
                     ];
                 })->values(),
             ],
+        ]);
+    }
+
+
+
+    public function homeOverview()
+    {
+        $employeeId = Auth::user()->id;
+
+        $latestTasks = Task::whereHas('assignments', function ($query) use ($employeeId) {
+            $query->where('employee_id', $employeeId);
+        })
+        ->with(['milestone.project', 'assignments' => function ($query) use ($employeeId) {
+            $query->where('employee_id', $employeeId);
+        }])
+        ->latest()
+        ->take(5)
+        ->get();
+
+        $inProgressTasks = Task::whereHas('assignments', function ($query) use ($employeeId) {
+            $query->where('employee_id', $employeeId)
+                ->where('status', 'in_progress');
+        })->get();
+
+        $progress = $inProgressTasks->map(function ($task) {
+            $now = Carbon::now();
+            $start = Carbon::parse($task->start_date);
+            $end = Carbon::parse($task->due_date);
+
+            if ($now->greaterThanOrEqualTo($end)) {
+                $percentage = 0;
+            } elseif ($now->lessThanOrEqualTo($start)) {
+                $percentage = 100;
+            } else {
+                $totalDuration = $end->diffInSeconds($start);
+                $remaining = $end->diffInSeconds($now);
+                $percentage = ($remaining / $totalDuration) * 100;
+            }
+
+            return [
+                'task_id' => $task->id,
+                'label' => $task->label,
+                'project' => $task->milestone->project->name ?? null,
+                'remaining_time_percentage' => round($percentage, 2)
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'latest_tasks' => $latestTasks,
+            'in_progress_tasks_time_remaining' => $progress
         ]);
     }
 
