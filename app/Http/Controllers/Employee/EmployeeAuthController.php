@@ -67,7 +67,7 @@ class EmployeeAuthController extends Controller
         ];
 
         Cache::put('employee_register_' . $request->phone, $cachedData, now()->addMinutes(10));
-        Cache::put('otp_' . $request->phone, $otp, now()->addMinutes(1));
+        Cache::put('otp_' . $request->phone, $otp, now()->addMinutes(10));
 
         return response()->json([
             'status' => true,
