@@ -45,13 +45,15 @@ Route::middleware('auth:employee')->group(function () {
     Route::apiResource('addresses', AddressController::class);
     Route::apiResource('screen-reviews', ScreenReviewController::class);
     Route::apiResource('screens', ScreenController::class);
+    Route::apiResource('tasks', TaskController::class);
     Route::apiResource('requested-apis', RequestedApiController::class);
     Route::apiResource('implemented-apis', ImplementedApiController::class);
     Route::apiResource('implemented-api-reviews', ImplementedApiReviewController::class);
     Route::apiResource('achievements', AchievementController::class);
     Route::apiResource('attendances', AttendanceController::class);
     Route::get('employee-tasks', [TaskController::class, 'employeeTasks']);
-    Route::get('ui-task-details/{id}', [TaskController::class, 'showTaskWithScreens']);
+    Route::get('ui-task-details/{id}', [TaskController::class, 'showTaskWithScreensforUI']);
+    Route::get('front-task-details/{id}', [TaskController::class, 'showTaskWithScreensfront']);
     Route::post('employee-meetings', [EmployeeMeetingController::class, 'store']);
     Route::prefix('employee-documents')->group(function () {
     Route::get('/{employeeId}', [EmployeeDocumentController::class, 'index']);
@@ -67,5 +69,8 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('money-request/my-requests', [MoneyRequestController::class, 'myRequests']);
     Route::get('overtime-request/my-requests', [OvertimeRequestController::class, 'myRequests']);
     Route::apiResource('overtime-requests', OvertimeRequestController::class);
+    Route::get('screen-details/{id}', [ScreenController::class, 'showWithRequestedApis']);
+    Route::get('back-task-details/{id}', [TaskController::class, 'showTaskWithScreensback']);
+    Route::post('implemented-apis/bulk-store', [ImplementedApiController::class, 'bulkStore']);
 
 });

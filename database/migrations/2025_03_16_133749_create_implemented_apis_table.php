@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('requested_api_id')->constrained('requested_apis')->onDelete('cascade');
             $table->string('postman_collection_url')->nullable();
-            $table->enum('status', ['pending', 'complete', 'tested'])->default('pending');
+            $table->enum('status', ['complete', 'tested'])->default('complete');
             $table->timestamps();
         });
     }

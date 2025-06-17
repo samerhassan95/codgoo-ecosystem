@@ -28,4 +28,8 @@ class Task extends Model
         return $this->hasMany(Screen::class);
     }
 
+    public function devModeScreens()
+    {
+        return $this->hasMany(Screen::class)->where('dev_mode', 1);
+    }
 }

@@ -29,4 +29,10 @@ class Screen extends Model
     {
         return $this->hasMany(ScreenReview::class);
     }
+
+    public function requestedApis()
+    {
+        return $this->hasMany(RequestedApi::class);
+    }
+
 }
