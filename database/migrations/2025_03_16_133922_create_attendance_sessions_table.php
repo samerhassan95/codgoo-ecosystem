@@ -18,6 +18,8 @@ return new class extends Migration
             $table->timestamp('check_in_time');
             $table->timestamp('check_out_time')->nullable();
             $table->boolean('is_in_office')->default(false);
+            $table->timestamp('pause_started_at')->nullable();
+            $table->integer('total_pause_minutes')->default(0);
             $table->timestamps();
         });
     }

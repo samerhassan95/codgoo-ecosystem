@@ -14,7 +14,9 @@ class AttendanceSession extends Model
         'ip_address',
         'check_in_time',
         'check_out_time',
-        'is_in_office'
+        'is_in_office',
+        'pause_started_at',
+        'total_pause_minutes',
     ];
 
     public function attendance()

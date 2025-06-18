@@ -73,4 +73,12 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('back-task-details/{id}', [TaskController::class, 'showTaskWithScreensback']);
     Route::post('implemented-apis/bulk-store', [ImplementedApiController::class, 'bulkStore']);
     Route::get('home-overview', [TaskController::class, 'homeOverview']);
+
+    Route::post('attendance/check-in', [AttendanceController::class, 'checkIn']);
+    Route::post('attendance/check-out/{sessionId}', [AttendanceController::class, 'checkOut']);         
+    Route::post('attendance/pause/{sessionId}', [AttendanceController::class, 'pause']);
+    Route::post('attendance/resume', [AttendanceController::class, 'resume']);
+    Route::get('attendance/sessions', [AttendanceController::class, 'getSessions']);
+    Route::get('attendance/real-time', [AttendanceController::class, 'realTimeStatus']);
+
 });
