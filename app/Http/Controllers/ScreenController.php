@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Screen;
 use App\Repositories\ScreenRepositoryInterface;
+use Illuminate\Http\Request;
 
 class ScreenController extends BaseController
 {
@@ -50,4 +51,63 @@ class ScreenController extends BaseController
             ],
         ]);
     }
+
+
+    public function getScreensWithReviewsByRole(Request $request)
+    {
+        $user = auth()->user();
+
+        $roleToReviewType = [
+            'ui_ux'     => 'ui',
+            'front_end' => 'frontend',
+            'back_end'  => 'backend',
+            'mobile'    => 'mobile',
+            'tester'    => null,
+        ];
+
+        $reviewType = $roleToReviewType[$user->role] ?? null;
+
+        $screens = Screen::whereHas('reviews', function ($query) use ($reviewType, $user) {
+            $query->where('is_resolved', false); // ❗ فقط الكومنتات الغير محلولة
+            if ($user->role !== 'tester' && $reviewType) {
+                $query->where('review_type', $reviewType);
+            }
+        })
+        ->with([
+            'task:id,label',
+            'reviews' => function ($query) use ($reviewType, $user) {
+                $query->where('is_resolved', false); // ❗ الكومنتات الغير محلولة فقط
+                if ($user->role !== 'tester' && $reviewType) {
+                    $query->where('review_type', $reviewType);
+                }
+                $query->with('creator:id,name');
+            }
+        ])
+        ->get()
+        ->map(function ($screen) {
+            return [
+                'screen_id'   => $screen->id,
+                'screen_name' => $screen->name,
+                'screen_code' => $screen->screen_code,
+                'dev_mode'    => $screen->dev_mode,
+                'task_name'   => $screen->task->label ?? null,
+                'comments'    => $screen->reviews->map(function ($review) {
+                    return [
+                        'creator_name' => $review->creator->name ?? 'Unknown',
+                        'id'           => $review->id,
+                        'comment'      => $review->comment,
+                        'created_at'   => $review->created_at->toDateTimeString(),
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'status'  => true,
+            'screens' => $screens
+        ]);
+    }
+
+
+
 }

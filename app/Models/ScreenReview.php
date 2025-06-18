@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use App\Models\Employee; 
 class ScreenReview extends Model
 {
     use HasFactory;
@@ -16,6 +16,9 @@ class ScreenReview extends Model
         'review_type',
         'creator_type',
         'creator_id',
+        'parent_id',
+        'is_resolved',
+
         
     ];
 
@@ -28,5 +31,6 @@ class ScreenReview extends Model
     {
         return $this->morphTo();
     }
+
     
 }

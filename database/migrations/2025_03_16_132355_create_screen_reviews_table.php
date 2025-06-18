@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('screen_id')->constrained('screens')->onDelete('cascade');
             $table->text('comment');
-            $table->enum('review_type', ['ui', 'frontend', 'both'])->default('both');
+            $table->enum('review_type', ['ui', 'frontend', 'backend', 'mobile'])->default('ui');
             $table->morphs('creator');
+            $table->boolean('is_resolved')->default(false);
             $table->timestamps();
         });
     }

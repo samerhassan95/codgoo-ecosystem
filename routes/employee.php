@@ -80,5 +80,6 @@ Route::middleware('auth:employee')->group(function () {
     Route::post('attendance/resume', [AttendanceController::class, 'resume']);
     Route::get('attendance/sessions', [AttendanceController::class, 'getSessions']);
     Route::get('attendance/real-time', [AttendanceController::class, 'realTimeStatus']);
-
+    Route::get('screens-with-reviews', [ScreenController::class, 'getScreensWithReviewsByRole']);
+    Route::post('screen-reviews/mark-resolved', [ScreenReviewController::class, 'markCommentsResolved']);
 });
