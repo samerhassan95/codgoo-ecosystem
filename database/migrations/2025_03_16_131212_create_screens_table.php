@@ -18,6 +18,7 @@ return new class extends Migration
             $table->boolean('dev_mode')->default(false);
             $table->boolean('implemented')->default(false);
             $table->boolean('integrated')->default(false);
+            $table->boolean('frontend_approved')->default(false);
             $table->string('screen_code')->nullable();
             $table->integer('estimated_hours')->nullable();
             $table->text('comment')->nullable();

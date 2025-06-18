@@ -16,6 +16,7 @@ class ScreenResource extends JsonResource
             'dev_mode' => $this->dev_mode,
             'implemented' => $this->implemented,
             'integrated' => $this->integrated,
+            'frontend_approved' => $this->frontend_approved,
             'screen_code' => $this->screen_code,
             'estimated_hours' => $this->estimated_hours,
             'comment' => $this->comment,

@@ -38,6 +38,7 @@ class ScreenController extends BaseController
                 'dev_mode' => $screen->dev_mode,
                 'implemented' => $screen->implemented,
                 'integrated' => $screen->integrated,
+                'frontend_approved' => $screen->frontend_approved,
                 'estimated_hours' => $screen->estimated_hours,
                 'requested_apis' => $screen->requestedApis->map(function ($api) {
                     return [
@@ -68,7 +69,7 @@ class ScreenController extends BaseController
         $reviewType = $roleToReviewType[$user->role] ?? null;
 
         $screens = Screen::whereHas('reviews', function ($query) use ($reviewType, $user) {
-            $query->where('is_resolved', false); // ❗ فقط الكومنتات الغير محلولة
+            $query->where('is_resolved', false); // 
             if ($user->role !== 'tester' && $reviewType) {
                 $query->where('review_type', $reviewType);
             }
@@ -76,7 +77,7 @@ class ScreenController extends BaseController
         ->with([
             'task:id,label',
             'reviews' => function ($query) use ($reviewType, $user) {
-                $query->where('is_resolved', false); // ❗ الكومنتات الغير محلولة فقط
+                $query->where('is_resolved', false); 
                 if ($user->role !== 'tester' && $reviewType) {
                     $query->where('review_type', $reviewType);
                 }

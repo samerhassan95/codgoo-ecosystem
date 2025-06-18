@@ -18,6 +18,7 @@ class ScreenRequest extends FormRequest
             'task_id' => 'required|exists:tasks,id',
             'dev_mode' => 'nullable|boolean',
             'implemented' => 'nullable|boolean',
+            'frontend_approved' => 'nullable|boolean',
             'integrated' => 'nullable|boolean',
             'screen_code' => 'nullable|string|max:255',
             'estimated_hours' => 'nullable|integer|min:0',

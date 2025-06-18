@@ -17,7 +17,8 @@ class Screen extends Model
         'integrated',
         'screen_code',
         'estimated_hours',
-        'comment'
+        'comment',
+        'frontend_approved',
     ];
 
     public function task()
