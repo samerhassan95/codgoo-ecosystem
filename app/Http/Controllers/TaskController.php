@@ -238,9 +238,144 @@ class TaskController extends BaseController
     }
 
 
-    public function showTaskWithScreensforUI($id)
+    // public function showTaskWithScreensforUI($id)
+    // {
+    //     $task = Task::with(['screens', 'milestone.project'])->find($id);
+
+    //     if (!$task) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Task not found.',
+    //             'data' => null,
+    //         ], 404);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Task details retrieved successfully.',
+    //         'data' => [
+    //             'id' => $task->id,
+    //             'label' => $task->label,
+    //             'description' => $task->description,
+    //             'start_date' => $task->start_date,
+    //             'due_date' => $task->due_date,
+    //             'priority' => $task->priority,
+    //             'status' => $task->status,
+    //             'project' => $task->milestone->project->name ?? null,
+    //             'screens' => $task->screens->map(function ($screen) {
+    //                 return [
+    //                     'id' => $screen->id,
+    //                     'name' => $screen->name,
+    //                     'screen_code' => $screen->screen_code,
+    //                     'comment' => $screen->comment,
+    //                     'integrated' => $screen->integrated,
+    //                     'implemented' => $screen->implemented,
+    //                     'dev_mode' => $screen->dev_mode,
+    //                 ];
+    //             }),
+    //         ],
+    //     ]);
+    // }
+
+    //  public function showTaskWithScreensfront($id)
+    // {
+    //     $task = Task::with(['devModeScreens', 'milestone.project'])->find($id);
+
+    //     if (!$task) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Task not found.',
+    //             'data' => null,
+    //         ], 404);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Task details retrieved successfully.',
+    //         'data' => [
+    //             'id' => $task->id,
+    //             'label' => $task->label,
+    //             'description' => $task->description,
+    //             'start_date' => $task->start_date,
+    //             'due_date' => $task->due_date,
+    //             'priority' => $task->priority,
+    //             'status' => $task->status,
+    //             'project' => $task->milestone->project->name ?? null,
+    //             'dev_mode_screens ' => $task->devModeScreens->map(function ($screen) {
+    //                 return [
+    //                     'id' => $screen->id,
+    //                     'name' => $screen->name,
+    //                     'screen_code' => $screen->screen_code,
+    //                     'comment' => $screen->comment,
+    //                     'integrated' => $screen->integrated,
+    //                     'implemented' => $screen->implemented,
+    //                     'dev_mode' => $screen->dev_mode,
+    //                 ];
+    //             }),
+    //         ],
+    //     ]);
+    // }
+
+    // public function showTaskWithScreensback($id)
+    // {
+    //     $task = Task::with(['screens.requestedApis', 'milestone.project'])->find($id);
+
+    //     if (!$task) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Task not found.',
+    //             'data' => null,
+    //         ], 404);
+    //     }
+
+    //     $filteredScreens = $task->screens->filter(function ($screen) {
+    //         return $screen->requestedApis->isNotEmpty();
+    //     });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Task details retrieved successfully.',
+    //         'data' => [
+    //             'id' => $task->id,
+    //             'label' => $task->label,
+    //             'description' => $task->description,
+    //             'start_date' => $task->start_date,
+    //             'due_date' => $task->due_date,
+    //             'priority' => $task->priority,
+    //             'status' => $task->status,
+    //             'project' => $task->milestone->project->name ?? null,
+    //             'screens' => $filteredScreens->map(function ($screen) {
+    //                 return [
+    //                     'id' => $screen->id,
+    //                     'name' => $screen->name,
+    //                     'screen_code' => $screen->screen_code,
+    //                     'comment' => $screen->comment,
+    //                     'integrated' => $screen->integrated,
+    //                     'implemented' => $screen->implemented,
+    //                     'dev_mode' => $screen->dev_mode,
+    //                 ];
+    //             })->values(),
+    //         ],
+    //     ]);
+    // }
+
+
+    public function showTaskWithScreensByRole($id)
     {
-        $task = Task::with(['screens', 'milestone.project'])->find($id);
+        $user = auth()->user();
+        $role = $user->role ?? null;
+
+        $with = ['milestone.project'];
+
+        if ($role === 'front_end') {
+            $with[] = 'devModeScreens';
+        } elseif ($role === 'back_end') {
+            $with[] = 'screens.requestedApis';
+        } else {
+            $with[] = 'screens';
+        }
+
+        $task = Task::with($with)->find($id);
 
         if (!$task) {
             return response()->json([
@@ -248,6 +383,16 @@ class TaskController extends BaseController
                 'message' => 'Task not found.',
                 'data' => null,
             ], 404);
+        }
+
+        if ($role === 'front_end') {
+            $screens = $task->devModeScreens;
+        } elseif ($role === 'back_end') {
+            $screens = $task->screens->filter(function ($screen) {
+                return $screen->requestedApis->isNotEmpty();
+            });
+        } else {
+            $screens = $task->screens;
         }
 
         return response()->json([
@@ -262,89 +407,7 @@ class TaskController extends BaseController
                 'priority' => $task->priority,
                 'status' => $task->status,
                 'project' => $task->milestone->project->name ?? null,
-                'screens' => $task->screens->map(function ($screen) {
-                    return [
-                        'id' => $screen->id,
-                        'name' => $screen->name,
-                        'screen_code' => $screen->screen_code,
-                        'comment' => $screen->comment,
-                        'integrated' => $screen->integrated,
-                        'implemented' => $screen->implemented,
-                        'dev_mode' => $screen->dev_mode,
-                    ];
-                }),
-            ],
-        ]);
-    }
-
-     public function showTaskWithScreensfront($id)
-    {
-        $task = Task::with(['devModeScreens', 'milestone.project'])->find($id);
-
-        if (!$task) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Task not found.',
-                'data' => null,
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Task details retrieved successfully.',
-            'data' => [
-                'id' => $task->id,
-                'label' => $task->label,
-                'description' => $task->description,
-                'start_date' => $task->start_date,
-                'due_date' => $task->due_date,
-                'priority' => $task->priority,
-                'status' => $task->status,
-                'project' => $task->milestone->project->name ?? null,
-                'dev_mode_screens ' => $task->devModeScreens->map(function ($screen) {
-                    return [
-                        'id' => $screen->id,
-                        'name' => $screen->name,
-                        'screen_code' => $screen->screen_code,
-                        'comment' => $screen->comment,
-                        'integrated' => $screen->integrated,
-                        'implemented' => $screen->implemented,
-                        'dev_mode' => $screen->dev_mode,
-                    ];
-                }),
-            ],
-        ]);
-    }
-
-    public function showTaskWithScreensback($id)
-    {
-        $task = Task::with(['screens.requestedApis', 'milestone.project'])->find($id);
-
-        if (!$task) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Task not found.',
-                'data' => null,
-            ], 404);
-        }
-
-        $filteredScreens = $task->screens->filter(function ($screen) {
-            return $screen->requestedApis->isNotEmpty();
-        });
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Task details retrieved successfully.',
-            'data' => [
-                'id' => $task->id,
-                'label' => $task->label,
-                'description' => $task->description,
-                'start_date' => $task->start_date,
-                'due_date' => $task->due_date,
-                'priority' => $task->priority,
-                'status' => $task->status,
-                'project' => $task->milestone->project->name ?? null,
-                'screens' => $filteredScreens->map(function ($screen) {
+                'screens' => $screens->map(function ($screen) {
                     return [
                         'id' => $screen->id,
                         'name' => $screen->name,
@@ -358,7 +421,6 @@ class TaskController extends BaseController
             ],
         ]);
     }
-
 
 
     public function homeOverview()

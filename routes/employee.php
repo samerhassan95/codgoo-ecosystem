@@ -52,8 +52,6 @@ Route::middleware('auth:employee')->group(function () {
     Route::apiResource('achievements', AchievementController::class);
     Route::apiResource('attendances', AttendanceController::class);
     Route::get('employee-tasks', [TaskController::class, 'employeeTasks']);
-    Route::get('ui-task-details/{id}', [TaskController::class, 'showTaskWithScreensforUI']);
-    Route::get('front-task-details/{id}', [TaskController::class, 'showTaskWithScreensfront']);
     Route::post('employee-meetings', [EmployeeMeetingController::class, 'store']);
     Route::prefix('employee-documents')->group(function () {
     Route::get('/{employeeId}', [EmployeeDocumentController::class, 'index']);
@@ -70,7 +68,7 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('overtime-request/my-requests', [OvertimeRequestController::class, 'myRequests']);
     Route::apiResource('overtime-requests', OvertimeRequestController::class);
     Route::get('screen-details/{id}', [ScreenController::class, 'showWithRequestedApis']);
-    Route::get('back-task-details/{id}', [TaskController::class, 'showTaskWithScreensback']);
+    Route::get('task-details/{id}', [TaskController::class, 'showTaskWithScreensByRole']);
     Route::post('implemented-apis/bulk-store', [ImplementedApiController::class, 'bulkStore']);
     Route::get('home-overview', [TaskController::class, 'homeOverview']);
 
