@@ -82,4 +82,7 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('attendance/real-time', [AttendanceController::class, 'realTimeStatus']);
     Route::get('screens-with-reviews', [ScreenController::class, 'getScreensWithReviewsByRole']);
     Route::post('screen-reviews/mark-resolved', [ScreenReviewController::class, 'markCommentsResolved']);
+    Route::get('screenreviews/{id}', [ScreenController::class, 'getScreenWithReviewsByType']);
+    Route::post('implemented-apis/mark-tested', [ImplementedApiController::class, 'markAsTested']);
+    Route::get('screen-development-overview/{id}', [ScreenController::class, 'getScreenDevelopmentOverview']);
 });

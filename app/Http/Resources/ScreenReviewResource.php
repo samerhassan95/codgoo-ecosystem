@@ -17,10 +17,10 @@ class ScreenReviewResource extends JsonResource
             ],
             'comment' => $this->comment,
             'review_type' => $this->review_type,
-            'created_by' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-            ],
+            // 'created_by' => [
+            //     'id' => $this->user->id,
+            //     'name' => $this->user->name,
+            // ],
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
         ];
     }

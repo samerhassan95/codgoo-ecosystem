@@ -16,7 +16,6 @@ class ScreenReview extends Model
         'review_type',
         'creator_type',
         'creator_id',
-        'parent_id',
         'is_resolved',
 
         

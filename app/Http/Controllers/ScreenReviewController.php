@@ -33,4 +33,49 @@ class ScreenReviewController extends BaseController
         ]);
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'screen_id'    => 'required|exists:screens,id',
+            'comment'      => 'required|string',
+            'review_type'  => 'required|in:ui,frontend,backend,mobile',
+        ]);
+
+        if (auth('employee')->check()) {
+            $user = auth('employee')->user();
+            $creatorType = \App\Models\Employee::class;
+        } elseif (auth('admin')->check()) {
+            $user = auth('admin')->user();
+            $creatorType = \App\Models\Admin::class;
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized user.',
+            ], 401);
+        }
+
+        $review = ScreenReview::create([
+            'screen_id'    => $request->screen_id,
+            'comment'      => $request->comment,
+            'review_type'  => $request->review_type,
+            'creator_type' => $creatorType,
+            'creator_id'   => $user->id,
+            'is_resolved'  => false,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Comment added successfully.',
+            'data' => [
+                'id' => $review->id,
+                'screen_id' => $review->screen_id,
+                'comment' => $review->comment,
+                'review_type' => $review->review_type,
+                'creator_name' => $user->name,
+                'is_resolved' => $review->is_resolved,
+                'created_at' => $review->created_at->toDateTimeString(),
+            ],
+        ]);
+    }
+
 }

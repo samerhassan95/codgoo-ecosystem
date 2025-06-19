@@ -7,6 +7,7 @@ use App\Http\Resources\ImplementedApiResource;
 use App\Repositories\ImplementedApiRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Models\ImplementedApi;
 
 class ImplementedApiController extends BaseController
 {
@@ -40,6 +41,22 @@ class ImplementedApiController extends BaseController
         return response()->json([
             'message' => 'APIs marked as implemented successfully.',
         ], 201);
+    }
+
+
+    public function markAsTested(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:implemented_apis,id',
+        ]);
+
+        ImplementedApi::whereIn('id', $request->ids)->update(['status' => 'tested']);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Selected APIs marked as tested successfully.',
+        ]);
     }
 
 
