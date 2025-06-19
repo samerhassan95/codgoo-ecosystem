@@ -83,4 +83,5 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('screenreviews/{id}', [ScreenController::class, 'getScreenWithReviewsByType']);
     Route::post('implemented-apis/mark-tested', [ImplementedApiController::class, 'markAsTested']);
     Route::get('screen-development-overview/{id}', [ScreenController::class, 'getScreenDevelopmentOverview']);
+    Route::get('task-screens/{id}', [TaskController::class, 'getTaskScreensWithEmployeeCommentsCount']);
 });

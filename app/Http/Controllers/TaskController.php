@@ -472,5 +472,37 @@ class TaskController extends BaseController
         ]);
     }
 
+     public function getTaskScreensWithEmployeeCommentsCount($taskId)
+    {
+        $task = Task::with('screens.reviews')->find($taskId);
+
+        if (!$task) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Task not found.',
+                'data' => null,
+            ], 404);
+        }
+
+        $screens = $task->screens->map(function ($screen) {
+            $employeeCommentsCount = $screen->reviews
+                ->filter(function ($review) {
+                    return $review->creator_type !== 'App\\Models\\Tester'; // exclude tester comments
+                })
+                ->count();
+
+            return [
+                'screen_name' => $screen->name,
+                'screen_comment' => $screen->comment,
+                'employee_comments_count' => $employeeCommentsCount,
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Screens with employee comment counts retrieved successfully.',
+            'data' => $screens,
+        ]);
+    }
 
 }
