@@ -73,8 +73,8 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('home-overview', [TaskController::class, 'homeOverview']);
 
     Route::post('attendance/check-in', [AttendanceController::class, 'checkIn']);
-    Route::post('attendance/check-out/{sessionId}', [AttendanceController::class, 'checkOut']);         
-    Route::post('attendance/pause/{sessionId}', [AttendanceController::class, 'pause']);
+    Route::post('attendance/check-out', [AttendanceController::class, 'checkOut']);         
+    Route::post('attendance/pause', [AttendanceController::class, 'pause']);
     Route::post('attendance/resume', [AttendanceController::class, 'resume']);
     Route::get('attendance/sessions', [AttendanceController::class, 'getSessions']);
     Route::get('attendance/real-time', [AttendanceController::class, 'realTimeStatus']);

@@ -272,27 +272,27 @@ class EmployeeAuthController extends Controller
     }
 
    public function getProfile(Request $request)
-{
-    $Employee = auth('employee')->user()?->load('address','documents'); 
+    {
+        $Employee = auth('employee')->user()?->load('address','documents'); 
 
-    if (!$Employee) {
+        if (!$Employee) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized. Employee not found.',
+                'data' => null
+            ], 401);
+        }
+
         return response()->json([
-            'status' => false,
-            'message' => 'Unauthorized. Employee not found.',
-            'data' => null
-        ], 401);
+            'status' => true,
+            'message' => 'Profile retrieved successfully.',
+            'data' => [
+                'Employee' => $Employee,
+                'token' => $request->bearerToken(),
+                'type' => 'Employee',
+            ],
+        ]);
     }
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Profile retrieved successfully.',
-        'data' => [
-            'Employee' => $Employee,
-            'token' => $request->bearerToken(),
-            'type' => 'Employee',
-        ],
-    ]);
-}
 
     public function forgotPasswordRequest(Request $request)
     {

@@ -343,53 +343,64 @@ class AttendanceController extends BaseController
 
 
        public function checkIn(Request $request)
-{
-    $user = auth()->user();
-    $today = now()->toDateString();
+    {
+        $user = auth()->user();
+        $today = now()->toDateString();
 
-    // إنشاء attendance لليوم الحالي إن لم يوجد
-    $attendance = Attendance::firstOrCreate([
-        'employee_id' => $user->id,
-        'date' => $today,
-    ]);
+        // إنشاء attendance لليوم الحالي إن لم يوجد
+        $attendance = Attendance::firstOrCreate([
+            'employee_id' => $user->id,
+            'date' => $today,
+        ]);
 
-    // التحقق إذا كانت آخر جلسة اليوم تم تسجيل خروجها (check_out)
-    $lastSession = $attendance->sessions()->latest()->first();
+        // التحقق إذا كانت آخر جلسة اليوم تم تسجيل خروجها (check_out)
+        $lastSession = $attendance->sessions()->latest()->first();
 
-    if ($lastSession && $lastSession->check_out_time && !$attendance->sessions()->whereNull('check_out_time')->exists()) {
-        // يعني الموظف خلّص كل الجلسات ومفيش جلسة مفتوحة
+        if ($lastSession && $lastSession->check_out_time && !$attendance->sessions()->whereNull('check_out_time')->exists()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You have already checked out completely for today.',
+            ]);
+        }
+
+        $attendance->sessions()
+            ->whereNull('check_out_time')
+            ->update(['check_out_time' => now()]);
+
+        $session = $attendance->sessions()->create([
+            'ip_address' => $request->ip(),
+            'check_in_time' => now(),
+            'is_in_office' => true,
+        ]);
+
         return response()->json([
-            'status' => false,
-            'message' => 'You have already checked out completely for today.',
+            'status' => true,
+            'message' => 'Checked in successfully.',
+            'session' => $session
         ]);
     }
 
-    // إنهاء أي جلسة مفتوحة (لو موجودة)
-    $attendance->sessions()
-        ->whereNull('check_out_time')
-        ->update(['check_out_time' => now()]);
 
-    // بدء جلسة جديدة
-    $session = $attendance->sessions()->create([
-        'ip_address' => $request->ip(),
-        'check_in_time' => now(),
-        'is_in_office' => true,
-    ]);
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Checked in successfully.',
-        'session' => $session
-    ]);
-}
-
-
-    public function pause($sessionId)
+    public function pause()
     {
-        $session = AttendanceSession::findOrFail($sessionId);
+        $user = auth()->user();
+        $today = now()->toDateString();
 
-        if ($session->check_out_time) {
-            return response()->json(['status' => false, 'message' => 'Session already ended.']);
+        $attendance = Attendance::where('employee_id', $user->id)
+            ->where('date', $today)
+            ->first();
+
+        if (!$attendance) {
+            return response()->json(['status' => false, 'message' => 'No attendance found for today.']);
+        }
+
+        $session = $attendance->sessions()
+            ->whereNull('check_out_time')
+            ->latest()
+            ->first();
+
+        if (!$session) {
+            return response()->json(['status' => false, 'message' => 'No active session to pause.']);
         }
 
         $session->update([
@@ -404,6 +415,7 @@ class AttendanceController extends BaseController
             'session' => $session
         ]);
     }
+
 
    public function resume()
     {
@@ -432,12 +444,27 @@ class AttendanceController extends BaseController
         ]);
     }
 
-    public function checkOut($sessionId)
+    public function checkOut()
     {
-        $session = AttendanceSession::findOrFail($sessionId);
+        $user = auth()->user();
+        $today = now()->toDateString();
 
-        if ($session->check_out_time) {
-            return response()->json(['status' => false, 'message' => 'Already checked out.']);
+        $attendance = Attendance::where('employee_id', $user->id)
+            ->where('date', $today)
+            ->with('sessions')
+            ->first();
+
+        if (!$attendance) {
+            return response()->json(['status' => false, 'message' => 'No attendance found for today.']);
+        }
+
+        $session = $attendance->sessions()
+            ->whereNull('check_out_time')
+            ->latest()
+            ->first();
+
+        if (!$session) {
+            return response()->json(['status' => false, 'message' => 'No active session to check out.']);
         }
 
         $session->update([
@@ -445,17 +472,15 @@ class AttendanceController extends BaseController
             'is_in_office' => false,
         ]);
 
-        $attendance = $session->attendance;
-        $totalMinutes = 0;
-
-        foreach ($attendance->sessions as $s) {
-            if ($s->check_out_time && $s->check_in_time) {
-                $totalMinutes += Carbon::parse($s->check_in_time)->diffInMinutes(Carbon::parse($s->check_out_time));
+        $totalMinutes = $attendance->sessions->sum(function ($s) {
+            if ($s->check_in_time && $s->check_out_time) {
+                return Carbon::parse($s->check_in_time)->diffInMinutes(Carbon::parse($s->check_out_time));
             }
-        }
+            return 0;
+        });
 
         $attendance->update([
-            'total_hours' => round($totalMinutes / 60, 2)
+            'total_hours' => round($totalMinutes / 60, 2),
         ]);
 
         return response()->json([
@@ -465,6 +490,7 @@ class AttendanceController extends BaseController
             'session' => $session
         ]);
     }
+
 
 
 }
