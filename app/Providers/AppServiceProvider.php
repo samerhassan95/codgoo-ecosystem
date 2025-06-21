@@ -10,6 +10,8 @@ use App\Repositories\EarlyLeaveRequestRepository;
 use App\Repositories\EarlyLeaveRequestRepositoryInterface;
 use App\Repositories\Employee\EmployeeRepository;
 use App\Repositories\Employee\EmployeeRepositoryInterface;
+use App\Repositories\HolidayRequestTypeRepository;
+use App\Repositories\HolidayRequestTypeRepositoryInterface;
 use App\Repositories\MoneyRequestRepository;
 use App\Repositories\MoneyRequestRepositoryInterface;
 use App\Repositories\OvertimeRequestRepository;
@@ -133,6 +135,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AchievementRepositoryInterface::class, AchievementRepository::class);
         $this->app->bind(AttendanceRepositoryInterface::class, AttendanceRepository::class);
         $this->app->bind(OvertimeRequestRepositoryInterface::class, OvertimeRequestRepository::class);
+        $this->app->bind(HolidayRequestTypeRepositoryInterface::class, HolidayRequestTypeRepository::class);
 
 
     }

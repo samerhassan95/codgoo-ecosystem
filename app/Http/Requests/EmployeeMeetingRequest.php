@@ -15,7 +15,7 @@ class EmployeeMeetingRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'visibility' => 'required|in:private,public',
+            'visibility' => 'nullable|in:private,public',
             'meeting_url' => 'nullable|url',
             'start_time' => 'required|date_format:H:i:s',
             'end_time' => 'nullable|date_format:H:i:s|after_or_equal:start_time',

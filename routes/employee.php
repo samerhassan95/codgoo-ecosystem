@@ -7,6 +7,7 @@ use App\Http\Controllers\{DocumentTypeController,
     EmployeeMeetingController,
     ExtendTaskTimeRequestController,
     HolidayRequestController,
+    HolidayRequestTypeController,
     MoneyRequestController,
     OvertimeRequestController,
     PaperRequestController,
@@ -72,7 +73,7 @@ Route::middleware('auth:employee')->group(function () {
     Route::post('implemented-apis/bulk-store', [ImplementedApiController::class, 'bulkStore']);
     Route::get('home-overview', [TaskController::class, 'homeOverview']);
     Route::post('attendance/check-in', [AttendanceController::class, 'checkIn']);
-    Route::post('attendance/check-out', [AttendanceController::class, 'checkOut']);         
+    Route::post('attendance/check-out', [AttendanceController::class, 'checkOut']);
     Route::post('attendance/pause', [AttendanceController::class, 'pause']);
     Route::post('attendance/resume', [AttendanceController::class, 'resume']);
     Route::get('attendance/sessions', [AttendanceController::class, 'getSessions']);
@@ -85,5 +86,6 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('task-screens/{id}', [TaskController::class, 'getTaskScreensWithEmployeeCommentsCount']);
     Route::get('participant-ids', [EmployeeAuthController::class, 'getAllEmployees']);
     Route::get('employees/search', [EmployeeAuthController::class, 'searchByName']);
+    Route::get('holiday-request-types/visible', [HolidayRequestTypeController::class, 'getVisibleTypes']);
 
 });

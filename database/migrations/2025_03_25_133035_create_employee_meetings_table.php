@@ -16,7 +16,7 @@ return new class extends Migration
             $table->morphs('created_by'); // Can be employee or admin
             $table->string('title');
             $table->text('description')->nullable();
-            $table->enum('visibility', ['private', 'public'])->default('private');
+            $table->enum('visibility', ['private', 'public'])->default('public');
             $table->string('meeting_url')->nullable();
             $table->time('start_time');
             $table->time('end_time')->nullable();
