@@ -532,25 +532,25 @@ class EmployeeAuthController extends Controller
 
     public function getAllEmployees(Request $request)
     {
-          try {
-        $employeeIds = Employee::pluck('id'); // Get only the IDs
+        try {
+            $employees = Employee::all();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Employee IDs retrieved successfully.',
-            'data' => $employeeIds,
-        ], 200);
+            return response()->json([
+                'status' => true,
+                'message' => 'Employees retrieved successfully.',
+                'data' => $employees,
+            ], 200);
 
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'An error occurred while fetching employee IDs.',
-            'data' => null,
-        ], 500);
+        } catch (\Exception $e) {            
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while fetching employees.',
+                'data' => null,
+            ], 500);
+        }
     }
-    }
-
-    public function searchByName(Request $request)
+    
+        public function searchByName(Request $request)
     {
         $request->validate([
             'name' => 'required|string',
@@ -564,6 +564,4 @@ class EmployeeAuthController extends Controller
             'data' => $employees,
         ]);
     }
-
-    
 }
