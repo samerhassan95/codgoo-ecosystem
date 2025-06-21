@@ -20,7 +20,7 @@ class ScreenRequest extends FormRequest
             'implemented' => 'nullable|boolean',
             'frontend_approved' => 'nullable|boolean',
             'integrated' => 'nullable|boolean',
-            'screen_code' => 'nullable|string|max:255',
+            'screen_code' => 'nullable|string|max:255|unique:screens,screen_code,' . $this->route('screen'),
             'estimated_hours' => 'nullable|integer|min:0',
             'comment' => 'nullable|string|max:1000',
         ];
