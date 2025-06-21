@@ -84,5 +84,6 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('screen-development-overview/{id}', [ScreenController::class, 'getScreenDevelopmentOverview']);
     Route::get('task-screens/{id}', [TaskController::class, 'getTaskScreensWithEmployeeCommentsCount']);
     Route::get('participant-ids', [EmployeeAuthController::class, 'getAllEmployees']);
+    Route::get('employees/search', [EmployeeAuthController::class, 'searchByName']);
 
 });
