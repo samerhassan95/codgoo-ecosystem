@@ -16,7 +16,6 @@ class PaperRequestRequest extends FormRequest
         return [
             'header' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'amount' => 'required|numeric|min:0',
             'employee_id' => 'required|exists:employees,id',
         ];
     }
