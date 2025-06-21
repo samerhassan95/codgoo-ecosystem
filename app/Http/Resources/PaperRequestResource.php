@@ -14,6 +14,7 @@ class PaperRequestResource extends JsonResource
             'employee' => new EmployeeResource($this->employee),
             'header' => $this->header,
             'description' => $this->description,
+            'status' => $this->status,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
         ];
     }
