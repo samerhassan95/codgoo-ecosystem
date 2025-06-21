@@ -71,7 +71,6 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('task-details/{id}', [TaskController::class, 'showTaskWithScreensByRole']);
     Route::post('implemented-apis/bulk-store', [ImplementedApiController::class, 'bulkStore']);
     Route::get('home-overview', [TaskController::class, 'homeOverview']);
-
     Route::post('attendance/check-in', [AttendanceController::class, 'checkIn']);
     Route::post('attendance/check-out', [AttendanceController::class, 'checkOut']);         
     Route::post('attendance/pause', [AttendanceController::class, 'pause']);
@@ -84,4 +83,6 @@ Route::middleware('auth:employee')->group(function () {
     Route::post('implemented-apis/mark-tested', [ImplementedApiController::class, 'markAsTested']);
     Route::get('screen-development-overview/{id}', [ScreenController::class, 'getScreenDevelopmentOverview']);
     Route::get('task-screens/{id}', [TaskController::class, 'getTaskScreensWithEmployeeCommentsCount']);
+    Route::get('participant-ids', [EmployeeAuthController::class, 'getAllEmployees']);
+
 });
