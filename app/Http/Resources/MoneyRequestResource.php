@@ -15,6 +15,7 @@ class MoneyRequestResource extends JsonResource
             'due_date' => $this->due_date,
             'description' => $this->description,
             'amount' => $this->amount,
+            'status' => $this->status,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
         ];
     }
