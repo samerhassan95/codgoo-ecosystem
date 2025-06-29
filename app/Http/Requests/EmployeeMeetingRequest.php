@@ -19,7 +19,7 @@ class EmployeeMeetingRequest extends FormRequest
             'meeting_url' => 'nullable|url',
             'start_time' => 'required|date_format:H:i:s',
             'end_time' => 'nullable|date_format:H:i:s|after_or_equal:start_time',
-            'date' => 'required|date',
+            'date' => 'required|date|after_or_equal:today',
             'status' => 'in:not_started,scheduled,completed,canceled',
             'participant_ids' => 'required|array',
             'participant_ids.*' => 'exists:employees,id',
