@@ -386,7 +386,7 @@ class TaskController extends BaseController
         }
 
         if ($role === 'front_end') {
-            $screens = $task->devModeScreens;
+            $screens = $task->screens;
         } elseif ($role === 'back_end') {
             $screens = $task->screens->filter(function ($screen) {
                 return $screen->requestedApis->isNotEmpty();
