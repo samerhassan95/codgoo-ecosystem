@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text('achievement_description')->nullable();
             $table->text('issues_notes')->nullable();
             $table->timestamp('submitted_at')->useCurrent();
+            $table->foreignId('attendance_id')->constrained('attendances')->onDelete('cascade')->nullable(); 
             $table->timestamps();
         });
     }
