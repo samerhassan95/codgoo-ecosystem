@@ -10,18 +10,15 @@ class Achievement extends Model
     use HasFactory;
 
     protected $fillable = [
-        'task_id',
          'created_by',
         'attendance_id',
         'achievement_description',
         'submitted_at',
-        'achievement_type',
+        'issues_notes',
+        
     ];
 
-    public function task()
-    {
-        return $this->belongsTo(Task::class);
-    }
+
 
     // public function creator()
     // {
@@ -33,8 +30,13 @@ class Achievement extends Model
         return $this->belongsTo(Attendance::class);
     }
 
-    public function achievementType()
+    public function attachments()
     {
-        return $this->belongsTo(AchievementType::class);
+        return $this->hasMany(AchievementAttachment::class);
+    }
+
+    public function getFileUrlAttribute()
+    {
+        return asset('storage/' . $this->file_path);
     }
 }

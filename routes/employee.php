@@ -87,5 +87,6 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('participant-ids', [EmployeeAuthController::class, 'getAllEmployees']);
     Route::get('employees/search', [EmployeeAuthController::class, 'searchByName']);
     Route::get('holiday-request-types/visible', [HolidayRequestTypeController::class, 'getVisibleTypes']);
+    Route::post('employee-achievements', [AchievementController::class, 'store']);
 
 });
