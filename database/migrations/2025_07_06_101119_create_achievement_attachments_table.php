@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('achievement_types', function (Blueprint $table) {
+        Schema::create('achievement_attachments', function (Blueprint $table) {
             $table->id();
-            $table->string('type_name');
+            $table->foreignId('achievement_id')->constrained('achievements')->onDelete('cascade');
+            $table->string('file_path');
             $table->timestamps();
         });
     }
@@ -23,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('achievement_types');
+        Schema::dropIfExists('achievement_attachments');
     }
 };
