@@ -91,6 +91,6 @@ Route::middleware('auth:employee')->group(function () {
     Route::post('employee-achievements', [AchievementController::class, 'store']);
     Route::get('tasks/{task}/discussion', [TaskDiscussionController::class, 'index']);
     Route::post('tasks/{task}/discussion/send', [TaskDiscussionController::class, 'send']);
-    Route::get('/projects/names', [ProjectController::class, 'listNames']);
+    Route::get('projects/names', [ProjectController::class, 'listNames']);
 
 });
