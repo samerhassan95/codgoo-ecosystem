@@ -22,7 +22,8 @@ use App\Http\Controllers\{DocumentTypeController,
     ImplementedApiReviewController,
     AchievementController,
     AttendanceController,
-    TaskController};
+    TaskController,
+    TaskDiscussionController};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:employee')->group(function () {
@@ -88,5 +89,8 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('employees/search', [EmployeeAuthController::class, 'searchByName']);
     Route::get('holiday-request-types/visible', [HolidayRequestTypeController::class, 'getVisibleTypes']);
     Route::post('employee-achievements', [AchievementController::class, 'store']);
+    Route::get('tasks/{task}/discussion', [TaskDiscussionController::class, 'index']);
+    Route::post('tasks/{task}/discussion/send', [TaskDiscussionController::class, 'send']);
+    Route::get('/projects/names', [ProjectController::class, 'listNames']);
 
 });

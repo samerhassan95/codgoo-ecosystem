@@ -543,6 +543,18 @@ class ProjectController extends BaseController
         return response()->json(['message' => 'Attachment deleted successfully.'], 200);
     }
 
+
+    public function listNames()
+    {
+        $projects = Project::select('id', 'name')->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $projects
+        ]);
+    }
+
+
 }
 
 
