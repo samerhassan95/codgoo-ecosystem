@@ -219,6 +219,7 @@ class ScreenController extends BaseController
 
         return response()->json([
             'status' => true,
+            'id' => $screen->id,
             'screen_name' => $screen->name,
             'screen_code' => $screen->screen_code,
             'comment' => $screen->comment,
