@@ -22,9 +22,10 @@ class TaskMessageSent implements ShouldBroadcast
         $this->message = $message;
     }
 
+
     public function broadcastOn()
     {
-        return new PrivateChannel('task.discussion.' . $this->message->task_id);
+        return new Channel('task.discussion.' . $this->message->task_id); 
     }
 
     public function broadcastWith()
