@@ -32,4 +32,14 @@ class Task extends Model
     {
         return $this->hasMany(Screen::class)->where('dev_mode', 1);
     }
+
+    public function employees()
+    {
+        return $this->belongsToMany(Employee::class, 'task_assignments')
+                    ->withPivot(['status', 'estimated_hours', 'header'])
+                    ->withTimestamps();
+    }
+
+
+    
 }

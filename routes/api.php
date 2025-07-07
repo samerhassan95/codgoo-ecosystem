@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\TaskMessageSent;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Client\ClientAuthController;
 use App\Http\Controllers\Employee\EmployeeAuthController;
@@ -8,7 +9,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\NotificationController;
 
-
+use App\Models\TaskDiscussionMessage;
+use App\Models\Employee;
 
 Route::prefix('admin')->group(function() {
     Route::post('register', [AdminAuthController::class, 'register']);
@@ -53,3 +55,24 @@ Route::post('send-chat-notification', [NotificationController::class, 'sendChatN
 Route::get('payment/success', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
 Route::get('payment/cancel', [PaymentController::class, 'paymentCancel'])->name('payment.cancel');
 Route::post('opay/callback', [PaymentController::class, 'opayCallback'])->name('opay.callback');
+
+
+Route::get('/pusher-test', function () {
+    $message = TaskDiscussionMessage::create([
+        'task_id'     => 8,
+        'sender_id'   => 5,
+        'sender_type' => Employee::class,
+        'message'     => 'Test message from route /pusher-test',
+    ]);
+
+    \Log::info('Broadcasting test message', ['message_id' => $message->id]);
+
+    broadcast(new TaskMessageSent($message))->toOthers();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Pusher test event broadcasted successfully!',
+        'data' => $message,
+    ]);
+});
+
