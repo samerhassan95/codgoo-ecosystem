@@ -2,14 +2,19 @@
 
 use Illuminate\Support\Facades\Broadcast;
 
+
 Broadcast::channel('task.discussion.{taskId}', function ($user, $taskId) {
     $task = \App\Models\Task::find($taskId);
+    
+    if (!$task) {
+        return false;
+    }
 
-    if (!$task) return false;
-
-    if ($user instanceof \App\Models\Admin) {
+    // للمديرين
+    if ($user->isAdmin()) {
         return true;
     }
 
-    return $task->employees()->where('employees.id', $user->id)->exists();
+    // للموظفين المسند إليهم المهمة
+    return $task->employees->contains($user->id);
 });
