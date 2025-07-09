@@ -47,17 +47,23 @@ class ImplementedApiController extends BaseController
     public function markAsTested(Request $request)
     {
         $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:implemented_apis,id',
+            'screen_id' => 'required|exists:screens,id',
         ]);
 
-        ImplementedApi::whereIn('id', $request->ids)->update(['status' => 'tested']);
+        $implementedApiIds = ImplementedApi::whereIn('requested_api_id', function ($query) use ($request) {
+            $query->select('id')
+                ->from('requested_apis')
+                ->where('screen_id', $request->screen_id);
+        })->pluck('id');
+
+        ImplementedApi::whereIn('id', $implementedApiIds)->update(['status' => 'tested']);
 
         return response()->json([
             'status' => true,
-            'message' => 'Selected APIs marked as tested successfully.',
+            'message' => 'All implemented APIs for the screen marked as tested successfully.',
         ]);
     }
+
 
 
 }
