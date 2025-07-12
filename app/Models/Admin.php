@@ -35,7 +35,11 @@ class Admin extends Authenticatable implements JWTSubject
         return $this->morphMany(Attachment::class, 'uploadedBy');
     }
 
-    
+    public function isAdmin()
+{
+    return true;
+}
+
     // public function projects()
     // {
     //     return $this->morphMany(Project::class, 'created_by');

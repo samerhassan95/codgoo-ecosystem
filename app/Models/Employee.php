@@ -40,6 +40,10 @@ class Employee extends Authenticatable implements JWTSubject
     {
         return $this->belongsToMany(Skill::class, 'employee_skill', 'employee_id', 'skill_id');
     }
+public function isAdmin()
+{
+    return false;
+}
 
 
     public function getJWTIdentifier()
