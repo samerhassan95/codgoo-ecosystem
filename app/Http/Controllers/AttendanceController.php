@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Achievement;
+use App\Models\AchievementAttachment;
 use App\Models\Attendance;
 use App\Models\AttendanceSession;
 use App\Repositories\AttendanceRepositoryInterface;
@@ -458,7 +460,7 @@ class AttendanceController extends BaseController
         ]);
     }
 
-    public function checkOut()
+    public function checkOut(Request $request)
     {
         $user = auth()->user();
         $today = now()->toDateString();
@@ -481,11 +483,13 @@ class AttendanceController extends BaseController
             return response()->json(['status' => false, 'message' => 'No active session to check out.']);
         }
 
+        // Check out the session
         $session->update([
             'check_out_time' => now(),
             'is_in_office' => false,
         ]);
 
+        // Calculate total hours
         $totalMinutes = $attendance->sessions->sum(function ($s) {
             if ($s->check_in_time && $s->check_out_time) {
                 return Carbon::parse($s->check_in_time)->diffInMinutes(Carbon::parse($s->check_out_time));
@@ -497,13 +501,37 @@ class AttendanceController extends BaseController
             'total_hours' => round($totalMinutes / 60, 2),
         ]);
 
+        // Create achievement if provided
+        $achievement = null;
+        if ($request->filled('achievement_description') || $request->filled('issues_notes') || $request->hasFile('attachments')) {
+            $achievement = Achievement::create([
+                'created_by' => $user->id,
+                'achievement_description' => $request->input('achievement_description'),
+                'issues_notes' => $request->input('issues_notes'),
+                'attendance_id' => $attendance->id,
+            ]);
+
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $path = $file->store('achievement_attachments', 'public');
+
+                    AchievementAttachment::create([
+                        'achievement_id' => $achievement->id,
+                        'file_path' => $path,
+                    ]);
+                }
+            }
+        }
+
         return response()->json([
             'status' => true,
             'message' => 'Checked out successfully.',
             'total_hours' => $attendance->total_hours,
-            'session' => $session
+            'session' => $session,
+            'achievement' => $achievement ? $achievement->load('attachments') : null,
         ]);
     }
+
 
 
 
