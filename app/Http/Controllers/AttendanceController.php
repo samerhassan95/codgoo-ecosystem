@@ -324,7 +324,13 @@ class AttendanceController extends BaseController
         $attendance = Attendance::where('employee_id', $user->id)->where('date', $today)->first();
 
         if (!$attendance) {
-            return response()->json(['status' => true, 'total_hours' => 0, 'message' => 'No attendance for today.']);
+            return response()->json([
+                'status' => true,
+                'total_hours' => 0,
+                'remaining_hours' => 8,
+                'shift_completion' => '0%',
+                'message' => 'No attendance for today.'
+            ]);
         }
 
         $totalMinutes = 0;
@@ -334,15 +340,23 @@ class AttendanceController extends BaseController
             $totalMinutes += Carbon::parse($session->check_in_time)->diffInMinutes(Carbon::parse($checkOut));
         }
 
+        $totalHours = round($totalMinutes / 60, 2);
+        $shiftHours = 8;
+        $remainingHours = max(0, round($shiftHours - $totalHours, 2));
+        $shiftCompletionPercentage = min(100, round(($totalHours / $shiftHours) * 100, 2)) . '%';
+
         return response()->json([
             'status' => true,
-            'total_hours' => round($totalMinutes / 60, 2),
+            'total_hours' => $totalHours,
+            'remaining_hours' => $remainingHours,
+            'shift_completion' => $shiftCompletionPercentage,
             'message' => 'Real-time attendance hours.',
         ]);
     }
 
 
-       public function checkIn(Request $request)
+
+    public function checkIn(Request $request)
     {
         $user = auth()->user();
         $today = now()->toDateString();
