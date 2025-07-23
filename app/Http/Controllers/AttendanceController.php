@@ -323,7 +323,10 @@ class AttendanceController extends BaseController
         $user = auth()->user();
         $today = now()->toDateString();
 
-        $attendance = Attendance::where('employee_id', $user->id)->where('date', $today)->with('sessions')->first();
+        $attendance = Attendance::where('employee_id', $user->id)
+            ->where('date', $today)
+            ->with('sessions')
+            ->first();
 
         if (!$attendance) {
             return response()->json([
@@ -347,15 +350,18 @@ class AttendanceController extends BaseController
         $remainingHours = max(0, round($shiftHours - $totalHours, 2));
         $shiftCompletionPercentage = min(100, round(($totalHours / $shiftHours) * 100, 2)) . '%';
 
-        // Determine last session status
-        $lastSession = $attendance->sessions->sortByDesc('id')->first();
+        $sortedSessions = $attendance->sessions->sortBy('check_in_time')->values();
+        $lastSession = $sortedSessions->last();
         $lastStatus = 'Unknown';
 
         if ($lastSession) {
             if (is_null($lastSession->check_out_time)) {
-                $lastStatus = 'Checked_in';
+                if ($sortedSessions->count() === 1) {
+                    $lastStatus = 'Checked_in'; 
+                } else {
+                    $lastStatus = 'Resumed'; 
+                }
             } else {
-                // session ended → check if there's any session started after it
                 $hasNextSession = $attendance->sessions->where('check_in_time', '>', $lastSession->check_out_time)->count() > 0;
                 $lastStatus = $hasNextSession ? 'Paused' : 'Checked_out';
             }
@@ -370,9 +376,6 @@ class AttendanceController extends BaseController
             'message' => 'Real-time attendance hours.',
         ]);
     }
-
-
-
 
     public function checkIn(Request $request)
     {
@@ -410,7 +413,6 @@ class AttendanceController extends BaseController
         ]);
     }
 
-
     public function pause()
     {
         $user = auth()->user();
@@ -445,7 +447,6 @@ class AttendanceController extends BaseController
             'session' => $session
         ]);
     }
-
 
    public function resume()
     {
@@ -542,8 +543,5 @@ class AttendanceController extends BaseController
             'achievement' => $achievement ? $achievement->load('attachments') : null,
         ]);
     }
-
-
-
-
+    
 }
