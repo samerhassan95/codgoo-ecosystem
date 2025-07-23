@@ -7,56 +7,60 @@ use App\Models\Task;
 use App\Models\TaskDiscussionMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use App\Services\ImageService;
+use Illuminate\Support\Facades\URL;
 
 class TaskDiscussionController extends Controller
 {
+
     public function index($taskId)
     {
         $task = Task::findOrFail($taskId);
         $user = Auth::user();
 
-        // التحقق من الصلاحيات
         if (!$user->isAdmin() && !$task->employees->contains($user->id)) {
             abort(403, 'Unauthorized');
         }
 
-        return TaskDiscussionMessage::with('sender')
+        $messages = TaskDiscussionMessage::with('sender')
             ->where('task_id', $taskId)
             ->orderBy('created_at')
             ->get();
+
+        $messages->transform(function ($message) {
+            $message->file_path = $message->file_path ? asset($message->file_path) : null;
+            return $message;
+        });
+
+        return $messages;
     }
+
 
     public function send(Request $request, $taskId)
     {
         $task = Task::findOrFail($taskId);
         $user = Auth::user();
 
-        // التحقق من الصلاحيات
         if (!$user->isAdmin() && !$task->employees->contains($user->id)) {
             abort(403, 'Unauthorized');
         }
 
-        // التحقق من نوع المحتوى
         $type = $request->input('type', 'text');
         $filePath = null;
 
-        if ($type === 'file' && $request->hasFile('file')) {
-            $file = $request->file('file');
-            $filePath = $file->store('discussion_files', 'public');
+        if (in_array($type, ['file', 'image', 'video']) && $request->hasFile('file')) {
+            $filePath = ImageService::upload($request->file('file'), 'discussion_files');
         }
 
-        // إنشاء الرسالة
         $message = TaskDiscussionMessage::create([
             'task_id' => $taskId,
             'sender_id' => $user->id,
             'sender_type' => get_class($user),
             'message' => $type === 'text' ? $request->input('message') : null,
             'type' => $type,
-            'file_path' => $filePath,
+            'file_path' => asset($filePath),
         ]);
 
-        // بث الحدث
         broadcast(new TaskMessageSent($message))->toOthers();
 
         return response()->json([
