@@ -323,7 +323,7 @@ class AttendanceController extends BaseController
         $user = auth()->user();
         $today = now()->toDateString();
 
-        $attendance = Attendance::where('employee_id', $user->id)->where('date', $today)->first();
+        $attendance = Attendance::where('employee_id', $user->id)->where('date', $today)->with('sessions')->first();
 
         if (!$attendance) {
             return response()->json([
@@ -331,12 +331,12 @@ class AttendanceController extends BaseController
                 'total_hours' => 0,
                 'remaining_hours' => 8,
                 'shift_completion' => '0%',
+                'last_status' => 'No_attendance',
                 'message' => 'No attendance for today.'
             ]);
         }
 
         $totalMinutes = 0;
-
         foreach ($attendance->sessions as $session) {
             $checkOut = $session->check_out_time ?? now();
             $totalMinutes += Carbon::parse($session->check_in_time)->diffInMinutes(Carbon::parse($checkOut));
@@ -347,14 +347,30 @@ class AttendanceController extends BaseController
         $remainingHours = max(0, round($shiftHours - $totalHours, 2));
         $shiftCompletionPercentage = min(100, round(($totalHours / $shiftHours) * 100, 2)) . '%';
 
+        // Determine last session status
+        $lastSession = $attendance->sessions->sortByDesc('id')->first();
+        $lastStatus = 'Unknown';
+
+        if ($lastSession) {
+            if (is_null($lastSession->check_out_time)) {
+                $lastStatus = 'Checked_in';
+            } else {
+                // session ended → check if there's any session started after it
+                $hasNextSession = $attendance->sessions->where('check_in_time', '>', $lastSession->check_out_time)->count() > 0;
+                $lastStatus = $hasNextSession ? 'Paused' : 'Checked_out';
+            }
+        }
+
         return response()->json([
             'status' => true,
             'total_hours' => $totalHours,
             'remaining_hours' => $remainingHours,
             'shift_completion' => $shiftCompletionPercentage,
+            'last_status' => $lastStatus,
             'message' => 'Real-time attendance hours.',
         ]);
     }
+
 
 
 
@@ -363,13 +379,11 @@ class AttendanceController extends BaseController
         $user = auth()->user();
         $today = now()->toDateString();
 
-        // إنشاء attendance لليوم الحالي إن لم يوجد
         $attendance = Attendance::firstOrCreate([
             'employee_id' => $user->id,
             'date' => $today,
         ]);
 
-        // التحقق إذا كانت آخر جلسة اليوم تم تسجيل خروجها (check_out)
         $lastSession = $attendance->sessions()->latest()->first();
 
         if ($lastSession && $lastSession->check_out_time && !$attendance->sessions()->whereNull('check_out_time')->exists()) {
@@ -483,13 +497,11 @@ class AttendanceController extends BaseController
             return response()->json(['status' => false, 'message' => 'No active session to check out.']);
         }
 
-        // Check out the session
         $session->update([
             'check_out_time' => now(),
             'is_in_office' => false,
         ]);
 
-        // Calculate total hours
         $totalMinutes = $attendance->sessions->sum(function ($s) {
             if ($s->check_in_time && $s->check_out_time) {
                 return Carbon::parse($s->check_in_time)->diffInMinutes(Carbon::parse($s->check_out_time));
@@ -501,7 +513,6 @@ class AttendanceController extends BaseController
             'total_hours' => round($totalMinutes / 60, 2),
         ]);
 
-        // Create achievement if provided
         $achievement = null;
         if ($request->filled('achievement_description') || $request->filled('issues_notes') || $request->hasFile('attachments')) {
             $achievement = Achievement::create([
