@@ -73,5 +73,7 @@ return [
         ],
 
     ],
+    'guard' => 'api',
+
 
 ];
