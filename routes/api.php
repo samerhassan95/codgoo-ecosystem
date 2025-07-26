@@ -8,6 +8,7 @@ use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\NotificationController;
+use Illuminate\Support\Facades\Broadcast;
 
 use App\Models\TaskDiscussionMessage;
 use App\Models\Employee;
@@ -76,3 +77,8 @@ Route::get('/pusher-test', function () {
     ]);
 });
 
+
+
+Broadcast::routes([
+    'middleware' => ['auth:sanctum'],
+]);
