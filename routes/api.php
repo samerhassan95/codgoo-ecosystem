@@ -79,6 +79,6 @@ Route::get('/pusher-test', function () {
 
 
 
-Broadcast::routes([
-    'middleware' => ['auth:sanctum'],
-]);
+Route::post('/broadcasting/auth', function (Illuminate\Http\Request $request) {
+    return Broadcast::auth($request);
+})->middleware('auth:api');
