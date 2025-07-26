@@ -321,61 +321,65 @@ class AttendanceController extends BaseController
     public function realTimeStatus()
     {
         $user = auth()->user();
-        $today = now()->toDateString();
 
-        $attendance = Attendance::where('employee_id', $user->id)
-            ->where('date', $today)
-            ->with('sessions')
+        $attendance = Attendance::with('sessions')
+            ->where('employee_id', $user->id)
+            ->whereDate('date', today())
             ->first();
 
         if (!$attendance) {
             return response()->json([
-                'status' => true,
-                'total_hours' => 0,
-                'remaining_hours' => 8,
-                'shift_completion' => '0%',
-                'last_status' => 'No_attendance',
-                'message' => 'No attendance for today.'
+                'status' => false,
+                'message' => 'No attendance record found for today.'
             ]);
         }
 
-        $totalMinutes = 0;
-        foreach ($attendance->sessions as $session) {
-            $checkOut = $session->check_out_time ?? now();
-            $totalMinutes += Carbon::parse($session->check_in_time)->diffInMinutes(Carbon::parse($checkOut));
+        $sortedSessions = $attendance->sessions->sortBy('check_in_time');
+        $totalSeconds = 0;
+
+        foreach ($sortedSessions as $session) {
+            $checkIn = \Carbon\Carbon::parse($session->check_in_time);
+            $checkOut = $session->check_out_time
+                ? \Carbon\Carbon::parse($session->check_out_time)
+                : now();
+
+            $totalSeconds += $checkOut->diffInSeconds($checkIn);
         }
 
-        $totalHours = round($totalMinutes / 60, 2);
-        $shiftHours = 8;
-        $remainingHours = max(0, round($shiftHours - $totalHours, 2));
-        $shiftCompletionPercentage = min(100, round(($totalHours / $shiftHours) * 100, 2)) . '%';
+        $totalHours = max(round($totalSeconds / 3600, 2), 0); 
+        $shiftHours = $attendance->shift_hours ?? 8; 
+        $remainingHours = max(round($shiftHours - $totalHours, 2), 0);
+        $completionPercentage = round(($totalHours / $shiftHours) * 100, 2) . '%';
 
-        $sortedSessions = $attendance->sessions->sortBy('check_in_time')->values();
         $lastSession = $sortedSessions->last();
         $lastStatus = 'Unknown';
 
         if ($lastSession) {
             if (is_null($lastSession->check_out_time)) {
-                if ($sortedSessions->count() === 1) {
-                    $lastStatus = 'Checked_in'; 
-                } else {
-                    $lastStatus = 'Resumed'; 
-                }
+                $lastStatus = $attendance->sessions->count() === 1 ? 'Checked_in' : 'Resumed';
             } else {
-                $hasNextSession = $attendance->sessions->where('check_in_time', '>', $lastSession->check_out_time)->count() > 0;
-                $lastStatus = $hasNextSession ? 'Paused' : 'Checked_out';
+                $hasNextSession = $attendance->sessions
+                    ->where('check_in_time', '>', $lastSession->check_out_time)
+                    ->count() > 0;
+
+                if (!$hasNextSession && $lastSession->pause_started_at && !$lastSession->is_in_office) {
+                    $lastStatus = 'Paused';
+                } else {
+                    $lastStatus = $hasNextSession ? 'Resumed' : 'Checked_out';
+                }
             }
         }
 
         return response()->json([
             'status' => true,
+            'last_status' => $lastStatus,
             'total_hours' => $totalHours,
             'remaining_hours' => $remainingHours,
-            'shift_completion' => $shiftCompletionPercentage,
-            'last_status' => $lastStatus,
-            'message' => 'Real-time attendance hours.',
+            'shift_completion' => $completionPercentage,
+            'message' => 'Real-time attendance hours.'
         ]);
     }
+
 
     public function checkIn(Request $request)
     {
@@ -543,5 +547,5 @@ class AttendanceController extends BaseController
             'achievement' => $achievement ? $achievement->load('attachments') : null,
         ]);
     }
-    
+
 }
