@@ -81,4 +81,4 @@ Route::get('/pusher-test', function () {
 
 Route::post('/broadcasting/auth', function (Illuminate\Http\Request $request) {
     return Broadcast::auth($request);
-})->middleware('auth:api');
+})->middleware('auth:employee');
