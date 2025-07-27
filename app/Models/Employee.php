@@ -29,6 +29,7 @@ class Employee extends Authenticatable implements JWTSubject
         'birth_date',
         'role',
         'join_date',
+        'device_token',
     ];
 
     public function galleries()
@@ -84,6 +85,11 @@ public function isAdmin()
     public function documents()
     {
         return $this->hasMany(EmployeeDocument::class);
+    }
+
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
     }
 
 }

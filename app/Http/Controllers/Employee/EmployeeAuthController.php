@@ -39,6 +39,7 @@ class EmployeeAuthController extends Controller
             'email' => 'nullable|email|unique:employees,email',
             // 'intro' => 'nullable|string|max:1000',
             'role' => 'required|in:ui_ux,front_end,back_end,tester,mobile',
+            'device_token' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -64,6 +65,7 @@ class EmployeeAuthController extends Controller
             // 'cover_photo' => $coverPhotoPath,
             'intro' => $request->intro,
             'role' => $request->role,
+            'device_token' => $request->device_token, 
         ];
 
         Cache::put('employee_register_' . $request->phone, $cachedData, now()->addMinutes(10));
@@ -197,6 +199,7 @@ class EmployeeAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'login' => 'required', 
             'password' => 'required',
+            'device_token' => 'nullable|string|max:255',
                 ]);
 
         if ($validator->fails())
@@ -233,7 +236,10 @@ class EmployeeAuthController extends Controller
                         'data' => null,
                     ], 401);
                 }
-
+                if ($request->filled('device_token')) {
+                    $employee->device_token = $request->device_token;
+                    $employee->save();
+                }
                 $data = $employee->toArray();
                 $data['token'] = $token;
                 $data['type'] = 'employee'; 

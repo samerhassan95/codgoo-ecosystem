@@ -53,7 +53,6 @@ class ScreenController extends BaseController
         ]);
     }
 
-
     public function getScreensWithReviewsByRole(Request $request)
     {
         $user = auth()->user();
@@ -240,8 +239,6 @@ class ScreenController extends BaseController
             ]
         ]);
     }
-
-   
 
 }
 
