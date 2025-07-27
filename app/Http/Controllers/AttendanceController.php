@@ -318,67 +318,66 @@ class AttendanceController extends BaseController
     // }
 
 
-    public function realTimeStatus()
-    {
-        $user = auth()->user();
+public function realTimeStatus()
+{
+    $user = auth()->user();
+    $today = now()->toDateString();
+    $shiftHours = 8;
 
-        $attendance = Attendance::with('sessions')
-            ->where('employee_id', $user->id)
-            ->whereDate('date', today())
-            ->first();
+    $attendance = Attendance::where('employee_id', $user->id)
+        ->where('date', $today)
+        ->first();
 
-        if (!$attendance) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No attendance record found for today.'
-            ]);
-        }
-
-        $sortedSessions = $attendance->sessions->sortBy('check_in_time');
-        $totalSeconds = 0;
-
-        foreach ($sortedSessions as $session) {
-            $checkIn = \Carbon\Carbon::parse($session->check_in_time);
-            $checkOut = $session->check_out_time
-                ? \Carbon\Carbon::parse($session->check_out_time)
-                : now();
-
-            $totalSeconds += $checkOut->diffInSeconds($checkIn);
-        }
-
-        $totalHours = max(round($totalSeconds / 3600, 2), 0); 
-        $shiftHours = $attendance->shift_hours ?? 8; 
-        $remainingHours = max(round($shiftHours - $totalHours, 2), 0);
-        $completionPercentage = round(($totalHours / $shiftHours) * 100, 2) . '%';
-
-        $lastSession = $sortedSessions->last();
-        $lastStatus = 'Unknown';
-
-        if ($lastSession) {
-            if (is_null($lastSession->check_out_time)) {
-                $lastStatus = $attendance->sessions->count() === 1 ? 'Checked_in' : 'Resumed';
-            } else {
-                $hasNextSession = $attendance->sessions
-                    ->where('check_in_time', '>', $lastSession->check_out_time)
-                    ->count() > 0;
-
-                if (!$hasNextSession && $lastSession->pause_started_at && !$lastSession->is_in_office) {
-                    $lastStatus = 'Paused';
-                } else {
-                    $lastStatus = $hasNextSession ? 'Resumed' : 'Checked_out';
-                }
-            }
-        }
-
+    if (!$attendance) {
         return response()->json([
             'status' => true,
-            'last_status' => $lastStatus,
-            'total_hours' => $totalHours,
-            'remaining_hours' => $remainingHours,
-            'shift_completion' => $completionPercentage,
-            'message' => 'Real-time attendance hours.'
+            'total_hours' => 0,
+            'remaining_hours' => $shiftHours,
+            'shift_completion' => '0%',
+            'last_status' => 'Not Checked In',
+            'message' => 'No attendance for today.'
         ]);
     }
+
+    $totalMinutes = 0;
+    $lastStatus = 'Checked_out';
+
+    foreach ($attendance->sessions as $session) {
+        $checkIn = Carbon::parse($session->check_in_time);
+        $checkOut = $session->check_out_time ? Carbon::parse($session->check_out_time) : now();
+        $sessionMinutes = $checkIn->diffInMinutes($checkOut);
+
+        $pauseMinutes = $session->total_pause_minutes ?? 0;
+        $totalMinutes += max($sessionMinutes - $pauseMinutes, 0);
+
+        // Determine last status
+        if (!$session->check_out_time) {
+            if ($session->pause_started_at) {
+                $lastStatus = 'Paused';
+            } elseif ($session->resumed_at) {
+                $lastStatus = 'Resumed';
+            } else {
+                $lastStatus = 'Checked_in';
+            }
+        }
+    }
+
+    $totalHours = round($totalMinutes / 60, 2);
+    $remainingHours = round(max($shiftHours - $totalHours, 0), 2);
+    $shiftCompletion = round(min($totalHours / $shiftHours * 100, 100), 2) . '%';
+
+    return response()->json([
+        'status' => true,
+        'last_status' => $lastStatus,
+        'total_hours' => $totalHours,
+        'remaining_hours' => $remainingHours,
+        'shift_completion' => $shiftCompletion,
+        'message' => 'Real-time attendance hours.'
+    ]);
+}
+
+
+
 
 
     public function checkIn(Request $request)
