@@ -326,6 +326,7 @@ public function realTimeStatus()
 
     $attendance = Attendance::where('employee_id', $user->id)
         ->where('date', $today)
+        ->with('sessions')
         ->first();
 
     if (!$attendance) {
@@ -344,27 +345,33 @@ public function realTimeStatus()
 
     foreach ($attendance->sessions as $session) {
         $checkIn = Carbon::parse($session->check_in_time);
-        $checkOut = $session->check_out_time ? Carbon::parse($session->check_out_time) : now();
-        $sessionMinutes = $checkIn->diffInMinutes($checkOut);
+        $checkOut = $session->check_out_time
+            ? Carbon::parse($session->check_out_time)
+            : now();
 
         $pauseMinutes = $session->total_pause_minutes ?? 0;
-        $totalMinutes += max($sessionMinutes - $pauseMinutes, 0);
+        $sessionMinutes = $checkIn->diffInMinutes($checkOut);
 
-        // Determine last status
-        if (!$session->check_out_time) {
-            if ($session->pause_started_at) {
-                $lastStatus = 'Paused';
-            } elseif ($session->resumed_at) {
-                $lastStatus = 'Resumed';
-            } else {
-                $lastStatus = 'Checked_in';
-            }
+        $totalMinutes += max($sessionMinutes - $pauseMinutes, 0);
+    }
+
+    $openSession = $attendance->sessions->sortByDesc('id')->first();
+    if ($openSession) {
+        if ($openSession->pause_started_at) {
+            $lastStatus = 'Paused';
+        } else {
+            $hasPreviousClosedSessions = $attendance->sessions
+                ->whereNotNull('check_out_time')
+                ->where('id', '<', $openSession->id)
+                ->isNotEmpty();
+
+            $lastStatus = $hasPreviousClosedSessions ? 'Resumed' : 'Checked_in';
         }
     }
 
     $totalHours = round($totalMinutes / 60, 2);
-    $remainingHours = round(max($shiftHours - $totalHours, 0), 2);
-    $shiftCompletion = round(min($totalHours / $shiftHours * 100, 100), 2) . '%';
+    $remainingHours = max(round($shiftHours - $totalHours, 2), 0);
+    $shiftCompletion = round(($totalHours / $shiftHours) * 100, 2) . '%';
 
     return response()->json([
         'status' => true,
@@ -375,6 +382,7 @@ public function realTimeStatus()
         'message' => 'Real-time attendance hours.'
     ]);
 }
+
 
 
 
