@@ -117,12 +117,12 @@ class NotificationController extends Controller
 
             $notifiable = $model::find($request->notifiable_id);
 
-            if (!$notifiable || !$notifiable->fcm_token) {
+            if (!$notifiable || !$notifiable->device_token) {
                 return response()->json(['message' => 'User not found or missing FCM token'], 400);
             }
 
-            $this->firebaseService->sendNotification($notifiable->fcm_token, $title, $message);
-            $this->notificationRepository->createNotification($notifiable, $title, $message, $notifiable->fcm_token);
+            $this->firebaseService->sendNotification($notifiable->device_token, $title, $message);
+            $this->notificationRepository->createNotification($notifiable, $title, $message, $notifiable->device_token);
 
             return response()->json(['message' => 'Notification sent successfully!']);
         }
@@ -136,13 +136,13 @@ class NotificationController extends Controller
         }
 
         foreach ($clients as $client) {
-            $this->firebaseService->sendNotification($client->fcm_token, $title, $message);
-            $this->notificationRepository->createNotification($client, $title, $message, $client->fcm_token);
+            $this->firebaseService->sendNotification($client->device_token, $title, $message);
+            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token);
         }
 
         foreach ($employees as $employee) {
-            $this->firebaseService->sendNotification($employee->fcm_token, $title, $message);
-            $this->notificationRepository->createNotification($employee, $title, $message, $employee->fcm_token);
+            $this->firebaseService->sendNotification($employee->device_token, $title, $message);
+            $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token);
         }
 
         return response()->json(['message' => 'Notifications sent to all clients and employees successfully!']);
