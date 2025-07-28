@@ -91,7 +91,7 @@ class NotificationController extends Controller
         $request->validate([
             'type' => 'required|string|exists:notification_templates,type',
             'notifiable_id' => 'nullable|integer',
-            'notifiable_type' => 'nullable|in:admin,client',
+            'notifiable_type' => 'nullable|in:admin,client,employee',
             'data' => 'nullable|array'
         ]);
 
@@ -111,7 +111,9 @@ class NotificationController extends Controller
         }
 
         if ($request->has('notifiable_id') && $request->has('notifiable_type')) {
-            $model = $request->notifiable_type === 'admin' ? Admin::class : Client::class;
+            $model = $request->notifiable_type === 'admin' ? Admin::class
+                    : ($request->notifiable_type === 'employee' ? Employee::class : Client::class);
+
             $notifiable = $model::find($request->notifiable_id);
 
             if (!$notifiable || !$notifiable->fcm_token) {
@@ -124,10 +126,12 @@ class NotificationController extends Controller
             return response()->json(['message' => 'Notification sent successfully!']);
         }
 
+        // Send to all clients and employees
         $clients = Client::whereNotNull('fcm_token')->get();
+        $employees = Employee::whereNotNull('fcm_token')->get();
 
-        if ($clients->isEmpty()) {
-            return response()->json(['message' => 'No clients with valid FCM tokens.'], 400);
+        if ($clients->isEmpty() && $employees->isEmpty()) {
+            return response()->json(['message' => 'No clients or employees with valid FCM tokens.'], 400);
         }
 
         foreach ($clients as $client) {
@@ -135,8 +139,14 @@ class NotificationController extends Controller
             $this->notificationRepository->createNotification($client, $title, $message, $client->fcm_token);
         }
 
-        return response()->json(['message' => 'Notifications sent to all clients successfully!']);
+        foreach ($employees as $employee) {
+            $this->firebaseService->sendNotification($employee->fcm_token, $title, $message);
+            $this->notificationRepository->createNotification($employee, $title, $message, $employee->fcm_token);
+        }
+
+        return response()->json(['message' => 'Notifications sent to all clients and employees successfully!']);
     }
+
 
     public function getNotifications(Request $request)
     {
@@ -164,9 +174,6 @@ class NotificationController extends Controller
         ]);
     }
     
-    
-
-    
     public function markNotificationAsRead($id, Request $request)
     {
         $client = $request->user();
@@ -191,7 +198,6 @@ class NotificationController extends Controller
         ]);
     }
 
-
     public function markAllNotificationsAsRead(Request $request)
     {
         $client = $request->user();
@@ -205,7 +211,6 @@ class NotificationController extends Controller
             'message' => 'All notifications marked as read.',
         ]);
     }
-
 
     public function sendChatNotification(Request $request)
     {
