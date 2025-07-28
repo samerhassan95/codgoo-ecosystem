@@ -19,9 +19,10 @@ class ScreenReviewController extends BaseController
 
     public function markCommentsResolved(Request $request)
     {
-        $commentIds = $request->input('comment_ids');
+        $screenId = $request->input('screen_id');
 
-        $updated = ScreenReview::whereIn('id', $commentIds)
+        $updated = ScreenReview::where('screen_id', $screenId)
+            ->where('is_resolved', false)
             ->whereHasMorph('creator', [Employee::class], function ($query) {
                 $query->where('role', 'tester');
             })
@@ -32,6 +33,7 @@ class ScreenReviewController extends BaseController
             'message' => "$updated comment(s) marked as resolved."
         ]);
     }
+
 
     public function store(Request $request)
     {
