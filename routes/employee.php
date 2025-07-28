@@ -93,5 +93,8 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('tasks/{task}/discussion', [TaskDiscussionController::class, 'index']);
     Route::post('tasks/{task}/discussion/send', [TaskDiscussionController::class, 'send']);
     Route::get('projects/names', [ProjectController::class, 'listNames']);
+    Route::get('notifications', [NotificationController::class, 'getNotifications']);
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
 
 });
