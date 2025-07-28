@@ -121,7 +121,7 @@ class NotificationController extends Controller
                 return response()->json(['message' => 'User not found or missing FCM token'], 400);
             }
 
-            $this->firebaseService->sendNotification($notifiable->device_token, $title, $message);
+            $this->firebaseService->sendNotification($notifiable->device_token, $title, $message, $request->type);
             $this->notificationRepository->createNotification($notifiable, $title, $message, $notifiable->device_token);
 
             return response()->json(['message' => 'Notification sent successfully!']);
