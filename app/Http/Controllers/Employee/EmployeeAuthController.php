@@ -315,10 +315,12 @@ class EmployeeAuthController extends Controller
         }
 
         $phone = $request->phone;
+        $otp = 1234; // يمكنك استبداله بـ rand(1000, 9999) للإنتاج
 
-        $otp = 1234;
+        // تخزين OTP لكل رقم هاتف بشكل منفصل
+        Cache::put('otp_' . $phone, $otp, now()->addMinutes(10));
 
-        Cache::put('otp', $otp,  now()->addMinutes(10));  
+        // إرسال الـ OTP هنا إن كنت تستخدم SMS فعليًا
 
         return response()->json([
             'status' => true,
@@ -327,10 +329,11 @@ class EmployeeAuthController extends Controller
         ], 200);
     }
 
+
     public function verifyOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|exists:employees,phone',
+            'phone' => 'required',
             'otp' => 'required|numeric',
         ]);
 
@@ -345,7 +348,7 @@ class EmployeeAuthController extends Controller
         $phone = $request->phone;
         $otp = $request->otp;
 
-        $storedOtp = Cache::get('otp');
+        $storedOtp = Cache::get('otp_' . $phone);
 
         if (!$storedOtp || $storedOtp != $otp) {
             return response()->json([
@@ -355,8 +358,7 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        Cache::forget('otp_' . $phone);
-
+        // لا تحذف الـ OTP الآن، انتظر لما يتم تغيير الباسورد
         return response()->json([
             'status' => true,
             'message' => 'OTP verified successfully. You can now reset your password.',
@@ -367,7 +369,7 @@ class EmployeeAuthController extends Controller
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|exists:employees,phone',
+            'phone' => 'required',
             'password' => 'required|min:6|confirmed',  
         ]);
 
