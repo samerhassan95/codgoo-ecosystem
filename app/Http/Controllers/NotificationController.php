@@ -122,7 +122,7 @@ class NotificationController extends Controller
             }
 
             $this->firebaseService->sendNotification($notifiable->device_token, $title, $message, $request->type);
-            $this->notificationRepository->createNotification($notifiable, $title, $message, $notifiable->device_token);
+            $this->notificationRepository->createNotification($notifiable, $title, $message, $notifiable->device_token, $request->type);
 
             return response()->json(['message' => 'Notification sent successfully!']);
         }
