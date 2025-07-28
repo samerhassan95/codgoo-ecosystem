@@ -10,6 +10,8 @@ use Kreait\Firebase\Messaging\Notification;
 use App\Models\Client;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Http;
+
 class FirebaseService
 {
     protected $messaging;
