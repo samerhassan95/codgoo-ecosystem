@@ -35,12 +35,12 @@ class RequestedApiObserver
             );
 
             $payload = [
-                'api_id' => $api->id,
+                'api_id' => (string) $api->id,
                 'notification_type' => 'api_requested',
             ];
 
             try {
-                app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message, $payload);
+                app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message);
                 app(NotificationRepository::class)->createNotification($tester, $title, $message, $tester->device_token, 'api_requested');
             } catch (\Exception $e) {
                 Log::error('Error sending api_requested notification: ' . $e->getMessage());
