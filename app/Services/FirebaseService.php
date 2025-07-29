@@ -113,7 +113,7 @@ class FirebaseService
             $response = Http::withHeaders([
                 'Authorization' => 'key=' . $serverKey,
                 'Content-Type' => 'application/json',
-            ])->post('https://fcm.googleapis.com/fcm/send', $data);
+            ])->post('https://fcm.googleapis.com/v1/projects/codgoo-12e2d/messages:send', $data);
 
             \Log::info('Firebase response', [
                 'device_token' => $deviceToken,
