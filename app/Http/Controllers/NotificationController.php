@@ -75,7 +75,7 @@ use App\Services\FirebaseService;
 use App\Models\Admin;
 use App\Models\Client;
 use App\Models\NotificationTemplate;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 class NotificationController extends Controller
 {
