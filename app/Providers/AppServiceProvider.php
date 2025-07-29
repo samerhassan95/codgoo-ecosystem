@@ -4,6 +4,14 @@ namespace App\Providers;
 
 use App\Models\Admin;
 use App\Models\Client;
+use App\Models\ImplementedApi;
+use App\Models\ImplementedApiReview;
+use App\Models\RequestedApi;
+use App\Models\ScreenReview;
+use App\Observers\ImplementedApiObserver;
+use App\Observers\ImplementedApiReviewObserver;
+use App\Observers\RequestedApiObserver;
+use App\Observers\ScreenReviewObserver;
 use App\Repositories\AddonRepository;
 use App\Repositories\AddonRepositoryInterface;
 use App\Repositories\EarlyLeaveRequestRepository;
@@ -86,7 +94,8 @@ use App\Repositories\AchievementRepository;
 use App\Repositories\AchievementRepositoryInterface;
 use App\Repositories\AttendanceRepository;
 use App\Repositories\AttendanceRepositoryInterface;
-
+use App\Models\Screen;
+use App\Observers\ScreenObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -145,5 +154,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-      }
+        Screen::observe(ScreenObserver::class);
+        RequestedApi::observe(RequestedApiObserver::class);
+        ImplementedApi::observe(ImplementedApiObserver::class);
+        ImplementedApiReview::observe(ImplementedApiReviewObserver::class);
+        ScreenReview::observe(ScreenReviewObserver::class);
+
+    }
 }

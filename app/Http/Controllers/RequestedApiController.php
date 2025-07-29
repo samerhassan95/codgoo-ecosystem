@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class RequestedApiController extends BaseController
 {
-    private $repository;
+    private $repository; 
 
     public function __construct(RequestedApiRepositoryInterface $repository)
     {

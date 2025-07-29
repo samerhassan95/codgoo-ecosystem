@@ -6,6 +6,10 @@ use App\Http\Requests\EmployeeMeetingRequest;
 use App\Models\EmployeeMeeting;
 use App\Http\Resources\EmployeeMeetingResource;
 use App\Services\ZoomService;
+use App\Models\NotificationTemplate;
+use App\Repositories\NotificationRepository;
+use App\Services\FirebaseService;
+use App\Models\Employee;
 
 class EmployeeMeetingController extends Controller
 {
@@ -51,6 +55,7 @@ class EmployeeMeetingController extends Controller
 
         if (!empty($data['participant_ids'])) {
             $meeting->participants()->sync($data['participant_ids']);
+            $this->sendMeetingNotificationToParticipants($meeting, $data['participant_ids']);
         }
 
         return response()->json([
@@ -58,6 +63,41 @@ class EmployeeMeetingController extends Controller
             'message' => 'Meeting created successfully with Zoom link.',
             'data' => new EmployeeMeetingResource($meeting->load('participants')),
         ]);
+    }
+
+    private function sendMeetingNotificationToParticipants(EmployeeMeeting $meeting, array $participantIds)
+    {
+        $template = NotificationTemplate::where('type', 'employee_meeting_created')->first();
+        if (!$template) {
+            \Log::error('Notification template "employee_meeting_created" not found.');
+            return;
+        }
+
+        $title = $template->title;
+        $message = str_replace(
+            ['{title}', '{start_time}'],
+            [$meeting->title['en'] ?? $meeting->title, $meeting->created_at->format('Y-m-d H:i')],
+            $template->message
+        );
+
+        $employees = Employee::whereIn('id', $participantIds)
+            ->whereNotNull('device_token')
+            ->get();
+
+        foreach ($employees as $employee) {
+            try {
+                $dataPayload = [
+                    'employee_meeting_id' => $meeting->id,
+                    'notification_type' => 'employee_meeting_created',
+                ];
+
+                app(FirebaseService::class)->sendNotification($employee->device_token, $title, $message, $dataPayload);
+                app(NotificationRepository::class)->createNotification($employee, $title, $message, $employee->device_token, 'employee_meeting_created');
+
+            } catch (\Exception $e) {
+                \Log::error('Error sending employee meeting notification: ' . $e->getMessage());
+            }
+        }
     }
 
 }
