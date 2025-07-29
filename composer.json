@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "doctrine/dbal": "^4.2",
+        "firebase/php-jwt": "^6.11",
         "google/cloud-firestore": "^1.41",
         "guzzlehttp/guzzle": "^7.9",
         "kreait/firebase-php": "^5.26",

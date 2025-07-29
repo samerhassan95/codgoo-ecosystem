@@ -92,40 +92,38 @@ class FirebaseService
     }
 
     public function sendNotification($deviceToken, $title, $message, $type = null)
-{
-    $serverKey = config('services.firebase.server_key');
+    {
+        $serverKey = config('services.firebase.server_key');
 
-    $data = [
-        'to' => $deviceToken,
-        'notification' => [
-            'title' => $title,
-            'body' => $message,
-            'sound' => 'default',
-        ],
-        'data' => [
-            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-            'status' => 'done',
-            'type' => $type,
-        ],
-    ];
+        $data = [
+            'to' => $deviceToken,
+            'notification' => [
+                'title' => $title,
+                'body' => $message,
+                'sound' => 'default',
+            ],
+            'data' => [
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                'status' => 'done',
+                'type' => $type,
+            ],
+        ];
 
-    try {
-        $response = Http::withHeaders([
-            'Authorization' => 'key=' . $serverKey,
-            'Content-Type' => 'application/json',
-        ])->post('https://fcm.googleapis.com/fcm/send', $data);
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'key=' . $serverKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://fcm.googleapis.com/fcm/send', $data);
 
-        \log::info('Firebase response', [
-            'device_token' => $deviceToken,
-            'status' => $response->status(),
-            'body' => $response->body()
-        ]);
-    } catch (\Throwable $e) {
-        \Log::error('Firebase request failed', ['error' => $e->getMessage()]);
+            \Log::info('Firebase response', [
+                'device_token' => $deviceToken,
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Firebase request failed', ['error' => $e->getMessage()]);
+        }
     }
-}
-
-
 
     public function markMessagesAsSeen($chatId)
     {
