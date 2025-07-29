@@ -93,7 +93,7 @@ class FirebaseService
 
     public function sendNotification($deviceToken, $title, $message, $type = null)
     {
-        $serverKey = config('services.firebase.server_key');
+        $serverKey = "10c67a73d869f94d6147d2a83a5db37ed72e22d8";
 
         $data = [
             'to' => $deviceToken,
