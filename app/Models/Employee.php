@@ -11,10 +11,11 @@ use Spatie\Translatable\HasTranslations;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Notifications\Notifiable;
 
 class Employee extends Authenticatable implements JWTSubject
 {
-    use HasFactory,SoftDeletes,HasApiTokens;
+    use HasFactory,SoftDeletes,HasApiTokens,Notifiable;
 
     protected $fillable = [
         'name',
@@ -41,7 +42,7 @@ class Employee extends Authenticatable implements JWTSubject
     {
         return $this->belongsToMany(Skill::class, 'employee_skill', 'employee_id', 'skill_id');
     }
-    
+
     public function isAdmin()
     {
         return false;
