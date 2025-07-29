@@ -18,6 +18,7 @@ class RequestedApiObserver
     ->get()
     ->firstWhere(fn($assignment) => $assignment->employee?->role === 'back_end')
     ?->employee;
+    dd($tester);
         if ($tester && $tester->device_token) {
             $template = NotificationTemplate::where('type', 'api_requested')->first();
 
