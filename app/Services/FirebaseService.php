@@ -93,35 +93,24 @@ class FirebaseService
 
     public function sendNotification($deviceToken, $title, $message, $type = null)
     {
-        $serverKey = "10c67a73d869f94d6147d2a83a5db37ed72e22d8";
-
-        $data = [
-            'to' => $deviceToken,
-            'notification' => [
-                'title' => $title,
-                'body' => $message,
-                'sound' => 'default',
-            ],
-            'data' => [
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                'status' => 'done',
-                'type' => $type,
-            ],
-        ];
-
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'key=' . $serverKey,
-                'Content-Type' => 'application/json',
-            ])->post('https://fcm.googleapis.com/v1/projects/codgoo-12e2d/messages:send', $data);
+            $notification = Notification::create($title, $message);
 
-            \Log::info('Firebase response', [
-                'device_token' => $deviceToken,
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
+            $messageData = [
+                'type' => $type ?? 'default',
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            ];
+
+            $firebaseMessage = CloudMessage::withTarget('token', $deviceToken)
+                ->withNotification($notification)
+                ->withData($messageData);
+
+            $this->messaging->send($firebaseMessage);
+
+            \Log::info('Notification sent successfully', ['token' => $deviceToken]);
+
         } catch (\Throwable $e) {
-            \Log::error('Firebase request failed', ['error' => $e->getMessage()]);
+            \Log::error('Firebase notification failed', ['error' => $e->getMessage()]);
         }
     }
 
