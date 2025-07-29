@@ -30,7 +30,7 @@ class RequestedApiObserver
             );
 
             $payload = [
-                'api_id' => $api->id,
+                'api_id' => (string) $api->id,
                 'notification_type' => 'api_requested',
             ];
 
