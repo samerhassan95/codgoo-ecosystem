@@ -12,8 +12,12 @@ class ImplementedApiObserver
 {
     public function created(ImplementedApi $implementedApi)
     {
-        $tester = $implementedApi->requestedApi->screen->task->tester;
-
+        $tester = $api->screen->task
+                    ?->assignments()
+                    ->with('employee') 
+                    ->get()
+                    ->firstWhere(fn($assignment) => $assignment->employee?->role === 'tester')
+                    ?->employee;
         if ($tester && $tester->device_token) {
             $template = NotificationTemplate::where('type', 'api_implemented')->first();
 
@@ -35,7 +39,7 @@ class ImplementedApiObserver
             ];
 
             try {
-                app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message, $payload);
+                app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message);
                 app(NotificationRepository::class)->createNotification($tester, $title, $message, $tester->device_token, 'api_implemented');
             } catch (\Exception $e) {
                 Log::error('Error sending api_implemented notification: ' . $e->getMessage());
@@ -46,8 +50,12 @@ class ImplementedApiObserver
     public function updated(ImplementedApi $implementedApi)
     {
         if ($implementedApi->isDirty('status') && $implementedApi->status === 'tested') {
-            $frontend = $implementedApi->requestedApi->screen->task->frontend_developer;
-
+            $frontend = $api->screen->task
+                        ?->assignments()
+                        ->with('employee') 
+                        ->get()
+                        ->firstWhere(fn($assignment) => $assignment->employee?->role === 'front_end')
+            ?->employee;
             if ($frontend && $frontend->device_token) {
                 $template = NotificationTemplate::where('type', 'api_tested')->first();
 
@@ -69,7 +77,7 @@ class ImplementedApiObserver
                 ];
 
                 try {
-                    app(FirebaseService::class)->sendNotification($frontend->device_token, $title, $message, $payload);
+                    app(FirebaseService::class)->sendNotification($frontend->device_token, $title, $message);
                     app(NotificationRepository::class)->createNotification($frontend, $title, $message, $frontend->device_token, 'api_tested');
                 } catch (\Exception $e) {
                     Log::error('Error sending api_tested notification: ' . $e->getMessage());

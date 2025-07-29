@@ -12,8 +12,12 @@ class ImplementedApiReviewObserver
 {
     public function created(ImplementedApiReview $review)
     {
-        $backend = $review->implementedApi->requestedApi->screen->task->backend_developer;
-
+        $backend = $api->screen->task
+                    ?->assignments()
+                    ->with('employee') 
+                    ->get()
+                    ->firstWhere(fn($assignment) => $assignment->employee?->role === 'back_end')
+                    ?->employee;
         if ($backend && $backend->device_token) {
             $template = NotificationTemplate::where('type', 'api_review_added')->first();
 
@@ -35,7 +39,7 @@ class ImplementedApiReviewObserver
             ];
 
             try {
-                app(FirebaseService::class)->sendNotification($backend->device_token, $title, $message, $payload);
+                app(FirebaseService::class)->sendNotification($backend->device_token, $title, $message);
                 app(NotificationRepository::class)->createNotification($backend, $title, $message, $backend->device_token, 'api_review_added');
             } catch (\Exception $e) {
                 Log::error('Error sending api_review_added notification: ' . $e->getMessage());

@@ -13,12 +13,11 @@ class RequestedApiObserver
     public function created(RequestedApi $api)
     {
         $tester = $api->screen->task
-    ?->assignments()
-    ->with('employee') 
-    ->get()
-    ->firstWhere(fn($assignment) => $assignment->employee?->role === 'back_end')
-    ?->employee;
-    // dd($tester);
+            ?->assignments()
+            ->with('employee') 
+            ->get()
+            ->firstWhere(fn($assignment) => $assignment->employee?->role === 'back_end')
+            ?->employee;
         if ($tester && $tester->device_token) {
             $template = NotificationTemplate::where('type', 'api_requested')->first();
 

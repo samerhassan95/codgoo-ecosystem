@@ -12,12 +12,18 @@ class ScreenObserver
 {
     public function created(Screen $screen)
     {
-        // Notify frontend developer
+        // frontend
+        $frontend = $screen->task
+            ?->assignments()
+            ->with('employee')
+            ->get()
+            ->firstWhere(fn($assignment) => $assignment->employee?->role === 'front_end')
+            ?->employee;
+
         if (
             $screen->dev_mode &&
-            $screen->task &&
-            $screen->task->frontend_developer &&
-            $screen->task->frontend_developer->device_token
+            $frontend &&
+            $frontend->device_token
         ) {
             $template = NotificationTemplate::where('type', 'screen_created')->first();
 
@@ -33,20 +39,18 @@ class ScreenObserver
                 $template->message
             );
 
-            $deviceToken = $screen->task->frontend_developer->device_token;
-
             try {
                 $dataPayload = [
                     'screen_id' => $screen->id,
                     'notification_type' => 'screen_created',
                 ];
 
-                app(FirebaseService::class)->sendNotification($deviceToken, $title, $message, $dataPayload);
+                app(FirebaseService::class)->sendNotification($frontend->device_token, $title, $message);
                 app(NotificationRepository::class)->createNotification(
-                    $screen->task->frontend_developer,
+                    $frontend,
                     $title,
                     $message,
-                    $deviceToken,
+                    $frontend->device_token,
                     'screen_created'
                 );
             } catch (\Exception $e) {
@@ -54,12 +58,15 @@ class ScreenObserver
             }
         }
 
-        // Notify tester
-        if (
-            $screen->task &&
-            $screen->task->tester &&
-            $screen->task->tester->device_token
-        ) {
+        // tester
+        $tester = $screen->task
+            ?->assignments()
+            ->with('employee')
+            ->get()
+            ->firstWhere(fn($assignment) => $assignment->employee?->role === 'tester')
+            ?->employee;
+
+        if ($tester && $tester->device_token) {
             $template = NotificationTemplate::where('type', 'screen_created')->first();
 
             if (!$template) {
@@ -74,20 +81,18 @@ class ScreenObserver
                 $template->message
             );
 
-            $deviceToken = $screen->task->tester->device_token;
-
             try {
                 $dataPayload = [
                     'screen_id' => $screen->id,
                     'notification_type' => 'screen_created',
                 ];
 
-                app(FirebaseService::class)->sendNotification($deviceToken, $title, $message, $dataPayload);
+                app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message);
                 app(NotificationRepository::class)->createNotification(
-                    $screen->task->tester,
+                    $tester,
                     $title,
                     $message,
-                    $deviceToken,
+                    $tester->device_token,
                     'screen_created'
                 );
             } catch (\Exception $e) {
@@ -110,43 +115,55 @@ class ScreenObserver
     }
 
     private function sendTesterNotification(Screen $screen, string $templateType, string $defaultTitle)
-    {
-        if (!$screen->task || !$screen->task->tester || !$screen->task->tester->device_token) {
-            return;
-        }
-
-        $template = NotificationTemplate::where('type', $templateType)->first();
-
-        if (!$template) {
-            Log::error("Notification template \"$templateType\" not found.");
-            return;
-        }
-
-        $title = $template->title ?? $defaultTitle;
-        $message = str_replace(
-            ['{screen_name}', '{task_name}'],
-            [$screen->name, $screen->task->name],
-            $template->message
-        );
-
-        $deviceToken = $screen->task->tester->device_token;
-
-        try {
-            $dataPayload = [
-                'screen_id' => $screen->id,
-                'notification_type' => $templateType,
-            ];
-
-            app(FirebaseService::class)->sendNotification($deviceToken, $title, $message, $dataPayload);
-            app(NotificationRepository::class)->createNotification(
-                $screen->task->tester,
-                $title,
-                $message,
-                $deviceToken,
-                $templateType
-            );
-        } catch (\Exception $e) {
-            Log::error("Error sending $templateType notification: " . $e->getMessage());
-        }
+{
+    if (!$screen->task) {
+        return;
     }
+
+    $tester = $screen->task
+        ?->assignments()
+        ->with('employee')
+        ->get()
+        ->firstWhere(fn($assignment) => $assignment->employee?->role === 'tester')
+        ?->employee;
+
+    if (!$tester || !$tester->device_token) {
+        return;
+    }
+
+    $template = NotificationTemplate::where('type', $templateType)->first();
+
+    if (!$template) {
+        Log::error("Notification template \"$templateType\" not found.");
+        return;
+    }
+
+    $title = $template->title ?? $defaultTitle;
+    $message = str_replace(
+        ['{screen_name}', '{task_name}'],
+        [$screen->name, $screen->task->name],
+        $template->message
+    );
+
+    $deviceToken = $tester->device_token;
+
+    try {
+        $dataPayload = [
+            'screen_id' => $screen->id,
+            'notification_type' => $templateType,
+        ];
+
+        app(FirebaseService::class)->sendNotification($deviceToken, $title, $message);
+        app(NotificationRepository::class)->createNotification(
+            $tester,
+            $title,
+            $message,
+            $deviceToken,
+            $templateType
+        );
+    } catch (\Exception $e) {
+        Log::error("Error sending $templateType notification: " . $e->getMessage());
+    }
+}
+
 }
