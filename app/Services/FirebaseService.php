@@ -91,29 +91,40 @@ class FirebaseService
         return array_values($chatSummaries);
     }
 
-    public function sendNotification($deviceToken, $title, $message, $type)
-    {
-        $serverKey = config('services.firebase.server_key');
+    public function sendNotification($deviceToken, $title, $message, $type = null)
+{
+    $serverKey = config('services.firebase.server_key');
 
-        $data = [
-            'to' => $deviceToken,
-            'notification' => [
-                'title' => $title,
-                'body' => $message,
-                'sound' => 'default',
-            ],
-            'data' => [
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                'status' => 'done',
-                'type' => $type,
-            ],
-        ];
+    $data = [
+        'to' => $deviceToken,
+        'notification' => [
+            'title' => $title,
+            'body' => $message,
+            'sound' => 'default',
+        ],
+        'data' => [
+            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            'status' => 'done',
+            'type' => $type,
+        ],
+    ];
 
-        Http::withHeaders([
+    try {
+        $response = Http::withHeaders([
             'Authorization' => 'key=' . $serverKey,
             'Content-Type' => 'application/json',
         ])->post('https://fcm.googleapis.com/fcm/send', $data);
+
+        Log::info('Firebase response', [
+            'device_token' => $deviceToken,
+            'status' => $response->status(),
+            'body' => $response->body()
+        ]);
+    } catch (\Throwable $e) {
+        Log::error('Firebase request failed', ['error' => $e->getMessage()]);
     }
+}
+
 
 
     public function markMessagesAsSeen($chatId)
