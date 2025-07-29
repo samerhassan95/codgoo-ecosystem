@@ -115,13 +115,13 @@ class FirebaseService
             'Content-Type' => 'application/json',
         ])->post('https://fcm.googleapis.com/fcm/send', $data);
 
-        Log::info('Firebase response', [
+        \log::info('Firebase response', [
             'device_token' => $deviceToken,
             'status' => $response->status(),
             'body' => $response->body()
         ]);
     } catch (\Throwable $e) {
-        Log::error('Firebase request failed', ['error' => $e->getMessage()]);
+        \Log::error('Firebase request failed', ['error' => $e->getMessage()]);
     }
 }
 
