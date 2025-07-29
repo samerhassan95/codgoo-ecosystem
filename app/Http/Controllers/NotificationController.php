@@ -105,7 +105,7 @@ public function sendNotification(Request $request)
         return response()->json(['message' => 'Notification sent to all successfully']);
 
     } catch (\Throwable $e) {
-        Log::error('Error sending notification', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+        \Log::error('Error sending notification', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
         return response()->json(['message' => 'Internal server error', 'error' => $e->getMessage()], 500);
     }
 }
