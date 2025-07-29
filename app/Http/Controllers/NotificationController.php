@@ -140,7 +140,7 @@ public function sendNotification(Request $request)
 
             Log::info('Sending notification to user', ['id' => $notifiable->id, 'token' => $token]);
 
-            $this->sendFirebaseNotification($token, $title, $message, $validated['type']);
+            $this->firebaseService->sendNotification($token, $title, $message, $validated['type']);
             $this->notificationRepository->createNotification($notifiable, $title, $message, $token, $validated['type']);
 
             return response()->json(['message' => 'Notification sent successfully']);
@@ -157,13 +157,13 @@ public function sendNotification(Request $request)
 
         foreach ($clients as $client) {
             Log::info("Sending to client: " . $client->id);
-            $this->sendNotification($client->fcm_token, $title, $message, $validated['type']);
+             $this->firebaseService->sendNotification($client->fcm_token, $title, $message, $validated['type']);
             $this->notificationRepository->createNotification($client, $title, $message, $client->fcm_token, $validated['type']);
         }
 
         foreach ($employees as $employee) {
             Log::info("Sending to employee: " . $employee->id);
-            $this->sendNotification($employee->fcm_token, $title, $message, $validated['type']);
+             $this->firebaseService->sendNotification($employee->fcm_token, $title, $message, $validated['type']);
             $this->notificationRepository->createNotification($employee, $title, $message, $employee->fcm_token, $validated['type']);
         }
 
