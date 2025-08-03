@@ -68,15 +68,23 @@ class ScreenController extends BaseController
         $reviewType = $roleToReviewType[$user->role] ?? null;
 
         $screens = Screen::whereHas('reviews', function ($query) use ($reviewType, $user) {
-            $query->where('is_resolved', false); // 
+            $query->where('is_resolved', false);
             if ($user->role !== 'tester' && $reviewType) {
                 $query->where('review_type', $reviewType);
             }
         })
+        ->whereHas('task', function ($query) use ($user) {
+            $query->where(function ($q) use ($user) {
+                $q->where('assigned_to', $user->id)
+                ->orWhereHas('assignments', function ($qq) use ($user) {
+                    $qq->where('employee_id', $user->id);
+                });
+            });
+        })
         ->with([
             'task:id,label',
             'reviews' => function ($query) use ($reviewType, $user) {
-                $query->where('is_resolved', false); 
+                $query->where('is_resolved', false);
                 if ($user->role !== 'tester' && $reviewType) {
                     $query->where('review_type', $reviewType);
                 }
@@ -107,6 +115,7 @@ class ScreenController extends BaseController
             'screens' => $screens
         ]);
     }
+
    
     public function getScreenWithReviewsByType(Request $request, $id)
     {
