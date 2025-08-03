@@ -332,40 +332,35 @@ public function realTimeStatus()
     if (!$attendance) {
         return response()->json([
             'status' => true,
+            'last_status' => 'Not Checked In',
             'total_hours' => 0,
             'remaining_hours' => $shiftHours,
             'shift_completion' => '0%',
-            'last_status' => 'Not Checked In',
             'message' => 'No attendance for today.'
         ]);
     }
 
     $totalMinutes = 0;
-    $lastStatus = 'Checked_out';
-
     foreach ($attendance->sessions as $session) {
         $checkIn = Carbon::parse($session->check_in_time);
-        $checkOut = $session->check_out_time
-            ? Carbon::parse($session->check_out_time)
-            : now();
-
-        $pauseMinutes = $session->total_pause_minutes ?? 0;
-        $sessionMinutes = $checkIn->diffInMinutes($checkOut);
-
-        $totalMinutes += max($sessionMinutes - $pauseMinutes, 0);
+        $checkOut = $session->check_out_time ? Carbon::parse($session->check_out_time) : now();
+        $totalMinutes += $checkIn->diffInMinutes($checkOut);
     }
 
-    $openSession = $attendance->sessions->sortByDesc('id')->first();
-    if ($openSession) {
-        if ($openSession->pause_started_at) {
-            $lastStatus = 'Paused';
-        } else {
-            $hasPreviousClosedSessions = $attendance->sessions
-                ->whereNotNull('check_out_time')
-                ->where('id', '<', $openSession->id)
-                ->isNotEmpty();
+    $lastOpenSession = $attendance->sessions
+        ->sortByDesc('id')
+        ->first();
 
-            $lastStatus = $hasPreviousClosedSessions ? 'Resumed' : 'Checked_in';
+    $lastStatus = 'Checked_out';
+
+    if ($lastOpenSession) {
+        if ($lastOpenSession->pause_started_at) {
+            $lastStatus = 'Paused';
+        }elseif ($lastOpenSession->check_out_time&&$lastOpenSession->pause_started_at== null) {
+            $lastStatus = 'Checked_out';
+        } else {
+            $isFirstSession = $attendance->sessions->where('id', '<', $lastOpenSession->id)->isEmpty();
+            $lastStatus = $isFirstSession ? 'Checked_in' : 'Resumed';
         }
     }
 
@@ -379,9 +374,10 @@ public function realTimeStatus()
         'total_hours' => $totalHours,
         'remaining_hours' => $remainingHours,
         'shift_completion' => $shiftCompletion,
-        'message' => 'Real-time attendance hours.'
+        'message' => 'Real-time attendance data fetched successfully.'
     ]);
 }
+
 
 
 
