@@ -74,11 +74,8 @@ class ScreenController extends BaseController
             }
         })
         ->whereHas('task', function ($query) use ($user) {
-            $query->where(function ($q) use ($user) {
-                $q->where('assigned_to', $user->id)
-                ->orWhereHas('assignments', function ($qq) use ($user) {
-                    $qq->where('employee_id', $user->id);
-                });
+            $query->whereHas('assignments', function ($qq) use ($user) {
+                $qq->where('employee_id', $user->id);
             });
         })
         ->with([
@@ -115,6 +112,7 @@ class ScreenController extends BaseController
             'screens' => $screens
         ]);
     }
+
 
    
     public function getScreenWithReviewsByType(Request $request, $id)
