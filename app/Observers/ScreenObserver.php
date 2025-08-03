@@ -208,12 +208,8 @@ class ScreenObserver
             }
 
             try {
-                $dataPayload = [
-                    'screen_id' => (string) $screen->id,
-                    'notification_type' => $templateType,
-                ];
 
-                app(FirebaseService::class)->sendNotification($user->device_token, $title, $message, $dataPayload);
+                app(FirebaseService::class)->sendNotification($user->device_token, $title, $message);
                 app(NotificationRepository::class)->createNotification(
                     $user,
                     $title,
