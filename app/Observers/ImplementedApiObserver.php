@@ -12,7 +12,7 @@ class ImplementedApiObserver
 {
     public function created(ImplementedApi $implementedApi)
     {
-        $tester = $api->screen->task
+        $tester = $implementedApi->screen->task
                     ?->assignments()
                     ->with('employee') 
                     ->get()
