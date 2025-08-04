@@ -127,16 +127,7 @@ class ScreenController extends BaseController
             ], 400);
         }
 
-        $screen = Screen::with([
-            'task:id,label',
-            'reviews' => function ($query) use ($reviewType) {
-                if ($reviewType) {
-                    $query->where('review_type', $reviewType);
-                }
-                $query->with('creator:id,name');
-            },
-            'requestedApis'
-        ])->find($id);
+       $screen = Screen::with(['task:id,label', 'requestedApis'])->find($id);
 
         if (!$screen) {
             return response()->json([
@@ -145,12 +136,13 @@ class ScreenController extends BaseController
             ], 404);
         }
 
-        if ($reviewType === 'backend' && $screen->requestedApis->isEmpty()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'This screen is not backend-related (no requested APIs).',
-            ], 200);
+        $reviewQuery = $screen->reviews()->where('is_resolved', false);
+
+        if (!empty($reviewType)) {
+            $reviewQuery->where('review_type', $reviewType);
         }
+
+        $reviews = $reviewQuery->with('creator:id,name')->get();
 
         $screenData = [
             'screen_id'   => $screen->id,
@@ -158,7 +150,7 @@ class ScreenController extends BaseController
             'screen_code' => $screen->screen_code,
             'dev_mode'    => $screen->dev_mode,
             'task_name'   => $screen->task->label ?? null,
-            'comments'    => $screen->reviews->map(function ($review) {
+            'comments'    => $reviews->map(function ($review) {
                 return [
                     'creator_name' => $review->creator->name ?? 'Unknown',
                     'id'           => $review->id,
