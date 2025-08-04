@@ -33,6 +33,7 @@ class ScreenReviewObserver
 
         $tester = $task
             ?->assignments()
+            ->with('employee')
             ->get()
             ->firstWhere(fn($assignment) => $assignment->employee?->role === "tester")
             ?->employee;
@@ -51,34 +52,26 @@ class ScreenReviewObserver
             $template->message
         );
 
-        $payload = [
-            'review_id' => (string) $review->id,
-            'screen_id' => (string) $screen->id,
-            'notification_type' => 'screen_review',
-        ];
-
         $firebase = app(FirebaseService::class);
         $notificationRepo = app(NotificationRepository::class);
-
-        if ($developer && $developer->device_token) {
-            try {
-                $firebase->sendNotification($developer->device_token, $title, $message);
-                $notificationRepo->createNotification($developer, $title, $message, $developer->device_token, 'screen_review');
-            } catch (\Exception $e) {
-                Log::error('Error sending screen_review notification to developer: ' . $e->getMessage());
-            }
-        }
 
         if (
             $tester &&
             $tester->device_token &&
-            !($review->creator_type === get_class($tester) && $review->creator_id === $tester->id)
+            !($review->creator_type === get_class($tester) && $review->creator_id == $tester->id)
         ) {
             try {
                 $firebase->sendNotification($tester->device_token, $title, $message);
                 $notificationRepo->createNotification($tester, $title, $message, $tester->device_token, 'screen_review');
             } catch (\Exception $e) {
                 Log::error('Error sending screen_review notification to tester: ' . $e->getMessage());
+            }
+        } elseif ($developer && $developer->device_token) {
+            try {
+                $firebase->sendNotification($developer->device_token, $title, $message);
+                $notificationRepo->createNotification($developer, $title, $message, $developer->device_token, 'screen_review');
+            } catch (\Exception $e) {
+                Log::error('Error sending screen_review notification to developer: ' . $e->getMessage());
             }
         }
     }
