@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use Illuminate\Support\Facades\Log;
 use App\Services\FirebaseService;
-
+use App\Models\NotificationTemplate;
 trait RequestStatusObserver
 {
     public function updated($model)
@@ -13,8 +13,20 @@ trait RequestStatusObserver
             try {
                 $employee = $model->employee;
                 if ($employee && $employee->device_token) {
-                    $title = "Your request has been " . $model->status;
-                    $body = "Request type: " . class_basename($model) . " | Status: " . ucfirst($model->status);
+                   $template = NotificationTemplate::where('type', 'request_status_updated')->first();
+
+                if (!$template) {
+                    Log::error('Notification template "request_status_updated" not found.');
+                    return;
+                }
+
+                $title = $template->title;
+                $body = str_replace(
+                    ['{request_type}', '{status}'],
+                    [class_basename($model), ucfirst($model->status)],
+                    $template->message
+                );
+
                     
                     app(FirebaseService::class)->sendNotification($employee->device_token, $title, $body);
 
