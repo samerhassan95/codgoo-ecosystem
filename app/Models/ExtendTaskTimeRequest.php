@@ -15,6 +15,7 @@ class ExtendTaskTimeRequest extends Model
         'task_id',
         'new_deadline',
         'reason',
+        'status',
     ];
 
     protected $casts = [

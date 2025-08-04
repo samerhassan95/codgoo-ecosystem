@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('task_id')->constrained('tasks')->onDelete('cascade');
             $table->dateTime('new_deadline');
             $table->text('reason')->nullable();
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
         });
     }

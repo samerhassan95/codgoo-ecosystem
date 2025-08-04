@@ -15,6 +15,7 @@ class EarlyLeaveRequest extends Model
         'date',
         'leave_time',
         'reason',
+        'status',
     ];
 
     public function employee(): BelongsTo
