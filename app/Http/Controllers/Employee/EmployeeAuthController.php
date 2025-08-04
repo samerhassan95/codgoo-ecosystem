@@ -552,7 +552,7 @@ class EmployeeAuthController extends Controller
 
             $currentEmployeeId = auth('employee')->id();
 
-            $employees = Employee::whereHas('assignments', function ($query) use ($taskId) {
+            $employees = Employee::whereHas('taskAssignments', function ($query) use ($taskId) {
                 $query->where('task_id', $taskId);
             })
             ->where('id', '!=', $currentEmployeeId)
