@@ -407,11 +407,15 @@ public function realTimeStatus()
             ->whereNull('check_out_time')
             ->update(['check_out_time' => now()]);
 
+        $ip = $request->ip();
+        $isInOffice = $ip === env('OFFICE_IP');
+
         $session = $attendance->sessions()->create([
-            'ip_address' => $request->ip(),
+            'ip_address' => $ip,
             'check_in_time' => now(),
-            'is_in_office' => true,
+            'is_in_office' => $isInOffice,
         ]);
+
 
         return response()->json([
             'status' => true,
@@ -469,10 +473,13 @@ public function realTimeStatus()
             ->whereNull('check_out_time')
             ->update(['check_out_time' => now()]);
 
+        $ip = $request->ip();
+        $isInOffice = $ip === env('OFFICE_IP');
+
         $newSession = $attendance->sessions()->create([
-            'ip_address' => request()->ip(),
+            'ip_address' => $ip,
             'check_in_time' => now(),
-            'is_in_office' => true,
+            'is_in_office' => $isInOffice,
         ]);
 
         return response()->json([
