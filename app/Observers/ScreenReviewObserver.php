@@ -12,6 +12,8 @@ class ScreenReviewObserver
 {
     public function created(ScreenReview $review)
     {
+        Log::info('ScreenReviewObserver: created triggered.', ['review_id' => $review->id]);
+
         $screen = $review->screen;
         $task = $screen->task;
 
