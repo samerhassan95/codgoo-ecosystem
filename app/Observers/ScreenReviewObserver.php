@@ -32,10 +32,9 @@ class ScreenReviewObserver
             ?->employee;
 
         $tester = $task
-            ?->testers()
-            ->with('employee')
+            ?->assignments()
             ->get()
-            ->firstWhere(fn($assignment) => $assignment->employee?->role === $targetRole)
+            ->firstWhere(fn($assignment) => $assignment->employee?->role === "tester")
             ?->employee;
 
         $template = NotificationTemplate::where('type', 'screen_review')->first();
