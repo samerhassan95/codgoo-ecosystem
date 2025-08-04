@@ -40,8 +40,8 @@ class ScreenReviewObserver
 
             $title = $template->title;
             $message = str_replace(
-                ['{review_type}', '{screen_name}', '{task_name}'],
-                [ucfirst($review->review_type), $screen->name, $task->name],
+                ['{screen_name}', '{task_name}'],
+                [$screen->name, $task->name],
                 $template->message
             );
 

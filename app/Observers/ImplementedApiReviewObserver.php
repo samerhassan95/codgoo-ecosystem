@@ -28,8 +28,8 @@ class ImplementedApiReviewObserver
 
             $title = $template->title;
             $message = str_replace(
-                ['{endpoint}', '{task_name}'],
-                [$review->implementedApi->requestedApi->endpoint, $review->implementedApi->requestedApi->screen->task->name],
+                ['{endpoint}', '{screen_name}'],
+                [$review->implementedApi->requestedApi->endpoint, $review->implementedApi->requestedApi->screen->name],
                 $template->message
             );
 
