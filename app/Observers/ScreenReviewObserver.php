@@ -12,7 +12,6 @@ class ScreenReviewObserver
 {
     public function created(ScreenReview $review)
     {
-        Log::info('ScreenReviewObserver: created triggered.', ['review_id' => $review->id]);
 
         $screen = $review->screen;
         $task = $screen->task;
@@ -31,6 +30,10 @@ class ScreenReviewObserver
             ->get()
             ->firstWhere(fn($assignment) => $assignment->employee?->role === $targetRole)
             ?->employee;
+Log::info('Found developer for screen review', [
+    'developer_id' => $developer?->id,
+    'device_token' => $developer?->device_token,
+]);
 
         if ($developer && $developer->device_token) {
             $template = NotificationTemplate::where('type', 'screen_review')->first();
