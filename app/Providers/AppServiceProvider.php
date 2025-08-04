@@ -96,6 +96,14 @@ use App\Repositories\AttendanceRepository;
 use App\Repositories\AttendanceRepositoryInterface;
 use App\Models\Screen;
 use App\Observers\ScreenObserver;
+use App\Models\HolidayRequest;
+use App\Models\RemoteWorkRequest;
+use App\Models\ExtendTaskTimeRequest;
+use App\Models\EarlyLeaveRequest;
+use App\Models\MoneyRequest;
+use App\Models\OvertimeRequest;
+use App\Models\PaperRequest;
+use App\Observers\RequestStatusObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -159,6 +167,33 @@ class AppServiceProvider extends ServiceProvider
         ImplementedApi::observe(ImplementedApiObserver::class);
         ImplementedApiReview::observe(ImplementedApiReviewObserver::class);
         ScreenReview::observe(ScreenReviewObserver::class);
+        HolidayRequest::observe(new class {
+        use RequestStatusObserver;
+        });
+
+        RemoteWorkRequest::observe(new class {
+            use RequestStatusObserver;
+        });
+
+        ExtendTaskTimeRequest::observe(new class {
+            use RequestStatusObserver;
+        });
+
+        EarlyLeaveRequest::observe(new class {
+            use RequestStatusObserver;
+        });
+
+        MoneyRequest::observe(new class {
+            use RequestStatusObserver;
+        });
+
+        OvertimeRequest::observe(new class {
+            use RequestStatusObserver;
+        });
+
+        PaperRequest::observe(new class {
+            use RequestStatusObserver;
+        });
 
     }
 }
