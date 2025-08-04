@@ -91,28 +91,31 @@ class FirebaseService
         return array_values($chatSummaries);
     }
 
-    public function sendNotification($deviceToken, $title, $message, $type = null)
-    {
-        try {
-            $notification = Notification::create($title, $message);
 
-            $messageData = [
-                'type' => $type ?? 'default',
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-            ];
 
-            $firebaseMessage = CloudMessage::withTarget('token', $deviceToken)
-                ->withNotification($notification)
-                ->withData($messageData);
+public function sendNotification($deviceToken, $title, $message, $type = null)
+{
+    try {
+        $notification = Notification::create($title, $message); // تأكد إن دي من Kreait
 
-            $this->messaging->send($firebaseMessage);
+        $messageData = [
+            'type' => $type ?? 'default',
+            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+        ];
 
-            \Log::info('Notification sent successfully', ['token' => $deviceToken]);
+        $firebaseMessage = CloudMessage::withTarget('token', $deviceToken)
+            ->withNotification($notification)
+            ->withData($messageData);
 
-        } catch (\Throwable $e) {
-            \Log::error('Firebase notification failed', ['error' => $e->getMessage()]);
-        }
+        $this->messaging->send($firebaseMessage);
+
+        \Log::info('Notification sent successfully', ['token' => $deviceToken]);
+
+    } catch (\Throwable $e) {
+        \Log::error('Firebase notification failed', ['error' => $e->getMessage()]);
     }
+}
+
 
     public function markMessagesAsSeen($chatId)
     {
