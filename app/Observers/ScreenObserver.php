@@ -181,7 +181,7 @@ class ScreenObserver
             ?->assignments()
             ->with('employee')
             ->get()
-            ->filter(fn($assignment) => in_array($assignment->employee?->role, ['front_end', 'ui']))
+            ->filter(fn($assignment) => in_array($assignment->employee?->role, ['front_end', 'ui_ux']))
             ->pluck('employee');
 
         if ($recipients->isEmpty()) {
