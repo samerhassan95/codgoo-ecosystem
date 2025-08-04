@@ -18,7 +18,7 @@ class ScreenReviewObserver
 
         $reviewRoleMap = [
             'frontend' => 'front_end',
-            'backend'  => 'back_end',
+            'ui_ux'  => 'ui_ux',
             'mobile'   => 'mobile',
         ];
 
@@ -30,14 +30,6 @@ class ScreenReviewObserver
             ->get()
             ->firstWhere(fn($assignment) => $assignment->employee?->role === $targetRole)
             ?->employee;
-Log::info('Debugging screen review observer', [
-    'review_type' => $review->review_type,
-    'mapped_role' => $targetRole,
-    'task_id' => $task?->id,
-    'assignment_count' => $task?->assignments?->count(),
-    'roles_found' => $task?->assignments->pluck('employee.role'),
-]);
-
 
         if ($developer && $developer->device_token) {
             $template = NotificationTemplate::where('type', 'screen_review')->first();
