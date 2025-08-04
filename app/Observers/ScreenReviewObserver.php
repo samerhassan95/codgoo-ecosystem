@@ -30,10 +30,14 @@ class ScreenReviewObserver
             ->get()
             ->firstWhere(fn($assignment) => $assignment->employee?->role === $targetRole)
             ?->employee;
-Log::info('Found developer for screen review', [
-    'developer_id' => $developer?->id,
-    'device_token' => $developer?->device_token,
+Log::info('Debugging screen review observer', [
+    'review_type' => $review->review_type,
+    'mapped_role' => $targetRole,
+    'task_id' => $task?->id,
+    'assignment_count' => $task?->assignments?->count(),
+    'roles_found' => $task?->assignments->pluck('employee.role'),
 ]);
+
 
         if ($developer && $developer->device_token) {
             $template = NotificationTemplate::where('type', 'screen_review')->first();
