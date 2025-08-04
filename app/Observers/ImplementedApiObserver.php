@@ -12,12 +12,14 @@ class ImplementedApiObserver
 {
     public function created(ImplementedApi $implementedApi)
     {
-        $tester = $implementedApi->screen->task
-                    ?->assignments()
-                    ->with('employee') 
-                    ->get()
-                    ->firstWhere(fn($assignment) => $assignment->employee?->role === 'tester')
-                    ?->employee;
+        $requestedApi = $implementedApi->requestedApi;
+
+        $tester = $requestedApi->screen?->task
+            ?->assignments()
+            ->with('employee')
+            ->get()
+            ->firstWhere(fn($assignment) => $assignment->employee?->role === 'tester')
+            ?->employee;
         if ($tester && $tester->device_token) {
             $template = NotificationTemplate::where('type', 'api_implemented')->first();
 
