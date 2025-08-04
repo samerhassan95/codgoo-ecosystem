@@ -68,7 +68,7 @@ class ImplementedApiController extends BaseController
                 ];
 
                 try {
-                    app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message, $payload);
+                    app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message);
                     app(NotificationRepository::class)->createNotification($tester, $title, $message, $tester->device_token, 'api_implemented');
                 } catch (\Exception $e) {
                     Log::error('Error sending api_implemented notification: ' . $e->getMessage());
