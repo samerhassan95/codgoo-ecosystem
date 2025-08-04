@@ -96,7 +96,7 @@ class FirebaseService
 public function sendNotification($deviceToken, $title, $message, $type = null)
 {
     try {
-        $notification = Notification::create($title, $message); // تأكد إن دي من Kreait
+        $notification = Notification::create($title, $message);
 
         $messageData = [
             'type' => $type ?? 'default',
@@ -107,6 +107,13 @@ public function sendNotification($deviceToken, $title, $message, $type = null)
             ->withNotification($notification)
             ->withData($messageData);
 
+        \Log::info('Sending Firebase Notification', [
+            'token' => $deviceToken,
+            'title' => $title,
+            'body' => $message,
+            'data' => $messageData,
+        ]);
+
         $this->messaging->send($firebaseMessage);
 
         \Log::info('Notification sent successfully', ['token' => $deviceToken]);
@@ -115,6 +122,7 @@ public function sendNotification($deviceToken, $title, $message, $type = null)
         \Log::error('Firebase notification failed', ['error' => $e->getMessage()]);
     }
 }
+
 
 
     public function markMessagesAsSeen($chatId)
