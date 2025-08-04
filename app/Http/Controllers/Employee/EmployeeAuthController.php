@@ -358,7 +358,6 @@ class EmployeeAuthController extends Controller
             ], 402);
         }
 
-        // لا تحذف الـ OTP الآن، انتظر لما يتم تغيير الباسورد
         return response()->json([
             'status' => true,
             'message' => 'OTP verified successfully. You can now reset your password.',
@@ -541,15 +540,33 @@ class EmployeeAuthController extends Controller
     public function getAllEmployees(Request $request)
     {
         try {
-            $employees = Employee::all();
+            $taskId = $request->task_id;
+
+            if (!$taskId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Task ID is required.',
+                    'data' => null,
+                ], 400);
+            }
+
+            $currentEmployeeId = auth('employee')->id();
+
+            $employees = Employee::whereHas('assignments', function ($query) use ($taskId) {
+                $query->where('task_id', $taskId);
+            })
+            ->where('id', '!=', $currentEmployeeId)
+            ->get();
 
             return response()->json([
                 'status' => true,
-                'message' => 'Employees retrieved successfully.',
+                'message' => 'Filtered employees retrieved successfully.',
                 'data' => $employees,
             ], 200);
 
-        } catch (\Exception $e) {            
+        } catch (\Exception $e) {  
+            Log::error('Error fetching filtered employees: ' . $e->getMessage());
+
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred while fetching employees.',
@@ -557,7 +574,7 @@ class EmployeeAuthController extends Controller
             ], 500);
         }
     }
-    
+
         public function searchByName(Request $request)
     {
         $request->validate([
