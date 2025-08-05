@@ -17,210 +17,6 @@ class AttendanceController extends BaseController
         parent::__construct($repository);
     }
 
-    // public function checkIn(Request $request)
-    // {
-    //     $user = auth()->user();
-    //     $today = now()->toDateString();
-
-    //     $attendance = Attendance::firstOrCreate([
-    //         'employee_id' => $user->id,
-    //         'date' => $today,
-    //     ]);
-
-    //     $session = $attendance->sessions()->create([
-    //         'ip_address' => $request->ip(),
-    //         'check_in_time' => now(),
-    //         'is_in_office' => true,
-    //     ]);
-
-    //     return response()->json(['status' => true, 'session' => $session]);
-    // }
-
-    // public function pause(Request $request, $sessionId)
-    // {
-    //     $session = AttendanceSession::findOrFail($sessionId);
-
-    //     if ($session->pause_started_at) {
-    //         return response()->json(['message' => 'Already paused']);
-    //     }
-
-    //     $session->update([
-    //         'pause_started_at' => now(),
-    //     ]);
-
-    //     return response()->json(['status' => true, 'message' => 'Paused']);
-    // }
-
-    // public function resume(Request $request, $sessionId)
-    // {
-    //     $session = AttendanceSession::findOrFail($sessionId);
-
-    //     if (!$session->pause_started_at) {
-    //         return response()->json(['message' => 'Not paused']);
-    //     }
-
-    //     $pausedDuration = now()->diffInMinutes($session->pause_started_at);
-
-    //     $session->update([
-    //         'pause_started_at' => null,
-    //         'total_pause_minutes' => $session->total_pause_minutes + $pausedDuration,
-    //     ]);
-
-    //     return response()->json(['status' => true, 'message' => 'Resumed']);
-    // }
-
-    // public function checkOut(Request $request, $sessionId)
-    // {
-    //     $session = AttendanceSession::findOrFail($sessionId);
-
-    //     if (!$session->check_out_time) {
-    //         $checkIn = $session->check_in_time;
-    //         $checkOut = now();
-
-    //         $duration = $checkOut->diffInMinutes($checkIn) - $session->total_pause_minutes;
-
-    //         $session->update([
-    //             'check_out_time' => $checkOut,
-    //         ]);
-
-    //         $attendance = $session->attendance;
-    //         $attendance->total_hours += round($duration / 60, 2);
-    //         $attendance->save();
-    //     }
-
-    //     return response()->json(['status' => true, 'message' => 'Checked out']);
-    // }
-
-    // public function checkIn(Request $request)
-    // {
-    //     $user = auth()->user();
-    //     $today = now()->toDateString();
-
-    //     $attendance = Attendance::firstOrCreate([
-    //         'employee_id' => $user->id,
-    //         'date' => $today,
-    //     ]);
-
-    //     $attendance->sessions()->whereNull('check_out_time')->update([
-    //         'check_out_time' => now(),
-    //     ]);
-
-    //     $session = $attendance->sessions()->create([
-    //         'ip_address' => $request->ip(),
-    //         'check_in_time' => now(),
-    //         'is_in_office' => true,
-    //     ]);
-
-    //     return response()->json(['status' => true, 'session' => $session]);
-    // }
-
-
-    // public function pauseOrCheckOut(Request $request)
-    // {
-    //     $user = auth()->user();
-    //     $today = now()->toDateString();
-
-    //     $attendance = Attendance::where('employee_id', $user->id)->where('date', $today)->first();
-
-    //     if (!$attendance) {
-    //         return response()->json(['status' => false, 'message' => 'No active attendance.']);
-    //     }
-
-    //     $openSession = $attendance->sessions()->whereNull('check_out_time')->latest()->first();
-
-    //     if ($openSession) {
-    //         $openSession->update([
-    //             'check_out_time' => now(),
-    //         ]);
-    //     }
-
-    //     $totalMinutes = $attendance->sessions()
-    //         ->whereNotNull('check_out_time')
-    //         ->get()
-    //         ->sum(function ($session) {
-    //             return now()->parse($session->check_out_time)->diffInMinutes($session->check_in_time);
-    //         });
-
-    //     $attendance->update([
-    //         'total_hours' => round($totalMinutes / 60, 2),
-    //     ]);
-
-    //     return response()->json(['status' => true, 'message' => 'Session ended']);
-    // }
-
-//     public function checkIn(Request $request)
-// {
-//     $user = auth()->user();
-//     $today = now()->toDateString();
-
-//     $attendance = Attendance::firstOrCreate([
-//         'employee_id' => $user->id,
-//         'date' => $today,
-//     ]);
-
-//     $attendance->sessions()->create([
-//         'ip_address' => $request->ip(),
-//         'check_in_time' => now(),
-//         'is_in_office' => true,
-//     ]);
-
-//     return response()->json(['status' => true, 'message' => 'Checked in successfully']);
-// }
-
-// public function pause($sessionId)
-// {
-//     $session = AttendanceSession::findOrFail($sessionId);
-
-//     if ($session->check_out_time !== null) {
-//         return response()->json(['status' => false, 'message' => 'Session already ended']);
-//     }
-
-//     $session->update(['check_out_time' => now()]);
-
-//     return response()->json(['status' => true, 'message' => 'Paused successfully']);
-// }
-
-// public function resume(Request $request)
-// {
-//     $user = auth()->user();
-//     $today = now()->toDateString();
-
-//     $attendance = Attendance::firstOrCreate([
-//         'employee_id' => $user->id,
-//         'date' => $today,
-//     ]);
-
-//     $session = $attendance->sessions()->create([
-//         'ip_address' => $request->ip(),
-//         'check_in_time' => now(),
-//         'is_in_office' => true,
-//     ]);
-
-//     return response()->json(['status' => true, 'message' => 'Resumed successfully']);
-// }
-
-// public function checkOut($sessionId)
-// {
-//     $session = AttendanceSession::findOrFail($sessionId);
-
-//     if ($session->check_out_time !== null) {
-//         return response()->json(['status' => false, 'message' => 'Session already ended']);
-//     }
-
-//     $session->update(['check_out_time' => now()]);
-
-//     $attendance = $session->attendance;
-//     $totalMinutes = $attendance->sessions()->whereNotNull('check_out_time')->get()->sum(function ($s) {
-//         return \Carbon\Carbon::parse($s->check_out_time)->diffInMinutes($s->check_in_time);
-//     });
-
-//     $attendance->update([
-//         'total_hours' => round($totalMinutes / 60, 2),
-//     ]);
-
-//     return response()->json(['status' => true, 'message' => 'Checked out successfully']);
-// }
-
 
     public function getSessions(Request $request)
     {
@@ -233,156 +29,65 @@ class AttendanceController extends BaseController
         return response()->json(['status' => true, 'sessions' => $sessions]);
     }
 
+    public function realTimeStatus()
+    {
+        $user = auth()->user();
+        $today = now()->toDateString();
+        $shiftHours = 8;
 
-    // public function checkIn(Request $request)
-    // {
-    //     $user = auth()->user();
-    //     $today = now()->toDateString();
+        $attendance = Attendance::where('employee_id', $user->id)
+            ->where('date', $today)
+            ->with('sessions')
+            ->first();
 
-    //     $attendance = Attendance::firstOrCreate([
-    //         'employee_id' => $user->id,
-    //         'date' => $today,
-    //     ]);
+        if (!$attendance) {
+            return response()->json([
+                'status' => true,
+                'last_status' => 'Not Checked In',
+                'total_hours' => 0,
+                'remaining_hours' => $shiftHours,
+                'shift_completion' => '0%',
+                'message' => 'No attendance for today.'
+            ]);
+        }
 
-    //     $existingSession = $attendance->sessions()->whereNull('check_out_time')->first();
-    //     if ($existingSession) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'You already have an open session. Please pause or check-out first.',
-    //         ]);
-    //     }
+        $totalMinutes = 0;
+        foreach ($attendance->sessions as $session) {
+            $checkIn = Carbon::parse($session->check_in_time);
+            $checkOut = $session->check_out_time ? Carbon::parse($session->check_out_time) : now();
+            $totalMinutes += $checkIn->diffInMinutes($checkOut);
+        }
 
-    //     $session = $attendance->sessions()->create([
-    //         'ip_address' => $request->ip(),
-    //         'check_in_time' => now(),
-    //         'is_in_office' => true,
-    //     ]);
+        $lastOpenSession = $attendance->sessions
+            ->sortByDesc('id')
+            ->first();
 
-    //     return response()->json(['status' => true, 'session' => $session, 'message' => 'Check-in done.']);
-    // }
-    // public function pause($sessionId)
-    // {
-    //     $session = AttendanceSession::findOrFail($sessionId);
+        $lastStatus = 'Checked_out';
 
-    //     if ($session->check_out_time) {
-    //         return response()->json(['status' => false, 'message' => 'Session already ended.']);
-    //     }
+        if ($lastOpenSession) {
+            if ($lastOpenSession->pause_started_at) {
+                $lastStatus = 'Paused';
+            }elseif ($lastOpenSession->check_out_time&&$lastOpenSession->pause_started_at== null) {
+                $lastStatus = 'Checked_out';
+            } else {
+                $isFirstSession = $attendance->sessions->where('id', '<', $lastOpenSession->id)->isEmpty();
+                $lastStatus = $isFirstSession ? 'Checked_in' : 'Resumed';
+            }
+        }
 
-    //     $session->update(['check_out_time' => now()]);
+        $totalHours = round($totalMinutes / 60, 2);
+        $remainingHours = max(round($shiftHours - $totalHours, 2), 0);
+        $shiftCompletion = round(($totalHours / $shiftHours) * 100, 2) . '%';
 
-    //     return response()->json(['status' => true, 'message' => 'Paused session.']);
-    // }
-
-    // public function resume(Request $request)
-    // {
-    //     $user = auth()->user();
-    //     $today = now()->toDateString();
-
-    //     $attendance = Attendance::firstOrCreate([
-    //         'employee_id' => $user->id,
-    //         'date' => $today,
-    //     ]);
-
-    //     $session = $attendance->sessions()->create([
-    //         'ip_address' => $request->ip(),
-    //         'check_in_time' => now(),
-    //         'is_in_office' => true,
-    //     ]);
-
-    //     return response()->json(['status' => true, 'session' => $session, 'message' => 'Resumed session.']);
-    // }
-
-    // public function checkOut($sessionId)
-    // {
-    //     $session = AttendanceSession::findOrFail($sessionId);
-
-    //     if ($session->check_out_time) {
-    //         return response()->json(['status' => false, 'message' => 'Session already ended.']);
-    //     }
-
-    //     $session->update(['check_out_time' => now()]);
-
-    //     $attendance = $session->attendance;
-    //     $totalMinutes = $attendance->sessions()
-    //         ->whereNotNull('check_out_time')
-    //         ->get()
-    //         ->sum(function ($s) {
-    //             return Carbon::parse($s->check_in_time)->diffInMinutes($s->check_out_time);
-    //         });
-
-    //     $attendance->update([
-    //         'total_hours' => round($totalMinutes / 60, 2),
-    //     ]);
-
-    //     return response()->json(['status' => true, 'message' => 'Checked out.']);
-    // }
-
-
-public function realTimeStatus()
-{
-    $user = auth()->user();
-    $today = now()->toDateString();
-    $shiftHours = 8;
-
-    $attendance = Attendance::where('employee_id', $user->id)
-        ->where('date', $today)
-        ->with('sessions')
-        ->first();
-
-    if (!$attendance) {
         return response()->json([
             'status' => true,
-            'last_status' => 'Not Checked In',
-            'total_hours' => 0,
-            'remaining_hours' => $shiftHours,
-            'shift_completion' => '0%',
-            'message' => 'No attendance for today.'
+            'last_status' => $lastStatus,
+            'total_hours' => $totalHours,
+            'remaining_hours' => $remainingHours,
+            'shift_completion' => $shiftCompletion,
+            'message' => 'Real-time attendance data fetched successfully.'
         ]);
     }
-
-    $totalMinutes = 0;
-    foreach ($attendance->sessions as $session) {
-        $checkIn = Carbon::parse($session->check_in_time);
-        $checkOut = $session->check_out_time ? Carbon::parse($session->check_out_time) : now();
-        $totalMinutes += $checkIn->diffInMinutes($checkOut);
-    }
-
-    $lastOpenSession = $attendance->sessions
-        ->sortByDesc('id')
-        ->first();
-
-    $lastStatus = 'Checked_out';
-
-    if ($lastOpenSession) {
-        if ($lastOpenSession->pause_started_at) {
-            $lastStatus = 'Paused';
-        }elseif ($lastOpenSession->check_out_time&&$lastOpenSession->pause_started_at== null) {
-            $lastStatus = 'Checked_out';
-        } else {
-            $isFirstSession = $attendance->sessions->where('id', '<', $lastOpenSession->id)->isEmpty();
-            $lastStatus = $isFirstSession ? 'Checked_in' : 'Resumed';
-        }
-    }
-
-    $totalHours = round($totalMinutes / 60, 2);
-    $remainingHours = max(round($shiftHours - $totalHours, 2), 0);
-    $shiftCompletion = round(($totalHours / $shiftHours) * 100, 2) . '%';
-
-    return response()->json([
-        'status' => true,
-        'last_status' => $lastStatus,
-        'total_hours' => $totalHours,
-        'remaining_hours' => $remainingHours,
-        'shift_completion' => $shiftCompletion,
-        'message' => 'Real-time attendance data fetched successfully.'
-    ]);
-}
-
-
-
-
-
-
 
     public function checkIn(Request $request)
     {
