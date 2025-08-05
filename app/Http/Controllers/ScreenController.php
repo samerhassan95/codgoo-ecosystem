@@ -95,6 +95,9 @@ class ScreenController extends BaseController
                 'screen_name' => $screen->name,
                 'screen_code' => $screen->screen_code,
                 'dev_mode'    => $screen->dev_mode,
+                'frontend_approved' => $screen->frontend_approved,
+                'implemented' => $screen->implemented,
+                'integrated' => $screen->integrated,
                 'task_name'   => $screen->task->label ?? null,
                 'comments'    => $screen->reviews->map(function ($review) {
                     return [
