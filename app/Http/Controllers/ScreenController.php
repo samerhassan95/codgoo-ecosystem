@@ -98,6 +98,7 @@ class ScreenController extends BaseController
                 'frontend_approved' => $screen->frontend_approved,
                 'implemented' => $screen->implemented,
                 'integrated' => $screen->integrated,
+                'backend_approved' => $screen->implementedApis->where('status', 'tested')->isNotEmpty(),
                 'task_name'   => $screen->task->label ?? null,
                 'comments'    => $screen->reviews->map(function ($review) {
                     return [
