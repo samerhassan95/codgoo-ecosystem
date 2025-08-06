@@ -80,6 +80,7 @@ class ScreenController extends BaseController
         })
         ->with([
             'task:id,label',
+            'implementedApis',
             'reviews' => function ($query) use ($reviewType, $user) {
                 $query->where('is_resolved', false);
                 if ($user->role !== 'tester' && $reviewType) {
