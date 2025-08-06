@@ -116,8 +116,6 @@ class ScreenController extends BaseController
             'screens' => $screens
         ]);
     }
-
-
    
     public function getScreenWithReviewsByType(Request $request, $id)
     {
