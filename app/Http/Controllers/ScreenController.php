@@ -80,7 +80,7 @@ class ScreenController extends BaseController
         })
         ->with([
             'task:id,label',
-            'implementedApis',
+            'requestedApis.implementedApis',
             'reviews' => function ($query) use ($reviewType, $user) {
                 $query->where('is_resolved', false);
                 if ($user->role !== 'tester' && $reviewType) {
@@ -99,7 +99,12 @@ class ScreenController extends BaseController
                 'frontend_approved' => $screen->frontend_approved,
                 'implemented' => $screen->implemented,
                 'integrated' => $screen->integrated,
-                'backend_approved' => $screen->implementedApis->where('status', 'tested')->isNotEmpty(),
+                'backend_approved' => $screen->requestedApis
+                    ->flatMap(function ($reqApi) {
+                        return $reqApi->implementedApis;
+                    })
+                    ->where('status', 'tested')
+                    ->isNotEmpty(),
                 'task_name'   => $screen->task->label ?? null,
                 'comments'    => $screen->reviews->map(function ($review) {
                     return [
