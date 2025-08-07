@@ -72,7 +72,7 @@ class ScreenController extends BaseController
 
         if ($user->role !== 'tester' && $reviewType) {
             $query->where('review_type', $reviewType)
-                  ->whereHasMorph('creator', ['App\Models\User'], function ($q) {
+                  ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
                       $q->where('role', 'tester');
                   });
         }
@@ -90,7 +90,7 @@ class ScreenController extends BaseController
 
             if ($user->role !== 'tester' && $reviewType) {
                 $query->where('review_type', $reviewType)
-                      ->whereHasMorph('creator', ['App\Models\User'], function ($q) {
+                      ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
                           $q->where('role', 'tester');
                       });
             }
