@@ -93,37 +93,35 @@ class FirebaseService
 
 
 
-public function sendNotification($deviceToken, $title, $message, $type = null)
-{
-    try {
-        $notification = Notification::create($title, $message);
+    public function sendNotification($deviceToken, $title, $message, $type = null, $extraData = [])
+    {
+        try {
+            $notification = Notification::create($title, $message);
 
-        $messageData = [
-            'type' => $type ?? 'default',
-            'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-        ];
+            $messageData = array_merge([
+                'type' => (string)($type ?? 'default'),
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            ], $this->stringifyData($extraData));
 
-        $firebaseMessage = CloudMessage::withTarget('token', $deviceToken)
-            ->withNotification($notification)
-            ->withData($messageData);
+            $firebaseMessage = CloudMessage::withTarget('token', $deviceToken)
+                ->withNotification($notification)
+                ->withData($messageData);
 
-        \Log::info('Sending Firebase Notification', [
-            'token' => $deviceToken,
-            'title' => $title,
-            'body' => $message,
-            'data' => $messageData,
-        ]);
+            \Log::info('Sending Firebase Notification', [
+                'token' => $deviceToken,
+                'title' => $title,
+                'body' => $message,
+                'data' => $messageData,
+            ]);
 
-        $this->messaging->send($firebaseMessage);
+            $this->messaging->send($firebaseMessage);
 
-        \Log::info('Notification sent successfully', ['token' => $deviceToken]);
+            \Log::info('Notification sent successfully', ['token' => $deviceToken]);
 
-    } catch (\Throwable $e) {
-        \Log::error('Firebase notification failed', ['error' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            \Log::error('Firebase notification failed', ['error' => $e->getMessage()]);
+        }
     }
-}
-
-
 
     public function markMessagesAsSeen($chatId)
     {
@@ -190,4 +188,17 @@ public function sendNotification($deviceToken, $title, $message, $type = null)
         return $this->messaging->send($firebaseMessage);
     }
 
+    private function stringifyData(array $data): array
+    {
+        $stringified = [];
+        foreach ($data as $key => $value) {
+            if (is_array($value) || is_object($value)) {
+                $stringified[$key] = json_encode($value);
+            } else {
+                $stringified[$key] = (string) $value;
+            }
+        }
+        return $stringified;
+    }
+    
 }
