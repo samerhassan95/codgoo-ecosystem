@@ -17,7 +17,7 @@ class RequestedApiObserver
 
         $title = "New {$modelType} Created";
         $message = "A new {$modelType} request has been submitted.";
-
+dd($model->employee->device_token);
         if ($model->employee && $model->employee->device_token) {
             $payload = [
                 'request_type' => strtolower($modelType),
