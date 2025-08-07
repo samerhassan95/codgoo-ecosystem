@@ -164,7 +164,7 @@ class AttendanceController extends BaseController
         ]);
     }
 
-   public function resume()
+    public function resume(Request $request)
     {
         $user = auth()->user();
         $today = now()->toDateString();
@@ -193,6 +193,7 @@ class AttendanceController extends BaseController
             'session' => $newSession
         ]);
     }
+
 
     public function checkOut(Request $request)
     {
