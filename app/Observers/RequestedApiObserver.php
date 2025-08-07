@@ -8,7 +8,7 @@ use App\Repositories\NotificationRepository;
 use App\Services\FirebaseService;
 use Illuminate\Support\Facades\Log;
 
-trait RequestStatusObserver
+class RequestedApiObserver
 {
     public function created($model)
     {
