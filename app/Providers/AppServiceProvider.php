@@ -168,31 +168,31 @@ class AppServiceProvider extends ServiceProvider
         ImplementedApiReview::observe(ImplementedApiReviewObserver::class);
         ScreenReview::observe(ScreenReviewObserver::class);
         HolidayRequest::observe(new class {
-        use RequestStatusObserver;
+        use RequestedApiObserver;
         });
 
         RemoteWorkRequest::observe(new class {
-            use RequestStatusObserver;
+            use RequestedApiObserver;
         });
 
         ExtendTaskTimeRequest::observe(new class {
-            use RequestStatusObserver;
+            use RequestedApiObserver;
         });
 
         EarlyLeaveRequest::observe(new class {
-            use RequestStatusObserver;
+            use RequestedApiObserver;
         });
 
         MoneyRequest::observe(new class {
-            use RequestStatusObserver;
+            use RequestedApiObserver;
         });
 
         OvertimeRequest::observe(new class {
-            use RequestStatusObserver;
+            use RequestedApiObserver;
         });
 
         PaperRequest::observe(new class {
-            use RequestStatusObserver;
+            use RequestedApiObserver;
         });
 
     }
