@@ -5,6 +5,7 @@ namespace App\Observers;
 use Illuminate\Support\Facades\Log;
 use App\Services\FirebaseService;
 use App\Models\NotificationTemplate;
+
 trait RequestStatusObserver
 {
     public function updated($model)
@@ -27,8 +28,17 @@ trait RequestStatusObserver
                     $template->message
                 );
 
-                    
-                    app(FirebaseService::class)->sendNotification($employee->device_token, $title, $body);
+                    Log::info('Preparing to send notification to employee', [
+                        'employee_id' => $employee->id,
+                        'device_token' => $employee->device_token,
+                        'title' => $title,
+                        'body' => $body,
+                        'payload' => $payload,
+                    ]);
+                    app(FirebaseService::class)->sendNotification($employee->device_token, $title, $body, [
+                        'request_id' => $model->id,
+                        'notification_type' => 'request_status_updated',
+                    ]);
 
                     Log::info('Status notification sent to employee ID ' . $employee->id);
                 }
