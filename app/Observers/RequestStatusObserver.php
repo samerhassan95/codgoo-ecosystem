@@ -30,11 +30,9 @@ trait RequestStatusObserver
 
                     $payload = [
                         'request_id' => $model->id,
-                        'notification_type' => 'request_status_updated',
-                        'model_type' => class_basename($model), // نوع الموديل
+                        'notification_type' => class_basename($model),
                     ];
 
-                    // 🔍 أطبع شكل النوتيفكيشن في اللوج قبل الإرسال
                     Log::info('Preparing to send notification to employee', [
                         'employee_id' => $employee->id,
                         'device_token' => $employee->device_token,

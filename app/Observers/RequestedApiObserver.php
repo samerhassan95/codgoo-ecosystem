@@ -10,45 +10,39 @@ use Illuminate\Support\Facades\Log;
 
 class RequestedApiObserver
 {
-    public function created($model)
+    public function created(RequestedApi $api)
     {
-        $modelType = class_basename($model);
-        Log::info('Created model type: ' . $modelType);
+        $tester = $api->screen->task
+            ?->assignments()
+            ->with('employee') 
+            ->get()
+            ->firstWhere(fn($assignment) => $assignment->employee?->role === 'back_end')
+            ?->employee;
+        if ($tester && $tester->device_token) {
+            $template = NotificationTemplate::where('type', 'api_requested')->first();
 
-        $title = "New {$modelType} Created";
-        $message = "A new {$modelType} request has been submitted.";
-dd($model->employee->device_token);
-        if ($model->employee && $model->employee->device_token) {
+            if (!$template) {
+                Log::error('Notification template "api_requested" not found.');
+                return;
+            }
+
+            $title = $template->title;
+            $message = str_replace(
+                ['{endpoint}', '{task_name}'],
+                [$api->endpoint, $api->screen->task->name],
+                $template->message
+            );
+
             $payload = [
-                'request_type' => strtolower($modelType),
-                'id' => (string) $model->id,
-                'notification_type' => 'request_status_created',
+                'api_id' => (string) $api->id,
+                'notification_type' => 'api_requested',
             ];
 
-            Log::info('Sending notification to tester device', [
-            'device_token' => $tester->device_token,
-            'title'        => $title,
-            'message'      => $message,
-            'payload'      => $payload,
-            ]);
             try {
-                app(\App\Services\FirebaseService::class)->sendNotification(
-                    $model->employee->device_token,
-                    $title,
-                    $message,
-                    $payload
-                );
-
-                app(\App\Repositories\NotificationRepository::class)->createNotification(
-                    $model->employee,
-                    $title,
-                    $message,
-                    $model->employee->device_token,
-                    'request_status_created',
-                    $payload
-                );
+                app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message);
+                app(NotificationRepository::class)->createNotification($tester, $title, $message, $tester->device_token, 'api_requested');
             } catch (\Exception $e) {
-                Log::error('Error sending request status notification: ' . $e->getMessage());
+                Log::error('Error sending api_requested notification: ' . $e->getMessage());
             }
         }
     }

@@ -41,8 +41,9 @@ class ImplementedApiObserver
             ];
 
             try {
-                app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message);
-                app(NotificationRepository::class)->createNotification($tester, $title, $message, $tester->device_token, 'api_implemented');
+                app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message, $payload);
+                app(NotificationRepository::class)->createNotification($tester, $title, $message, $tester->device_token, 'api_implemented', $payload);
+
             } catch (\Exception $e) {
                 Log::error('Error sending api_implemented notification: ' . $e->getMessage());
             }
@@ -79,8 +80,9 @@ class ImplementedApiObserver
                 ];
 
                 try {
-                    app(FirebaseService::class)->sendNotification($frontend->device_token, $title, $message);
-                    app(NotificationRepository::class)->createNotification($frontend, $title, $message, $frontend->device_token, 'api_tested');
+                    app(FirebaseService::class)->sendNotification($frontend->device_token, $title, $message, $payload);
+                    app(NotificationRepository::class)->createNotification($frontend, $title, $message, $frontend->device_token, 'api_tested', $payload);
+
                 } catch (\Exception $e) {
                     Log::error('Error sending api_tested notification: ' . $e->getMessage());
                 }

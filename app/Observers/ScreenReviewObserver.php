@@ -61,8 +61,14 @@ class ScreenReviewObserver
             !($review->creator_type === get_class($tester) && $review->creator_id == $tester->id)
         ) {
             try {
-                $firebase->sendNotification($tester->device_token, $title, $message);
-                $notificationRepo->createNotification($tester, $title, $message, $tester->device_token, 'screen_review');
+                $firebase->sendNotification($tester->device_token, $title, $message, [
+                    'screen_review_id' => $review->id,
+                    'notification_type' => 'screen_review',
+                ]);
+                $notificationRepo->createNotification($tester, $title, $message, $tester->device_token, 'screen_review', [
+                    'screen_review_id' => $review->id,
+                    'notification_type' => 'screen_review',
+                ]);
             } catch (\Exception $e) {
                 Log::error('Error sending screen_review notification to tester: ' . $e->getMessage());
             }

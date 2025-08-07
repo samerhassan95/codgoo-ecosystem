@@ -209,13 +209,20 @@ class ScreenObserver
 
             try {
 
-                app(FirebaseService::class)->sendNotification($user->device_token, $title, $message);
+                app(FirebaseService::class)->sendNotification($user->device_token, $title, $message, [
+                    'screen_id' => $screen->id,
+                    'notification_type' => $templateType,
+                ]);
                 app(NotificationRepository::class)->createNotification(
                     $user,
                     $title,
                     $message,
                     $user->device_token,
-                    $templateType
+                    $templateType,
+                    [
+                        'screen_id' => $screen->id,
+                        'notification_type' => $templateType,
+                    ]
                 );
             } catch (\Exception $e) {
                 Log::error("Error sending $templateType notification to user {$user->id}: " . $e->getMessage());
