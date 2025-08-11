@@ -190,15 +190,13 @@ class FirebaseService
 
     private function stringifyData(array $data): array
     {
-        $stringified = [];
-        foreach ($data as $key => $value) {
+        return array_map(function ($value) {
             if (is_array($value) || is_object($value)) {
-                $stringified[$key] = json_encode($value);
-            } else {
-                $stringified[$key] = (string) $value;
+                return json_encode($value, JSON_UNESCAPED_UNICODE);
             }
-        }
-        return $stringified;
+            return (string)$value;
+        }, $data);
     }
+
     
 }
