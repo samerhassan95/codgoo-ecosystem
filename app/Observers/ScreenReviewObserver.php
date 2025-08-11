@@ -61,7 +61,7 @@ class ScreenReviewObserver
             !($review->creator_type === get_class($tester) && $review->creator_id == $tester->id)
         ) {
             try {
-                $firebase->sendNotification($tester->device_token, $title, $message, [
+                $firebase->sendNotification($tester->device_token, $title, $message, null, [
                     'screen_review_id' => $review->id,
                     'notification_type' => 'screen_review',
                 ]);
@@ -74,8 +74,14 @@ class ScreenReviewObserver
             }
         } elseif ($developer && $developer->device_token) {
             try {
-                $firebase->sendNotification($developer->device_token, $title, $message);
-                $notificationRepo->createNotification($developer, $title, $message, $developer->device_token, 'screen_review');
+                $firebase->sendNotification($developer->device_token, $title, $message, null, [
+                    'screen_review_id' => $review->id,
+                    'notification_type' => 'screen_review',
+                ]);
+                $notificationRepo->createNotification($developer, $title, $message, $developer->device_token, 'screen_review', [
+                    'screen_review_id' => $review->id,
+                    'notification_type' => 'screen_review',
+                ]);
             } catch (\Exception $e) {
                 Log::error('Error sending screen_review notification to developer: ' . $e->getMessage());
             }

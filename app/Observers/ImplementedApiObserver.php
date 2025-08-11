@@ -80,7 +80,7 @@ class ImplementedApiObserver
                 ];
 
                 try {
-                    app(FirebaseService::class)->sendNotification($frontend->device_token, $title, $message, $payload);
+                    app(FirebaseService::class)->sendNotification($frontend->device_token, $title, $message, null, $payload);
                     app(NotificationRepository::class)->createNotification($frontend, $title, $message, $frontend->device_token, 'api_tested', $payload);
 
                 } catch (\Exception $e) {

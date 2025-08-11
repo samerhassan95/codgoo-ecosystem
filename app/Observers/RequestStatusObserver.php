@@ -41,7 +41,7 @@ trait RequestStatusObserver
                         'payload' => $payload,
                     ]);
 
-                    app(FirebaseService::class)->sendNotification($employee->device_token, $title, $body, $payload);
+                    app(FirebaseService::class)->sendNotification($employee->device_token, $title, $body, null, $payload);
 
                     Log::info('Status notification sent to employee ID ' . $employee->id);
                 }

@@ -209,7 +209,7 @@ class ScreenObserver
 
             try {
 
-                app(FirebaseService::class)->sendNotification($user->device_token, $title, $message, [
+                app(FirebaseService::class)->sendNotification($user->device_token, $title, $message, null, [
                     'screen_id' => $screen->id,
                     'notification_type' => $templateType,
                 ]);
@@ -219,6 +219,7 @@ class ScreenObserver
                     $message,
                     $user->device_token,
                     $templateType,
+                    
                     [
                         'screen_id' => $screen->id,
                         'notification_type' => $templateType,

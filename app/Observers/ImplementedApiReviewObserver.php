@@ -39,7 +39,7 @@ class ImplementedApiReviewObserver
             ];
 
             try {
-                app(FirebaseService::class)->sendNotification($backend->device_token, $title, $message, $payload);
+                app(FirebaseService::class)->sendNotification($backend->device_token, $title, $message, null, $payload);
                 app(NotificationRepository::class)->createNotification($backend, $title, $message, $backend->device_token, 'api_review_added', $payload);
             } catch (\Exception $e) {
                 Log::error('Error sending api_review_added notification: ' . $e->getMessage());
