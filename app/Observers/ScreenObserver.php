@@ -104,6 +104,14 @@ class ScreenObserver
     {
         $original = $screen->getOriginal();
 
+        $changedFields = array_diff_assoc($screen->getAttributes(), $original);
+
+        unset($changedFields['updated_at'], $changedFields['created_at']);
+
+        if (!empty($changedFields)) {
+            $this->sendEditNotification($screen, $changedFields);
+        }
+
         if (!$original['implemented'] && $screen->implemented) {
             $this->sendTesterNotification($screen, 'screen_implemented', 'Screen implemented');
         }
@@ -116,6 +124,57 @@ class ScreenObserver
             $this->sendDevModeNotification($screen, 'screen_dev_mode_enabled', 'Screen entered dev mode');
         }
     }
+
+    private function sendEditNotification(Screen $screen, array $changedFields)
+    {
+        $title = "Screen Updated";
+        $message = "The screen '{$screen->name}' in task '{$screen->task->name}' was updated.";
+
+        $frontend = $screen->task
+            ?->assignments()
+            ->with('employee')
+            ->get()
+            ->firstWhere(fn($assignment) => $assignment->employee?->role === 'front_end')
+            ?->employee;
+
+        if ($frontend && $frontend->device_token) {
+            app(FirebaseService::class)->sendNotification($frontend->device_token, $title, $message, null, [
+                'task_id' => $screen->task_id,
+                'notification_type' => 'screen_updated',
+            ]);
+
+            app(NotificationRepository::class)->createNotification(
+                $frontend,
+                $title,
+                $message,
+                $frontend->device_token,
+                'screen_updated'
+            );
+        }
+
+        $tester = $screen->task
+            ?->assignments()
+            ->with('employee')
+            ->get()
+            ->firstWhere(fn($assignment) => $assignment->employee?->role === 'tester')
+            ?->employee;
+
+        if ($tester && $tester->device_token) {
+            app(FirebaseService::class)->sendNotification($tester->device_token, $title, $message, null, [
+                'task_id' => $screen->task_id,
+                'notification_type' => 'screen_updated',
+            ]);
+
+            app(NotificationRepository::class)->createNotification(
+                $tester,
+                $title,
+                $message,
+                $tester->device_token,
+                'screen_updated'
+            );
+        }
+    }
+
 
 
     private function sendTesterNotification(Screen $screen, string $templateType, string $defaultTitle)
