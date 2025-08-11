@@ -58,14 +58,56 @@ class TaskDiscussionController extends Controller
             'sender_type' => get_class($user),
             'message' => $type === 'text' ? $request->input('message') : null,
             'type' => $type,
-            'file_path' => asset($filePath),
+            'file_path' => $filePath,
         ]);
 
         broadcast(new TaskMessageSent($message))->toOthers();
+
+        $title = $user->name;
+        switch ($message->type) {
+            case 'image':
+                $body = "📷 Sent an image";
+                break;
+            case 'video':
+                $body = "🎥 Sent a video";
+                break;
+            case 'file':
+                $body = "📎 Sent a file";
+                break;
+            default:
+                $body = $message->message ?? '';
+                break;
+        }
+
+        foreach ($task->employees as $employee) {
+            if ($employee->id == $user->id) {
+                continue;
+            }
+
+            if (!$employee->device_token) {
+                continue;
+            }
+
+            $dataPayload = [
+                'task_id' => $task->id,
+                'discussion_message_id' => $message->id,
+                'notification_type' => 'task_discussion_message'
+            ];
+
+            app(\App\Services\FirebaseService::class)->sendNotification(
+                $employee->device_token,
+                $title,
+                $body,
+                null,
+                $dataPayload
+            );
+        }
 
         return response()->json([
             'status' => 'success',
             'message' => $message->load('sender')
         ]);
     }
+
+
 }

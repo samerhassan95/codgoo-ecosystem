@@ -12,7 +12,6 @@ class ScreenObserver
 {
     public function created(Screen $screen)
     {
-        // frontend
         $frontend = $screen->task
             ?->assignments()
             ->with('employee')
@@ -154,7 +153,7 @@ class ScreenObserver
 
         try {
             $dataPayload = [
-                'screen_id' => $screen->id,
+                'task_id' => $screen->task_id,
                 'notification_type' => $templateType,
             ];
 
@@ -210,7 +209,7 @@ class ScreenObserver
             try {
 
                 app(FirebaseService::class)->sendNotification($user->device_token, $title, $message, null, [
-                    'screen_id' => $screen->id,
+                    'task_id' => $screen->task_id,
                     'notification_type' => $templateType,
                 ]);
                 app(NotificationRepository::class)->createNotification(
