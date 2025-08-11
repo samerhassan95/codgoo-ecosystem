@@ -91,7 +91,7 @@ class EmployeeMeetingController extends Controller
                     'notification_type' => 'employee_meeting_created',
                 ];
 
-                app(FirebaseService::class)->sendNotification($employee->device_token, $title, $message);
+                app(FirebaseService::class)->sendNotification($employee->device_token, $title, $message, $dataPayload);
                 app(NotificationRepository::class)->createNotification($employee, $title, $message, $employee->device_token, 'employee_meeting_created');
 
             } catch (\Exception $e) {
