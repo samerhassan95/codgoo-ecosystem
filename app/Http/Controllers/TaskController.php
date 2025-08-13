@@ -416,7 +416,13 @@ class TaskController extends BaseController
                         'integrated' => $screen->integrated,
                         'implemented' => $screen->implemented,
                         'dev_mode' => $screen->dev_mode,
-                    ];
+                        'backend_approved' => $screen->requestedApis
+                                    ->flatMap(function ($reqApi) {
+                                        return $reqApi->implementedApis;
+                                    })
+                                    ->where('status', 'tested')
+                                    ->isNotEmpty(),
+                                    ];
                 })->values(),
             ],
         ]);
@@ -487,7 +493,7 @@ class TaskController extends BaseController
         $screens = $task->screens->map(function ($screen) {
             $employeeCommentsCount = $screen->reviews
                 ->filter(function ($review) {
-                    return $review->creator_type !== 'App\\Models\\Tester'; // exclude tester comments
+                    return $review->creator_type !== 'App\\Models\\Tester';
                 })
                 ->count();
 
