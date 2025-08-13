@@ -60,92 +60,94 @@ class ScreenController extends BaseController
     }
 
     public function getScreensWithReviewsByRole(Request $request)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    $roleToReviewType = [
-        'ui_ux'     => 'ui',
-        'front_end' => 'frontend',
-        'back_end'  => 'backend',
-        'mobile'    => 'mobile',
-        'tester'    => null,
-    ];
-
-    $reviewType = $roleToReviewType[$user->role] ?? null;
-
-    $screens = Screen::whereHas('reviews', function ($query) {
-        // السكرين لازم يكون فيه تعليق من تيستر
-        $query->where('is_resolved', false)
-              ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
-                  $q->where('role', 'tester');
-              });
-    })
-    ->whereHas('task', function ($query) use ($user) {
-        $query->whereHas('assignments', function ($qq) use ($user) {
-            $qq->where('employee_id', $user->id);
-        });
-    })
-    ->with([
-        'task:id,label',
-        'requestedApis.implementedApis',
-        'reviews' => function ($query) use ($reviewType, $user) {
-            $query->where('is_resolved', false);
-
-            if ($user->role !== 'tester' && $reviewType) {
-                // غير تيستر → يشوف تعليقات التستر أو نفسه فقط
-                $query->where(function ($q) use ($user) {
-                    $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
-                        $subQ->where('role', 'tester');
-                    })
-                    ->orWhere(function ($subQ) use ($user) {
-                        $subQ->where('creator_id', $user->id)
-                             ->where('creator_type', get_class($user));
-                    });
-                });
-            }
-            
-            $query->with('creator:id,name');
-        }
-    ])
-    ->get()
-    ->filter(fn($screen) => $screen->reviews->isNotEmpty()) // استبعاد اللي مفيهوش تعليقات بعد الفلترة
-    ->values()
-    ->map(function ($screen) {
-        return [
-            'screen_id'   => $screen->id,
-            'screen_name' => $screen->name,
-            'screen_code' => $screen->screen_code,
-            'dev_mode'    => $screen->dev_mode,
-            'frontend_approved' => $screen->frontend_approved,
-            'implemented' => $screen->implemented,
-            'integrated'  => $screen->integrated,
-            'backend_approved' => $screen->requestedApis
-                ->flatMap(function ($reqApi) {
-                    return $reqApi->implementedApis;
-                })
-                ->where('status', 'tested')
-                ->isNotEmpty(),
-            'task_name'   => $screen->task->label ?? null,
-            'comments'    => $screen->reviews->map(function ($review) {
-                return [
-                    'creator_name' => $review->creator->name ?? 'Unknown',
-                    'id'           => $review->id,
-                    'comment'      => $review->comment,
-                    'created_at'   => $review->created_at->toDateTimeString(),
-                ];
-            }),
+        $roleToReviewType = [
+            'ui_ux'     => 'ui',
+            'front_end' => 'frontend',
+            'back_end'  => 'backend',
+            'mobile'    => 'mobile',
+            'tester'    => null,
         ];
-    });
 
-    return response()->json([
-        'status'  => true,
-        'screens' => $screens
-    ]);
-}
+        $reviewType = $roleToReviewType[$user->role] ?? null;
+
+        $screens = Screen::whereHas('reviews', function ($query) {
+
+            $query->where('is_resolved', false)
+                ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
+                    $q->where('role', 'tester');
+                });
+        })
+        ->whereHas('task', function ($query) use ($user) {
+            $query->whereHas('assignments', function ($qq) use ($user) {
+                $qq->where('employee_id', $user->id);
+            });
+        })
+        ->with([
+            'task:id,label',
+            'requestedApis.implementedApis',
+            'reviews' => function ($query) use ($reviewType, $user) {
+                $query->where('is_resolved', false);
+
+                if ($user->role !== 'tester' && $reviewType) {
+
+                    $query->where(function ($q) use ($user) {
+                        $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
+                            $subQ->where('role', 'tester');
+                        })
+                        ->orWhere(function ($subQ) use ($user) {
+                            $subQ->where('creator_id', $user->id)
+                                ->where('creator_type', get_class($user));
+                        });
+                    });
+                }
+                
+                $query->with('creator:id,name');
+            }
+        ])
+        ->get()
+        ->filter(fn($screen) => $screen->reviews->isNotEmpty()) // استبعاد اللي مفيهوش تعليقات بعد الفلترة
+        ->values()
+        ->map(function ($screen) {
+            return [
+                'screen_id'   => $screen->id,
+                'screen_name' => $screen->name,
+                'screen_code' => $screen->screen_code,
+                'dev_mode'    => $screen->dev_mode,
+                'frontend_approved' => $screen->frontend_approved,
+                'implemented' => $screen->implemented,
+                'integrated'  => $screen->integrated,
+                'backend_approved' => $screen->requestedApis
+                    ->flatMap(function ($reqApi) {
+                        return $reqApi->implementedApis;
+                    })
+                    ->where('status', 'tested')
+                    ->isNotEmpty(),
+                'task_name'   => $screen->task->label ?? null,
+                'comments'    => $screen->reviews->map(function ($review) {
+                    return [
+                        'creator_name' => $review->creator->name ?? 'Unknown',
+                        'id'           => $review->id,
+                        'comment'      => $review->comment,
+                        'created_at'   => $review->created_at->toDateTimeString(),
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'status'  => true,
+            'screens' => $screens
+        ]);
+    }
 
 
     public function getScreenWithReviewsByType(Request $request, $id)
     {
+        $user = auth()->user();
+
         $reviewType = $request->get('review_type');
         $validTypes = ['backend', 'frontend', 'ui'];
 
@@ -156,7 +158,7 @@ class ScreenController extends BaseController
             ], 400);
         }
 
-       $screen = Screen::with(['task:id,label', 'requestedApis'])->find($id);
+        $screen = Screen::with(['task:id,label', 'requestedApis'])->find($id);
 
         if (!$screen) {
             return response()->json([
@@ -167,8 +169,22 @@ class ScreenController extends BaseController
 
         $reviewQuery = $screen->reviews()->where('is_resolved', false);
 
+
         if (!empty($reviewType)) {
             $reviewQuery->where('review_type', $reviewType);
+        }
+
+
+        if ($user->role !== 'tester') {
+            $reviewQuery->where(function ($q) use ($user) {
+                $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
+                    $subQ->where('role', 'tester');
+                })
+                ->orWhere(function ($subQ) use ($user) {
+                    $subQ->where('creator_id', $user->id)
+                        ->where('creator_type', get_class($user));
+                });
+            });
         }
 
         $reviews = $reviewQuery->with('creator:id,name')->get();
