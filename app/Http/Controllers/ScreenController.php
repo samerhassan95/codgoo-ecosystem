@@ -78,8 +78,14 @@ class ScreenController extends BaseController
 
             if ($user->role !== 'tester' && $reviewType) {
                 $query->where('review_type', $reviewType)
-                    ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
-                        $q->where('role', 'tester');
+                    ->where(function ($q) use ($user) {
+                        $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
+                            $subQ->where('role', 'tester');
+                        })
+                        ->orWhere(function ($subQ) use ($user) {
+                            $subQ->where('creator_id', $user->id)
+                                ->where('creator_type', get_class($user));
+                        });
                     });
             }
         })
@@ -96,8 +102,14 @@ class ScreenController extends BaseController
 
                 if ($user->role !== 'tester' && $reviewType) {
                     $query->where('review_type', $reviewType)
-                        ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
-                            $q->where('role', 'tester');
+                        ->where(function ($q) use ($user) {
+                            $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
+                                $subQ->where('role', 'tester');
+                            })
+                            ->orWhere(function ($subQ) use ($user) {
+                                $subQ->where('creator_id', $user->id)
+                                    ->where('creator_type', get_class($user));
+                            });
                         });
                 }
 
@@ -137,6 +149,7 @@ class ScreenController extends BaseController
             'screens' => $screens
         ]);
     }
+
 
    
     public function getScreenWithReviewsByType(Request $request, $id)
