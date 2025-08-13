@@ -39,6 +39,12 @@ class ScreenController extends BaseController
                 'implemented' => $screen->implemented,
                 'integrated' => $screen->integrated,
                 'frontend_approved' => $screen->frontend_approved,
+                'backend_approved' => $screen->requestedApis
+                    ->flatMap(function ($reqApi) {
+                        return $reqApi->implementedApis;
+                    })
+                    ->where('status', 'tested')
+                    ->isNotEmpty(),
                 'estimated_hours' => $screen->estimated_hours,
                 'requested_apis' => $screen->requestedApis->map(function ($api) {
                     return [
