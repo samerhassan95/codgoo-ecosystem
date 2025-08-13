@@ -228,7 +228,7 @@ class TaskController extends BaseController
                     'start_date' => $task->start_date,
                     'due_date' => $task->due_date,
                     'priority' => $task->priority,
-                    'status' => $assignment?->status ?? $task->status,
+                    'status' => $assignment->status,
                     'estimated_hours' => $assignment?->estimated_hours,
                     'header' => $assignment?->header,
                     'project' => $task->milestone->project->name ?? null,
