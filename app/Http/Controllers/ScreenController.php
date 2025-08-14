@@ -147,84 +147,97 @@ class ScreenController extends BaseController
     }
 
     public function getScreenWithReviewsByType(Request $request, $id)
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        $reviewType = $request->get('review_type');
-        $validTypes = ['backend', 'frontend', 'ui'];
+    $reviewType = $request->get('review_type');
+    $validTypes = ['backend', 'frontend', 'ui'];
 
-        if ($reviewType && !in_array($reviewType, $validTypes)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid review type.',
-            ], 400);
-        }
-
-        $screen = Screen::with(['task:id,label', 'requestedApis'])->find($id);
-
-        if (!$screen) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Screen not found.',
-            ], 404);
-        }
-
-        $typeToRole = [
-            'frontend' => 'front_end',
-            'backend'  => 'back_end',
-            'ui'       => 'ui_ux',
-        ];
-        $roleForType = $reviewType ? ($typeToRole[$reviewType] ?? null) : null;
-
-        $reviewQuery = $screen->reviews()->where('is_resolved', false);
-
-        if (!empty($reviewType) && $roleForType) {
-            $reviewQuery->where('review_type', $reviewType)
-                ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) use ($roleForType) {
-                    $q->whereIn('role', ['tester', $roleForType]);
-                });
-        } elseif (!empty($reviewType)) {
-            $reviewQuery->where('review_type', $reviewType)
-                ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
-                    $q->where('role', 'tester');
-                });
-        }
-
-        $reviews = $reviewQuery->with('creator:id,name')->get();
-
-        $screenData = [
-            'screen_id'   => $screen->id,
-            'screen_name' => $screen->name,
-            'screen_code' => $screen->screen_code,
-            'dev_mode'    => $screen->dev_mode,
-            'task_name'   => $screen->task->label ?? null,
-            'comments'    => $reviews->map(function ($review) {
-                return [
-                    'creator_name' => $review->creator->name ?? 'Unknown',
-                    'id'           => $review->id,
-                    'comment'      => $review->comment,
-                    'created_at'   => $review->created_at->toDateTimeString(),
-                ];
-            }),
-        ];
-
-        if ($reviewType === 'backend') {
-            $screenData['apis'] = $screen->requestedApis->map(function ($api) {
-                return [
-                    'id' => $api->id,
-                    'endpoint' => $api->endpoint,
-                    'method' => $api->method,
-                    'request_body' => $api->request_body,
-                    'response_structure' => $api->response_structure,
-                ];
-            });
-        }
-
+    if ($reviewType && !in_array($reviewType, $validTypes)) {
         return response()->json([
-            'status' => true,
-            'screen' => $screenData,
-        ]);
+            'status' => false,
+            'message' => 'Invalid review type.',
+        ], 400);
     }
+
+    $screen = Screen::with(['task:id,label', 'requestedApis'])->find($id);
+
+    if (!$screen) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Screen not found.',
+        ], 404);
+    }
+
+    $typeToRole = [
+        'frontend' => 'front_end',
+        'backend'  => 'back_end',
+        'ui'       => 'ui_ux',
+    ];
+    $roleForType = $reviewType ? ($typeToRole[$reviewType] ?? null) : null;
+
+    $reviewQuery = $screen->reviews()->where('is_resolved', false);
+
+    if (!empty($reviewType) && $roleForType) {
+        $reviewQuery->where('review_type', $reviewType)
+            ->where(function ($q) use ($roleForType, $user) {
+                $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) use ($roleForType) {
+                    $subQ->whereIn('role', ['tester', $roleForType]);
+                })
+                ->orWhere(function ($subQ) use ($user) {
+                    $subQ->where('creator_id', $user->id)
+                        ->where('creator_type', get_class($user));
+                });
+            });
+    } elseif (!empty($reviewType)) {
+        $reviewQuery->where('review_type', $reviewType)
+            ->where(function ($q) use ($user) {
+                $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
+                    $subQ->where('role', 'tester');
+                })
+                ->orWhere(function ($subQ) use ($user) {
+                    $subQ->where('creator_id', $user->id)
+                        ->where('creator_type', get_class($user));
+                });
+            });
+    }
+
+    $reviews = $reviewQuery->with('creator:id,name')->get();
+
+    $screenData = [
+        'screen_id'   => $screen->id,
+        'screen_name' => $screen->name,
+        'screen_code' => $screen->screen_code,
+        'dev_mode'    => $screen->dev_mode,
+        'task_name'   => $screen->task->label ?? null,
+        'comments'    => $reviews->map(function ($review) {
+            return [
+                'creator_name' => $review->creator->name ?? 'Unknown',
+                'id'           => $review->id,
+                'comment'      => $review->comment,
+                'created_at'   => $review->created_at->toDateTimeString(),
+            ];
+        }),
+    ];
+
+    if ($reviewType === 'backend') {
+        $screenData['apis'] = $screen->requestedApis->map(function ($api) {
+            return [
+                'id' => $api->id,
+                'endpoint' => $api->endpoint,
+                'method' => $api->method,
+                'request_body' => $api->request_body,
+                'response_structure' => $api->response_structure,
+            ];
+        });
+    }
+
+    return response()->json([
+        'status' => true,
+        'screen' => $screenData,
+    ]);
+}
+
 
     public function getScreenDevelopmentOverview($id)
     {
