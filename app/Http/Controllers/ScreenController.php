@@ -73,7 +73,7 @@ public function getScreensWithReviewsByRole(Request $request)
 
     $reviewType = $roleToReviewType[$user->role] ?? null;
     $isDeveloper = ($user->role !== 'tester' && $reviewType);
-dd($reviewType);
+
     $screens = Screen::whereHas('reviews', function ($query) use ($isDeveloper, $reviewType, $user) {
         $query->where('is_resolved', false);
 
