@@ -59,94 +59,113 @@ class ScreenController extends BaseController
         ]);
     }
 
-    public function getScreensWithReviewsByRole(Request $request)
-    {
-        $user = auth()->user();
+   public function getScreensWithReviewsByRole(Request $request)
+{
+    $user = auth()->user();
 
-        $roleToReviewType = [
-            'ui_ux'     => 'ui',
-            'front_end' => 'frontend',
-            'back_end'  => 'backend',
-            'mobile'    => 'mobile',
-            'tester'    => null,
-        ];
+    $roleToReviewType = [
+        'ui_ux'     => 'ui',
+        'front_end' => 'frontend',
+        'back_end'  => 'backend',
+        'mobile'    => 'mobile',
+        'tester'    => null,
+    ];
 
-        $reviewType = $roleToReviewType[$user->role] ?? null;
+    $reviewType = $roleToReviewType[$user->role] ?? null;
 
-        $screens = Screen::whereHas('reviews', function ($query) use ($reviewType) {
-            $query->where('is_resolved', false)
-                ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
-                    $q->where('role', 'tester');
-                });
+    $screens = Screen::whereHas('reviews', function ($query) use ($reviewType) {
+        $query->where('is_resolved', false);
+
+        if ($reviewType) {
+            $query->where('review_type', $reviewType)
+                  ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) use ($reviewType) {
+                      $roleForType = [
+                          'frontend' => 'front_end',
+                          'backend'  => 'back_end',
+                          'ui'       => 'ui_ux',
+                          'mobile'   => 'mobile',
+                      ][$reviewType] ?? null;
+
+                      if ($roleForType) {
+                          $q->whereIn('role', ['tester', $roleForType]);
+                      } else {
+                          $q->where('role', 'tester');
+                      }
+                  });
+        } else {
+            $query->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
+                $q->where('role', 'tester');
+            });
+        }
+    })
+    ->whereHas('task', function ($query) use ($user) {
+        $query->whereHas('assignments', function ($qq) use ($user) {
+            $qq->where('employee_id', $user->id);
+        });
+    })
+    ->with([
+        'task:id,label',
+        'requestedApis.implementedApis',
+        'reviews' => function ($query) use ($reviewType) {
+            $query->where('is_resolved', false);
 
             if ($reviewType) {
-                $query->where('review_type', $reviewType);
+                $roleForType = [
+                    'frontend' => 'front_end',
+                    'backend'  => 'back_end',
+                    'ui'       => 'ui_ux',
+                    'mobile'   => 'mobile',
+                ][$reviewType] ?? null;
+
+                $query->where('review_type', $reviewType)
+                      ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) use ($roleForType) {
+                          if ($roleForType) {
+                              $q->whereIn('role', ['tester', $roleForType]);
+                          } else {
+                              $q->where('role', 'tester');
+                          }
+                      });
             }
-        })
-        ->whereHas('task', function ($query) use ($user) {
-            $query->whereHas('assignments', function ($qq) use ($user) {
-                $qq->where('employee_id', $user->id);
-            });
-        })
-        ->with([
-            'task:id,label',
-            'requestedApis.implementedApis',
-            'reviews' => function ($query) use ($reviewType, $user) {
-                $query->where('is_resolved', false);
+            $query->with('creator:id,name');
+        }
+    ])
+    ->get()
+    ->filter(fn($screen) => $screen->reviews->isNotEmpty())
+    ->values()
+    ->map(function ($screen) {
+        return [
+            'screen_id'   => $screen->id,
+            'screen_name' => $screen->name,
+            'screen_code' => $screen->screen_code,
+            'dev_mode'    => $screen->dev_mode,
+            'frontend_approved' => $screen->frontend_approved,
+            'implemented' => $screen->implemented,
+            'integrated'  => $screen->integrated,
+            'backend_approved' => $screen->requestedApis
+                ->flatMap(function ($reqApi) {
+                    return $reqApi->implementedApis;
+                })
+                ->where('status', 'tested')
+                ->isNotEmpty(),
+            'task_name'   => $screen->task->label ?? null,
+            'comments'    => $screen->reviews->map(function ($review) {
+                return [
+                    'creator_name' => $review->creator->name ?? 'Unknown',
+                    'id'           => $review->id,
+                    'comment'      => $review->comment,
+                    'created_at'   => $review->created_at->toDateTimeString(),
+                ];
+            }),
+        ];
+    });
 
-                if ($user->role !== 'tester' && $reviewType) {
-                    $query->where('review_type', $reviewType)
-                        ->where(function ($q) use ($user) {
-                            $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
-                                $subQ->where('role', 'tester');
-                            })
-                            ->orWhere(function ($subQ) use ($user) {
-                                $subQ->where('creator_id', $user->id)
-                                    ->where('creator_type', get_class($user));
-                            });
-                        });
-                }
+    return response()->json([
+        'status'  => true,
+        'screens' => $screens
+    ]);
+}
 
-                $query->with('creator:id,name');
-            }
-        ])
-        ->get()
-        ->filter(fn($screen) => $screen->reviews->isNotEmpty())
-        ->values()
-        ->map(function ($screen) {
-            return [
-                'screen_id'   => $screen->id,
-                'screen_name' => $screen->name,
-                'screen_code' => $screen->screen_code,
-                'dev_mode'    => $screen->dev_mode,
-                'frontend_approved' => $screen->frontend_approved,
-                'implemented' => $screen->implemented,
-                'integrated'  => $screen->integrated,
-                'backend_approved' => $screen->requestedApis
-                    ->flatMap(function ($reqApi) {
-                        return $reqApi->implementedApis;
-                    })
-                    ->where('status', 'tested')
-                    ->isNotEmpty(),
-                'task_name'   => $screen->task->label ?? null,
-                'comments'    => $screen->reviews->map(function ($review) {
-                    return [
-                        'creator_name' => $review->creator->name ?? 'Unknown',
-                        'id'           => $review->id,
-                        'comment'      => $review->comment,
-                        'created_at'   => $review->created_at->toDateTimeString(),
-                    ];
-                }),
-            ];
-        });
-
-        return response()->json([
-            'status'  => true,
-            'screens' => $screens
-        ]);
-    }
-
-    public function getScreenWithReviewsByType(Request $request, $id)
+public function getScreenWithReviewsByType(Request $request, $id)
 {
     $user = auth()->user();
 
@@ -180,25 +199,13 @@ class ScreenController extends BaseController
 
     if (!empty($reviewType) && $roleForType) {
         $reviewQuery->where('review_type', $reviewType)
-            ->where(function ($q) use ($roleForType, $user) {
-                $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) use ($roleForType) {
-                    $subQ->whereIn('role', ['tester', $roleForType]);
-                })
-                ->orWhere(function ($subQ) use ($user) {
-                    $subQ->where('creator_id', $user->id)
-                        ->where('creator_type', get_class($user));
-                });
+            ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) use ($roleForType) {
+                $q->whereIn('role', ['tester', $roleForType]);
             });
     } elseif (!empty($reviewType)) {
         $reviewQuery->where('review_type', $reviewType)
-            ->where(function ($q) use ($user) {
-                $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
-                    $subQ->where('role', 'tester');
-                })
-                ->orWhere(function ($subQ) use ($user) {
-                    $subQ->where('creator_id', $user->id)
-                        ->where('creator_type', get_class($user));
-                });
+            ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
+                $q->where('role', 'tester');
             });
     }
 
