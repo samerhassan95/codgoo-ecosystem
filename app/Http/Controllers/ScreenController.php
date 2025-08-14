@@ -59,7 +59,7 @@ class ScreenController extends BaseController
         ]);
     }
 
-   public function getScreensWithReviewsByRole(Request $request)
+public function getScreensWithReviewsByRole(Request $request)
 {
     $user = auth()->user();
 
@@ -72,23 +72,26 @@ class ScreenController extends BaseController
     ];
 
     $reviewType = $roleToReviewType[$user->role] ?? null;
-
     $isDeveloper = ($user->role !== 'tester' && $reviewType);
 
     $screens = Screen::whereHas('reviews', function ($query) use ($isDeveloper, $reviewType, $user) {
         $query->where('is_resolved', false);
 
         if ($isDeveloper) {
-
-            $query->where('review_type', $reviewType)
-                  ->where(function ($q) use ($user) {
-                      $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
-                          $subQ->where('role', 'tester');
-                      })->orWhere(function ($subQ) use ($user) {
-                          $subQ->where('creator_id', $user->id)
-                               ->where('creator_type', get_class($user));
-                      });
-                  });
+            // التعديل هنا: إضافة شرط النوع بشكل منفصل لكل جزء
+            $query->where(function ($q) use ($reviewType, $user) {
+                $q->where('review_type', $reviewType)
+                    ->where(function ($subQ) {
+                        $subQ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
+                            $q->where('role', 'tester');
+                        });
+                    })
+                    ->orWhere(function ($subQ) use ($user) {
+                        $subQ->where('review_type', $reviewType)
+                            ->where('creator_id', $user->id)
+                            ->where('creator_type', get_class($user));
+                    });
+            });
         } else {
             $query->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
                 $q->where('role', 'tester');
@@ -107,15 +110,20 @@ class ScreenController extends BaseController
             $query->where('is_resolved', false);
 
             if ($isDeveloper) {
-                $query->where('review_type', $reviewType)
-                      ->where(function ($q) use ($user) {
-                          $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
-                              $subQ->where('role', 'tester');
-                          })->orWhere(function ($subQ) use ($user) {
-                              $subQ->where('creator_id', $user->id)
-                                   ->where('creator_type', get_class($user));
-                          });
-                      });
+                // التعديل هنا: نفس المنطق المطبق في whereHas
+                $query->where(function ($q) use ($reviewType, $user) {
+                    $q->where('review_type', $reviewType)
+                        ->where(function ($subQ) {
+                            $subQ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
+                                $q->where('role', 'tester');
+                            });
+                        })
+                        ->orWhere(function ($subQ) use ($user) {
+                            $subQ->where('review_type', $reviewType)
+                                ->where('creator_id', $user->id)
+                                ->where('creator_type', get_class($user));
+                        });
+                });
             } else {
                 $query->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
                     $q->where('role', 'tester');
