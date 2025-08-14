@@ -73,12 +73,15 @@ class ScreenController extends BaseController
 
         $reviewType = $roleToReviewType[$user->role] ?? null;
 
-        $screens = Screen::whereHas('reviews', function ($query) {
-
+        $screens = Screen::whereHas('reviews', function ($query) use ($reviewType) {
             $query->where('is_resolved', false)
                 ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
                     $q->where('role', 'tester');
                 });
+
+            if ($reviewType) {
+                $query->where('review_type', $reviewType);
+            }
         })
         ->whereHas('task', function ($query) use ($user) {
             $query->whereHas('assignments', function ($qq) use ($user) {
@@ -92,23 +95,23 @@ class ScreenController extends BaseController
                 $query->where('is_resolved', false);
 
                 if ($user->role !== 'tester' && $reviewType) {
-
-                    $query->where(function ($q) use ($user) {
-                        $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
-                            $subQ->where('role', 'tester');
-                        })
-                        ->orWhere(function ($subQ) use ($user) {
-                            $subQ->where('creator_id', $user->id)
-                                ->where('creator_type', get_class($user));
+                    $query->where('review_type', $reviewType)
+                        ->where(function ($q) use ($user) {
+                            $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
+                                $subQ->where('role', 'tester');
+                            })
+                            ->orWhere(function ($subQ) use ($user) {
+                                $subQ->where('creator_id', $user->id)
+                                    ->where('creator_type', get_class($user));
+                            });
                         });
-                    });
                 }
-                
+
                 $query->with('creator:id,name');
             }
         ])
         ->get()
-        ->filter(fn($screen) => $screen->reviews->isNotEmpty()) // استبعاد اللي مفيهوش تعليقات بعد الفلترة
+        ->filter(fn($screen) => $screen->reviews->isNotEmpty())
         ->values()
         ->map(function ($screen) {
             return [
@@ -143,7 +146,6 @@ class ScreenController extends BaseController
         ]);
     }
 
-
     public function getScreenWithReviewsByType(Request $request, $id)
     {
         $user = auth()->user();
@@ -167,7 +169,6 @@ class ScreenController extends BaseController
             ], 404);
         }
 
-        // map review_type -> employee.role
         $typeToRole = [
             'frontend' => 'front_end',
             'backend'  => 'back_end',
@@ -175,8 +176,6 @@ class ScreenController extends BaseController
         ];
         $roleForType = $reviewType ? ($typeToRole[$reviewType] ?? null) : null;
 
-        // نجيب بس التعليقات غير المحلولة لنوع الريفيو المطلوب
-        // والـ creator لازم يكون يا "tester" يا الرول المناظر للنوع
         $reviewQuery = $screen->reviews()->where('is_resolved', false);
 
         if (!empty($reviewType) && $roleForType) {
@@ -185,7 +184,6 @@ class ScreenController extends BaseController
                     $q->whereIn('role', ['tester', $roleForType]);
                 });
         } elseif (!empty($reviewType)) {
-            // احتياطي لو الماب مش رجّع رول (مش مفروض يحصل بعد الفاليديشن)
             $reviewQuery->where('review_type', $reviewType)
                 ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
                     $q->where('role', 'tester');
@@ -227,8 +225,6 @@ class ScreenController extends BaseController
             'screen' => $screenData,
         ]);
     }
-
-
 
     public function getScreenDevelopmentOverview($id)
     {
