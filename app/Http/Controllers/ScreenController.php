@@ -73,14 +73,13 @@ class ScreenController extends BaseController
 
     $reviewType = $roleToReviewType[$user->role] ?? null;
 
-    // فقط إذا كان المستخدم ليس tester ولديه reviewType محددة
     $isDeveloper = ($user->role !== 'tester' && $reviewType);
 
     $screens = Screen::whereHas('reviews', function ($query) use ($isDeveloper, $reviewType, $user) {
         $query->where('is_resolved', false);
 
         if ($isDeveloper) {
-            // فلترة الشاشات: تعليقات التيستر لنوع المستخدم + تعليقات المستخدم نفسه
+
             $query->where('review_type', $reviewType)
                   ->where(function ($q) use ($user) {
                       $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
@@ -91,7 +90,6 @@ class ScreenController extends BaseController
                       });
                   });
         } else {
-            // للحالات الأخرى (مثل tester): تعليقات التيستر فقط (بدون شرط النوع)
             $query->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
                 $q->where('role', 'tester');
             });
@@ -109,7 +107,6 @@ class ScreenController extends BaseController
             $query->where('is_resolved', false);
 
             if ($isDeveloper) {
-                // جلب: تعليقات التيستر لنوع المستخدم + تعليقات المستخدم نفسه
                 $query->where('review_type', $reviewType)
                       ->where(function ($q) use ($user) {
                           $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
@@ -120,7 +117,6 @@ class ScreenController extends BaseController
                           });
                       });
             } else {
-                // للحالات الأخرى: تعليقات التيستر فقط
                 $query->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
                     $q->where('role', 'tester');
                 });
