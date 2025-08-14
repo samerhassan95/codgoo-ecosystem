@@ -57,6 +57,7 @@ class FirebaseService
                     'chatId' => $chatId,
                     'clientName' => $client->name ?? 'Unknown',
                     'clientImage' => asset($client->photo) ?? null,
+                    'phone' => $client->phone ?? 'Unknown',
                     'unreadMessages' => 0,
                     'lastMessage' => null,
                     'lastMessageType' => null,
