@@ -169,12 +169,12 @@ class ScreenController extends BaseController
 
         $reviewQuery = $screen->reviews()->where('is_resolved', false);
 
-
+        // فلترة حسب نوع الريفيو لو موجود
         if (!empty($reviewType)) {
             $reviewQuery->where('review_type', $reviewType);
         }
 
-
+        // فلترة التعليقات بناءً على دور المستخدم
         if ($user->role !== 'tester') {
             $reviewQuery->where(function ($q) use ($user) {
                 $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
@@ -205,6 +205,7 @@ class ScreenController extends BaseController
             }),
         ];
 
+        // إضافة الـ APIs لو النوع Backend
         if ($reviewType === 'backend') {
             $screenData['apis'] = $screen->requestedApis->map(function ($api) {
                 return [
@@ -222,6 +223,7 @@ class ScreenController extends BaseController
             'screen' => $screenData,
         ]);
     }
+
 
     public function getScreenDevelopmentOverview($id)
     {
