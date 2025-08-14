@@ -86,7 +86,7 @@ public function getScreensWithReviewsByRole(Request $request)
                             $q->where('role', 'tester');
                         });
                     })
-                    ->orWhere(function ($subQ) use ($user) {
+                    ->orWhere(function ($subQ)  use ($reviewType, $user) {
                         $subQ->where('review_type', $reviewType)
                             ->where('creator_id', $user->id)
                             ->where('creator_type', get_class($user));
@@ -118,7 +118,7 @@ public function getScreensWithReviewsByRole(Request $request)
                                 $q->where('role', 'tester');
                             });
                         })
-                        ->orWhere(function ($subQ) use ($user) {
+                        ->orWhere(function ($subQ) use ($reviewType, $user) {
                             $subQ->where('review_type', $reviewType)
                                 ->where('creator_id', $user->id)
                                 ->where('creator_type', get_class($user));
