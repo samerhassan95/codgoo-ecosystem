@@ -167,24 +167,29 @@ class ScreenController extends BaseController
             ], 404);
         }
 
+        // map review_type -> employee.role
+        $typeToRole = [
+            'frontend' => 'front_end',
+            'backend'  => 'back_end',
+            'ui'       => 'ui_ux',
+        ];
+        $roleForType = $reviewType ? ($typeToRole[$reviewType] ?? null) : null;
+
+        // نجيب بس التعليقات غير المحلولة لنوع الريفيو المطلوب
+        // والـ creator لازم يكون يا "tester" يا الرول المناظر للنوع
         $reviewQuery = $screen->reviews()->where('is_resolved', false);
 
-        // فلترة حسب نوع الريفيو لو موجود
-        if (!empty($reviewType)) {
-            $reviewQuery->where('review_type', $reviewType);
-        }
-
-        // فلترة التعليقات بناءً على دور المستخدم
-        if ($user->role !== 'tester') {
-            $reviewQuery->where(function ($q) use ($user) {
-                $q->whereHasMorph('creator', ['App\Models\Employee'], function ($subQ) {
-                    $subQ->where('role', 'tester');
-                })
-                ->orWhere(function ($subQ) use ($user) {
-                    $subQ->where('creator_id', $user->id)
-                        ->where('creator_type', get_class($user));
+        if (!empty($reviewType) && $roleForType) {
+            $reviewQuery->where('review_type', $reviewType)
+                ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) use ($roleForType) {
+                    $q->whereIn('role', ['tester', $roleForType]);
                 });
-            });
+        } elseif (!empty($reviewType)) {
+            // احتياطي لو الماب مش رجّع رول (مش مفروض يحصل بعد الفاليديشن)
+            $reviewQuery->where('review_type', $reviewType)
+                ->whereHasMorph('creator', ['App\Models\Employee'], function ($q) {
+                    $q->where('role', 'tester');
+                });
         }
 
         $reviews = $reviewQuery->with('creator:id,name')->get();
@@ -205,7 +210,6 @@ class ScreenController extends BaseController
             }),
         ];
 
-        // إضافة الـ APIs لو النوع Backend
         if ($reviewType === 'backend') {
             $screenData['apis'] = $screen->requestedApis->map(function ($api) {
                 return [
@@ -223,6 +227,7 @@ class ScreenController extends BaseController
             'screen' => $screenData,
         ]);
     }
+
 
 
     public function getScreenDevelopmentOverview($id)
