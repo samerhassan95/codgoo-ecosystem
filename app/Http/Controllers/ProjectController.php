@@ -108,7 +108,7 @@ class ProjectController extends BaseController
                     'notification_type' => 'project_created',
                 ];
                 app(FirebaseService::class)->sendNotification($admin->device_token, $title, $message, $dataPayload);
-                app(NotificationRepository::class)->createNotification($admin, $title, $message, $admin->device_token);
+                // app(NotificationRepository::class)->createNotification($admin, $title, $message, $admin->device_token);
             } catch (\Exception $e) {
                 Log::error('Error sending project creation notification: ' . $e->getMessage());
             }
