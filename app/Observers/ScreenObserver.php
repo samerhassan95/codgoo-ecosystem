@@ -108,8 +108,15 @@ class ScreenObserver
 
         unset($changedFields['updated_at'], $changedFields['created_at']);
 
-        if (!empty($changedFields)) {
-            $this->sendEditNotification($screen, $changedFields);
+       if (!empty($changedFields)) {
+            $filteredChanges = array_diff_key(
+                $changedFields,
+                array_flip(['implemented', 'integrated', 'dev_mode'])
+            );
+
+            if (!empty($filteredChanges)) {
+                $this->sendEditNotification($screen, $filteredChanges);
+            }
         }
 
         if (!$original['implemented'] && $screen->implemented) {
