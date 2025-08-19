@@ -383,15 +383,15 @@ class EmployeeAuthController extends Controller
         $phone = $request->phone;
         $newPassword = $request->password;
 
-        $storedOtp = Cache::get('otp');
+        // $storedOtp = Cache::get('otp');
 
-        if (!$storedOtp) {
-            return response()->json([
-                'status' => false,
-                'message' => 'OTP has either expired or was not verified.',
-                'data' => null
-            ], 402);
-        }
+        // if (!$storedOtp) {
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'OTP has either expired or was not verified.',
+        //         'data' => null
+        //     ], 402);
+        // }
 
         $Employee = Employee::where('phone', $phone)->first();
 
