@@ -25,90 +25,90 @@ class NotificationController extends Controller
 
 
 
-public function sendNotification(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'type' => 'required|string|exists:notification_templates,type',
-            'notifiable_id' => 'nullable|integer',
-            'notifiable_type' => 'nullable|in:admin,client,employee',
-            'data' => 'nullable|array'
-        ]);
+    public function sendNotification(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'type' => 'required|string|exists:notification_templates,type',
+                'notifiable_id' => 'nullable|integer',
+                'notifiable_type' => 'nullable|in:admin,client,employee',
+                'data' => 'nullable|array'
+            ]);
 
-        \Log::info('Starting notification process', $validated);
+            \Log::info('Starting notification process', $validated);
 
-        $template = NotificationTemplate::where('type', $validated['type'])->first();
-        if (!$template) {
-            \Log::error('Notification template not found for type: ' . $validated['type']);
-            return response()->json(['message' => 'Invalid notification type'], 400);
-        }
-
-        $title = $template->title;
-        $message = $template->message;
-
-        if (!empty($validated['data'])) {
-            foreach ($validated['data'] as $key => $value) {
-                $message = str_replace("{" . $key . "}", $value, $message);
-            }
-        }
-
-        // Case 1: Send to one specific notifiable
-        if (!empty($validated['notifiable_id']) && !empty($validated['notifiable_type'])) {
-            $model = match($validated['notifiable_type']) {
-                'admin' => \App\Models\Admin::class,
-                'employee' => \App\Models\Employee::class,
-                'client' => \App\Models\Client::class,
-            };
-
-            $notifiable = $model::find($validated['notifiable_id']);
-            if (!$notifiable) {
-                \Log::error("Notifiable not found", $validated);
-                return response()->json(['message' => 'User not found'], 404);
+            $template = NotificationTemplate::where('type', $validated['type'])->first();
+            if (!$template) {
+                \Log::error('Notification template not found for type: ' . $validated['type']);
+                return response()->json(['message' => 'Invalid notification type'], 400);
             }
 
-            $token = $notifiable->device_token ?? $notifiable->fcm_token ?? null;
+            $title = $template->title;
+            $message = $template->message;
 
-            if (!$token) {
-                \Log::error("FCM token missing for user", ['user_id' => $notifiable->id, 'type' => $validated['notifiable_type']]);
-                return response()->json(['message' => 'User missing FCM token'], 400);
+            if (!empty($validated['data'])) {
+                foreach ($validated['data'] as $key => $value) {
+                    $message = str_replace("{" . $key . "}", $value, $message);
+                }
             }
 
-            \Log::info('Sending notification to user', ['id' => $notifiable->id, 'token' => $token]);
+            // Case 1: Send to one specific notifiable
+            if (!empty($validated['notifiable_id']) && !empty($validated['notifiable_type'])) {
+                $model = match($validated['notifiable_type']) {
+                    'admin' => \App\Models\Admin::class,
+                    'employee' => \App\Models\Employee::class,
+                    'client' => \App\Models\Client::class,
+                };
 
-            $this->firebaseService->sendNotification($token, $title, $message, $validated['type']);
-            $this->notificationRepository->createNotification($notifiable, $title, $message, $token, $validated['type']);
+                $notifiable = $model::find($validated['notifiable_id']);
+                if (!$notifiable) {
+                    \Log::error("Notifiable not found", $validated);
+                    return response()->json(['message' => 'User not found'], 404);
+                }
 
-            return response()->json(['message' => 'Notification sent successfully']);
+                $token = $notifiable->device_token ?? $notifiable->fcm_token ?? null;
+
+                if (!$token) {
+                    \Log::error("FCM token missing for user", ['user_id' => $notifiable->id, 'type' => $validated['notifiable_type']]);
+                    return response()->json(['message' => 'User missing FCM token'], 400);
+                }
+
+                \Log::info('Sending notification to user', ['id' => $notifiable->id, 'token' => $token]);
+
+                $this->firebaseService->sendNotification($token, $title, $message, $validated['type']);
+                $this->notificationRepository->createNotification($notifiable, $title, $message, $token, $validated['type']);
+
+                return response()->json(['message' => 'Notification sent successfully']);
+            }
+
+            // Case 2: Send to all clients & employees
+            $clients = \App\Models\Client::whereNotNull('fcm_token')->get();
+            $employees = \App\Models\Employee::whereNotNull('fcm_token')->get();
+
+            if ($clients->isEmpty() && $employees->isEmpty()) {
+                \Log::warning("No clients or employees found with FCM token");
+                return response()->json(['message' => 'No recipients with FCM tokens found'], 400);
+            }
+
+            foreach ($clients as $client) {
+                \Log::info("Sending to client: " . $client->id);
+                $this->firebaseService->sendNotification($client->fcm_token, $title, $message, $validated['type']);
+                $this->notificationRepository->createNotification($client, $title, $message, $client->fcm_token, $validated['type']);
+            }
+
+            foreach ($employees as $employee) {
+                \Log::info("Sending to employee: " . $employee->id);
+                $this->firebaseService->sendNotification($employee->fcm_token, $title, $message, $validated['type']);
+                $this->notificationRepository->createNotification($employee, $title, $message, $employee->fcm_token, $validated['type']);
+            }
+
+            return response()->json(['message' => 'Notification sent to all successfully']);
+
+        } catch (\Throwable $e) {
+            \Log::error('Error sending notification', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['message' => 'Internal server error', 'error' => $e->getMessage()], 500);
         }
-
-        // Case 2: Send to all clients & employees
-        $clients = \App\Models\Client::whereNotNull('fcm_token')->get();
-        $employees = \App\Models\Employee::whereNotNull('fcm_token')->get();
-
-        if ($clients->isEmpty() && $employees->isEmpty()) {
-            \Log::warning("No clients or employees found with FCM token");
-            return response()->json(['message' => 'No recipients with FCM tokens found'], 400);
-        }
-
-        foreach ($clients as $client) {
-            \Log::info("Sending to client: " . $client->id);
-             $this->firebaseService->sendNotification($client->fcm_token, $title, $message, $validated['type']);
-            $this->notificationRepository->createNotification($client, $title, $message, $client->fcm_token, $validated['type']);
-        }
-
-        foreach ($employees as $employee) {
-            \Log::info("Sending to employee: " . $employee->id);
-             $this->firebaseService->sendNotification($employee->fcm_token, $title, $message, $validated['type']);
-            $this->notificationRepository->createNotification($employee, $title, $message, $employee->fcm_token, $validated['type']);
-        }
-
-        return response()->json(['message' => 'Notification sent to all successfully']);
-
-    } catch (\Throwable $e) {
-        \Log::error('Error sending notification', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-        return response()->json(['message' => 'Internal server error', 'error' => $e->getMessage()], 500);
     }
-}
 
 
     public function getNotifications(Request $request)
@@ -131,6 +131,7 @@ public function sendNotification(Request $request)
                     'data' => $notification->data,
                     'is_read' => $notification->is_read,
                     'created_at' => $notification->created_at,
+                    'payload' => $notification->data,
                     'notification_type' => $notification->template?->type,
                 ];
             }),
