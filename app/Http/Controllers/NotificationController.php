@@ -131,7 +131,6 @@ class NotificationController extends Controller
                     'data' => $notification->data,
                     'is_read' => $notification->is_read,
                     'created_at' => $notification->created_at,
-                    'payload' => $notification->data,
                     'notification_type' => $notification->template?->type,
                 ];
             }),
