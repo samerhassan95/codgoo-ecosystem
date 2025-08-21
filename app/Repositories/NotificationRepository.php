@@ -23,7 +23,7 @@ class NotificationRepository
     if (!$template) {
         return null;
     }
-    Log::info("Creating notification of type: $type", json_encode($data));
+    Log::info("Creating notification of type: $type", ['data' => $data]);
     return Notification::create([
         'notifiable_id' => $notifiable->id,
         'notifiable_type' => get_class($notifiable),
