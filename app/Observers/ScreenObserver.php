@@ -229,7 +229,8 @@ class ScreenObserver
                 $title,
                 $message,
                 $deviceToken,
-                $templateType
+                $templateType,
+                $dataPayload
             );
         } catch (\Exception $e) {
             Log::error("Error sending $templateType notification: " . $e->getMessage());
