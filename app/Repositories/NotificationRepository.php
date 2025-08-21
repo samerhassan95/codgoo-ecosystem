@@ -29,7 +29,7 @@ class NotificationRepository
         'notifiable_type' => get_class($notifiable),
         'title' => $title,
         'message' => $message,
-        'data' => json_encode($data),
+        'data' => array_merge($extraData, ['device_token' => $deviceToken]),
         'is_read' => false,
         'notification_template_id' => $template->id,
     ]);
