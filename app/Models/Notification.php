@@ -12,8 +12,9 @@ class Notification extends Model
     protected $fillable = ['title', 'message', 'token', 'is_read','notifiable_id','notifiable_type','data','notification_template_id'];
 
     protected $casts = [
-        'data' => 'array', 
-    ];    
+    'data' => 'array',
+    ];
+ 
     public function notifiable()
     {
         return $this->morphTo();
@@ -23,5 +24,9 @@ class Notification extends Model
     {
         return $this->belongsTo(NotificationTemplate::class, 'notification_template_id');
     }
+    protected function getDataAttribute($value)
+{
+    return json_decode($value, true);
+}
 
 }
