@@ -546,7 +546,13 @@ class ProjectController extends BaseController
 
     public function listNames()
     {
-        $projects = Project::select('id', 'name')->get();
+        $employeeId = auth()->id(); 
+        
+        $projects = Project::select('id', 'name')
+            ->whereHas('milestones.tasks.assignments', function ($q) use ($employeeId) {
+                $q->where('employee_id', $employeeId);
+            })
+            ->get();
 
         return response()->json([
             'status' => true,
