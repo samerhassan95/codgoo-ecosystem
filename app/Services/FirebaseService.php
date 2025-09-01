@@ -34,8 +34,25 @@ class FirebaseService
 
     public function getAllChats()
     {
+        $clients = Client::all();
+
         $messagesCollection = $this->firestore->collectionGroup('messages')->documents();
+
         $chatSummaries = [];
+
+        foreach ($clients as $client) {
+            $chatSummaries[$client->id] = [
+                'chatId' => (string)$client->id,
+                'clientName' => $client->name ?? 'Unknown',
+                'clientImage' => $client->photo ? asset($client->photo) : null,
+                'phone' => $client->phone ?? 'Unknown',
+                'unreadMessages' => 0,
+                'lastMessage' => null,
+                'lastMessageType' => null,
+                'lastMessageTime' => null,
+            ];
+        }
+
 
         foreach ($messagesCollection as $messageDoc) {
             if (!$messageDoc->exists()) {
@@ -51,18 +68,8 @@ class FirebaseService
             $chatId = $parentRef->id();
 
             if (!isset($chatSummaries[$chatId])) {
-                $client = Client::find($chatId);
 
-                $chatSummaries[$chatId] = [
-                    'chatId' => $chatId,
-                    'clientName' => $client->name ?? 'Unknown',
-                    'clientImage' => asset($client->photo) ?? null,
-                    'phone' => $client->phone ?? 'Unknown',
-                    'unreadMessages' => 0,
-                    'lastMessage' => null,
-                    'lastMessageType' => null,
-                    'lastMessageTime' => null,
-                ];
+                continue;
             }
 
             $messageType = 'text';
@@ -76,13 +83,16 @@ class FirebaseService
                 $lastMessageContent = '[Audio]';
             }
 
-            // Count only unread messages where userId != chatId
+
             if (isset($messageData['seen']) && !$messageData['seen'] && isset($messageData['userId']) && $messageData['userId'] != $chatId) {
                 $chatSummaries[$chatId]['unreadMessages']++;
             }
 
-            // Get last message and its type
-            if (!isset($chatSummaries[$chatId]['lastMessageTime']) || $messageData['createdAt'] > $chatSummaries[$chatId]['lastMessageTime']) {
+
+            if (
+                !isset($chatSummaries[$chatId]['lastMessageTime']) ||
+                $messageData['createdAt'] > $chatSummaries[$chatId]['lastMessageTime']
+            ) {
                 $chatSummaries[$chatId]['lastMessage'] = $lastMessageContent;
                 $chatSummaries[$chatId]['lastMessageType'] = $messageType;
                 $chatSummaries[$chatId]['lastMessageTime'] = $messageData['createdAt'] ?? null;
@@ -91,8 +101,6 @@ class FirebaseService
 
         return array_values($chatSummaries);
     }
-
-
 
     public function sendNotification($deviceToken, $title, $message, $type = null, $extraData = [])
     {
