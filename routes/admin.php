@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\{AddonController,
+    AvailableSlotController,
     CategoryController,
     Client\ClientAuthController,
     ContractController,
@@ -156,9 +157,9 @@ Route::middleware('admin')->group(function () {
             'store' => 'admin.tickets.store',
             'update' => 'admin.tickets.update',
             'destroy' => 'admin.tickets.destroy',
-        ]);  
+        ]);
     Route::post('slots', [AvailableSlotController::class, 'store']);
     Route::delete('slots/{id}', [AvailableSlotController::class, 'destroy']);
 
-    Route::post('meetings', [MeetingController::class, 'store']);  
+    Route::post('meetings', [MeetingController::class, 'store']);
 });
