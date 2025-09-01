@@ -38,7 +38,7 @@ class MeetingController extends Controller
             'meeting_name' => $validated['meeting_name'],
             'description' => $validated['description'] ?? null,
             'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
+            // 'end_time' => $validated['end_time'],
             'project_id' => $validated['project_id'] ?? null,
             'jitsi_url' => config('services.jitsi.base_url') . '/meeting-' . uniqid(),
             'status' => 'Request Sent',

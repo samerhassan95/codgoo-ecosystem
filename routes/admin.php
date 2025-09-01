@@ -159,7 +159,10 @@ Route::middleware('admin')->group(function () {
             'destroy' => 'admin.tickets.destroy',
         ]);
     Route::post('slots', [AvailableSlotController::class, 'store']);
+
     Route::delete('slots/{id}', [AvailableSlotController::class, 'destroy']);
+    
+    Route::put('slots/{id}', [AvailableSlotController::class, 'update']);
 
     Route::post('meetings', [MeetingController::class, 'store']);
 });

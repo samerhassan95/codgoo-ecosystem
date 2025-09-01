@@ -118,6 +118,33 @@ class AvailableSlotController extends Controller
         ], 201);
     }
 
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'date' => 'nullable|date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+        ]);
+
+        $slot = AvailableSlot::find($id);
+
+        if (!$slot) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Slot not found'
+            ], 404);
+        }
+
+        $slot->update($validated);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Slot updated successfully',
+            'data' => $slot
+        ]);
+    }
+
+
     public function destroy($id)
     {
         $slot = AvailableSlot::find($id);
