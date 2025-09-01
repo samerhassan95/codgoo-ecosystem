@@ -17,6 +17,7 @@ class MeetingRequest extends FormRequest
     {
         $rules = [
             'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i'],
             'meeting_name' => ['required', 'string', 'max:255'],
             'project_id' => ['nullable', 'exists:projects,id'],
             'description' => ['nullable', 'string', 'max:1000'],
