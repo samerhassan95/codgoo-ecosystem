@@ -150,5 +150,7 @@ Route::middleware('admin')->group(function () {
     Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
     Route::get('tickets/{ticket_id}/replies', [TicketController::class, 'getRepliesForTicket']);
+    Route::apiResource('tickets', TicketController::class)->except(['index', 'show']);
+
 
 });
