@@ -142,7 +142,9 @@ Route::middleware('admin')->group(function () {
     Route::post('send-notification', [NotificationController::class, 'sendNotification']);
     Route::get('get-clients', [ClientAuthController::class, 'getAllClients']);
     Route::post('contracts/{projectId}/upload', [ContractController::class, 'uploadContract']);
-
+    Route::post('contracts/{contractId}/sign', [ContractController::class, 'signContract']);
+    Route::get('contracts/{contractId}', [ContractController::class, 'getContractDetails']);
+    Route::get('contracts', [ContractController::class, 'getClientContracts']);
     Route::get('chats', [ChatController::class, 'getAllChats']);
     Route::post('chats/{chatId}/seen', [ChatController::class, 'markChatAsSeen']);
     Route::get('employees', [EmployeeAuthController::class, 'getAllEmployees']);
@@ -161,7 +163,7 @@ Route::middleware('admin')->group(function () {
     Route::post('slots', [AvailableSlotController::class, 'store']);
 
     Route::delete('slots/{id}', [AvailableSlotController::class, 'destroy']);
-    
+
     Route::put('slots/{id}', [AvailableSlotController::class, 'update']);
 
     Route::post('meetings', [MeetingController::class, 'store']);
