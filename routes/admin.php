@@ -160,5 +160,5 @@ Route::middleware('admin')->group(function () {
     Route::post('slots', [AvailableSlotController::class, 'store']);
     Route::delete('slots/{id}', [AvailableSlotController::class, 'destroy']);
 
-    Route::post('meetings', [MeetingController::class, 'adminStore']);  
+    Route::post('meetings', [MeetingController::class, 'store']);  
 });
