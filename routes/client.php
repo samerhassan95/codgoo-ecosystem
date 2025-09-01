@@ -91,7 +91,13 @@ Route::middleware('client')->group(function ()  {
     ]);
 
 
-    Route::apiResource('tickets', TicketController::class)->except(['edit', 'create']);
+    Route::apiResource('tickets', TicketController::class)->names([
+        'index' => 'client.tickets.index',
+        'show' => 'client.tickets.show',
+        'store' => 'client.tickets.store',
+        'update' => 'client.tickets.update',
+        'destroy' => 'client.tickets.destroy',
+    ]);
     Route::apiResource('sliders', SliderController::class)->names([
         'index' => 'client.sliders.index',
         'show' => 'client.sliders.show',
