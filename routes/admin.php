@@ -149,4 +149,6 @@ Route::middleware('admin')->group(function () {
     Route::get('notifications', [NotificationController::class, 'getNotifications']);
     Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
+    Route::get('tickets/{ticket_id}/replies', [TicketController::class, 'getRepliesForTicket']);
+
 });
