@@ -253,7 +253,7 @@ class ProjectController extends BaseController
         $user = auth()->user();
 
         $project = Project::where('id', $projectId)
-            ->where('client_id', $user->id)
+            ->with(['milestones.tasks', 'addons', 'meetings']) 
             ->first();
 
         if (!$project) {
@@ -274,6 +274,7 @@ class ProjectController extends BaseController
 
         $openTasks = $milestones->flatMap->tasks->where('status', '!=', 'completed')->count();
         $totalTasks = $milestones->flatMap->tasks->count();
+
         $addons = $project->addons->map(function ($addon) {
             return [
                 'id' => $addon->id,
@@ -283,6 +284,16 @@ class ProjectController extends BaseController
         });
 
         $totalRate = $project->price + $addons->sum('price');
+
+        $meetings = $project->meetings->map(function ($meeting) {
+            return [
+                'id' => $meeting->id,
+                'title' => $meeting->meeting_name,
+                'end_time' => $meeting->end_time,
+                'start_time' => $meeting->start_time,
+                'meeting_link' => $meeting->jitsi_url,
+            ];
+        });
 
         return response()->json([
             'status' => true,
@@ -300,6 +311,7 @@ class ProjectController extends BaseController
                 ],
                 'total_days' => (int)$totalDays,
                 'days_left' => (int)$daysLeft,
+                'meetings' => $meetings,
             ],
         ]);
     }
