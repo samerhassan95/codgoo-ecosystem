@@ -165,8 +165,11 @@ Route::middleware('admin')->group(function () {
     Route::delete('slots/{id}', [AvailableSlotController::class, 'destroy']);
 
     Route::put('slots/{id}', [AvailableSlotController::class, 'update']);
-        Route::get('/available-slots', [AvailableSlotController::class, 'getAvailableSlotsGroupedByDate']);
-
+        
+    Route::get('/available-slots', [AvailableSlotController::class, 'getAvailableSlotsGroupedByDate']);
 
     Route::post('meetings', [MeetingController::class, 'store']);
+
+    Route::get('project/{project_id}/details', [ProjectController::class, 'getProjectDetails']);
+
 });
