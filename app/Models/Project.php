@@ -22,13 +22,10 @@ class Project extends Model
         return $this->belongsTo(Client::class, 'client_id');
     }
 
-
-
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
     }
-
 
     public function attachments()
     {
@@ -36,9 +33,9 @@ class Project extends Model
     }
 
     public function addons()
-{
-    return $this->belongsToMany(Addon::class, 'project_addons');
-}
+    {
+        return $this->belongsToMany(Addon::class, 'project_addons');
+    }
 
 
     public function milestones()
@@ -79,6 +76,7 @@ class Project extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
     public function getTotalAddonsAmount()
     {
         $projectAddonsTotal = $this->addons()->sum('price');
@@ -90,7 +88,6 @@ class Project extends Model
         return $projectAddonsTotal + $productAddonsTotal;
     }
 
-
     public function updateProjectStatusIfNeeded()
     {
         if ($this->milestones->every(fn($milestone) => $milestone->status === 'completed')) {
@@ -101,6 +98,11 @@ class Project extends Model
     public function contract()
     {
         return $this->hasOne(Contract::class);
+    }
+
+    public function meetings()
+    {
+        return $this->hasMany(Meeting::class);
     }
 
 }
