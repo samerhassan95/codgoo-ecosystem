@@ -146,9 +146,14 @@ class ProjectController extends BaseController
             ], 403);
         }
 
-        // Remove 'addons' from the main project data to prevent SQL error
+        // Remove 'addons' and 'attachments' from the main project data
         $addons = $validatedData['addons'] ?? [];
         unset($validatedData['addons']);
+        unset($validatedData['attachments']); 
+
+        // Update the project
+        $project->update($validatedData);
+
 
         // Update the project
         $project->update($validatedData);
