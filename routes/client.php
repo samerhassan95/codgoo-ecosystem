@@ -137,7 +137,6 @@ Route::middleware('client')->group(function ()  {
     ]);
     Route::get('ticket-summary', [TicketController::class, 'getTicketsAndSummary']);
 
-    Route::get('topics', [TopicController::class, 'getTopicsBySection']);
     Route::get('home-page', [ProjectController::class, 'getDashboardSummary']);
 
     Route::get('tickets/{ticket_id}/replies', [TicketController::class, 'getRepliesForTicket']);
@@ -168,3 +167,4 @@ Route::middleware('client')->group(function ()  {
     Route::post('pay-invoice/{invoiceId}', [PaymentController::class, 'payInvoice']);
 
 });
+Route::get('topics', [TopicController::class, 'getTopicsBySection']);
