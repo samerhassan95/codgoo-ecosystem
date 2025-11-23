@@ -805,7 +805,7 @@ class ProjectController extends BaseController
                     return [
                         'id' => $assignment->employee->id,
                         'name' => $assignment->employee->name,
-                        'avatar' => $assignment->employee->avatar ?? null,
+                        'image' => $assignment->employee->image ?? null,
                         'assignment_status' => $assignment->status,
                     ];
                 }),
