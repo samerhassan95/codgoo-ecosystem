@@ -64,10 +64,28 @@ class TaskController extends BaseController
     {
         $validatedData = $request->validate((new TaskRequest())->rules());
 
+        // Extract assigned employees if provided
+        $assignedEmployees = $request->assigned_employees ?? [];
+
+        unset($validatedData['assigned_employees']);  
+
+        // 1️⃣ Create Task
         $task = $this->repository->create($validatedData);
 
+        // 2️⃣ Assign employees (task_assignments table)
+        if (!empty($assignedEmployees)) {
+            foreach ($assignedEmployees as $employeeId) {
+                TaskAssignment::create([
+                    'task_id' => $task->id,
+                    'employee_id' => $employeeId,
+                    'status' => 'not_started'
+                ]);
+            }
+        }
+
+        // 3️⃣ Notifications → Notify client
         $milestone = $task->milestone;
-        $client = $milestone->project->client ?? null; 
+        $client = $milestone->project->client ?? null;
 
         if ($client && $client->device_token) {
             $template = NotificationTemplate::where('type', 'create_task')->first();
@@ -89,35 +107,40 @@ class TaskController extends BaseController
             }
         }
 
-        if ($task->assigned_to) {
-            $employee = Employee::find($task->assigned_to);
-            if ($employee && $employee->device_token) {
-                $template = NotificationTemplate::where('type', 'assigne_task')->first();
-                if ($template) {
-                    $title = $template->title;
-                    $message = str_replace(
-                        ['{label}', '{milestone}'],
-                        [$task->label, $milestone->name],
-                        $template->message
-                    );
+        // 4️⃣ Notifications → Notify assigned employees
+        if (!empty($assignedEmployees)) {
+            foreach ($assignedEmployees as $employeeId) {
+                $employee = Employee::find($employeeId);
 
-                    $dataPayload = [
-                        'task_id' => $task->id,
-                        'notification_type' => 'assigne_task',
-                    ];
+                if ($employee && $employee->device_token) {
+                    $template = NotificationTemplate::where('type', 'assigne_task')->first();
+                    if ($template) {
+                        $title = $template->title;
+                        $message = str_replace(
+                            ['{label}', '{milestone}'],
+                            [$task->label, $milestone->label],
+                            $template->message
+                        );
 
-                    $this->firebaseService->sendNotification($employee->device_token, $title, $message, $dataPayload);
-                    $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token, 'assigne_task');
+                        $dataPayload = [
+                            'task_id' => $task->id,
+                            'notification_type' => 'assigne_task',
+                        ];
+
+                        $this->firebaseService->sendNotification($employee->device_token, $title, $message, $dataPayload);
+                        $this->notificationRepository->createNotification($employee, $title, $message, $employee->device_token, 'assigne_task');
+                    }
                 }
             }
         }
 
         return response()->json([
-            'status' => true,
-            'message' => 'Task created successfully, and notifications sent.',
-            'data' => new TaskResource($task),
+            'status'  => true,
+            'message' => 'Task created and employees assigned successfully.',
+            'data'    => new TaskResource($task->load('assignments.employee')),
         ], 201);
     }
+
 
     public function update(Request $request, $id)
     {
