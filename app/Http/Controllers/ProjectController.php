@@ -586,7 +586,7 @@ class ProjectController extends BaseController
         }
 
 
-        $projects = Project::with(['milestones.tasks', 'team', 'attachments', 'addons'])
+        $projects = Project::with(['milestones.tasks', 'attachments', 'addons'])
             ->where('client_id', $user->id)
             ->get();
 
@@ -598,39 +598,39 @@ class ProjectController extends BaseController
         ];
 
         $projectsData = $projects->map(function ($project) {
-        $startDate = $project->milestones->min('start_date');
-        $deadline = $project->milestones->max('end_date');
+            $startDate = $project->milestones->min('start_date');
+            $deadline = $project->milestones->max('end_date');
 
-        $completedTasks = $project->milestones->flatMap->tasks->where('status', 'completed')->count();
-        $totalTasks = $project->milestones->flatMap->tasks->count();
+            $completedTasks = $project->milestones->flatMap->tasks->where('status', 'completed')->count();
+            $totalTasks = $project->milestones->flatMap->tasks->count();
 
 
-        $team = $project->milestones
-            ->flatMap->tasks
-            ->flatMap->assignments
-            ->pluck('employee')
-            ->unique('id');
+            $team = $project->milestones
+                ->flatMap->tasks
+                ->flatMap->assignments
+                ->pluck('employee')
+                ->unique('id');
 
-        return [
-            'id' => $project->id,
-            'name' => $project->name,
-            'description' => $project->description,
-            'team' => $team->map(fn($member) => [
-                'id' => $member->id,
-                'name' => $member->name,
-                'avatar' => $member->avatar ?? null,
-            ]),
-            'start_date' => $startDate ? $startDate->toDateString() : null,
-            'deadline' => $deadline ? $deadline->toDateString() : null,
-            'budget' => $project->price,
-            'tasks' => [
-                'completed' => $completedTasks,
-                'total' => $totalTasks
-            ],
-            'status' => $project->status,
-            'last_update' => $project->updated_at->diffForHumans(),
-        ];
-    });
+            return [
+                'id' => $project->id,
+                'name' => $project->name,
+                'description' => $project->description,
+                'team' => $team->map(fn($member) => [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'avatar' => $member->avatar ?? null,
+                ]),
+                'start_date' => $startDate ? $startDate : null,
+                'deadline' => $deadline ? $deadline: null,
+                'budget' => $project->price,
+                'tasks' => [
+                    'completed' => $completedTasks,
+                    'total' => $totalTasks
+                ],
+                'status' => $project->status,
+                'last_update' => $project->updated_at->diffForHumans(),
+            ];
+        });
 
         return response()->json([
             'status' => true,
