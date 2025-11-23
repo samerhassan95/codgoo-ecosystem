@@ -548,10 +548,12 @@ class ProjectController extends BaseController
         $user = auth()->user();
 
         $attachment = Attachment::where('id', $attachmentId)
-            ->whereHas('project', function ($query) use ($user) {
+            ->where('attachable_type', Project::class)
+            ->whereHas('attachable', function ($query) use ($user) {
                 $query->where('client_id', $user->id);
             })
             ->first();
+
 
         if (!$attachment) {
             return response()->json(['message' => 'Attachment not found.'], 404);
