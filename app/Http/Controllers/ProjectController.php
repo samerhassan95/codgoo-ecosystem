@@ -619,7 +619,7 @@ class ProjectController extends BaseController
                 'team' => $team->map(fn($member) => [
                     'id' => $member->id,
                     'name' => $member->name,
-                    'avatar' => $member->avatar ?? null,
+                    'avatar' => $member->image ?? null,
                 ]),
                 'start_date' => $startDate ? $startDate : null,
                 'deadline' => $deadline ? $deadline: null,
