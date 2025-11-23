@@ -653,7 +653,7 @@ class ProjectController extends BaseController
             'attachments',
             'addons',
             'invoices',
-            'proposals'
+            // 'proposals'
         ])
         ->where('id', $id)
         ->where('client_id', $user->id)
