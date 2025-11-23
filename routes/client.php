@@ -167,5 +167,6 @@ Route::middleware('client')->group(function ()  {
     Route::post('pay-invoice/{invoiceId}', [PaymentController::class, 'payInvoice']);
     ///Software Dashboard Routes
     Route::get('dashboard/projects', [ProjectController::class, 'getClientDashboardProjects']);
+    Route::get('project/overview', [ProjectController::class, 'getProjectFullDetails']);
 });
 Route::get('topics', [TopicController::class, 'getTopicsBySection']);

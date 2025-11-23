@@ -643,6 +643,109 @@ class ProjectController extends BaseController
     }
 
 
+    
+    public function getProjectFullDetails($id)
+    {
+        $user = auth()->user();
+
+        $project = Project::with([
+            'milestones.tasks.assignments.employee',
+            'attachments',
+            'addons',
+            'invoices',
+            'proposals'
+        ])
+        ->where('id', $id)
+        ->where('client_id', $user->id)
+        ->first();
+
+        if (!$project) {
+            return response()->json(['status' => false, 'message' => 'Project not found or access denied'], 404);
+        }
+
+
+        $startDate = $project->milestones->min('start_date');
+        $deadline = $project->milestones->max('end_date');
+        $completedTasks = $project->milestones->flatMap->tasks->where('status', 'completed')->count();
+        $totalTasks = $project->milestones->flatMap->tasks->count();
+        $team = $project->milestones->flatMap->tasks->flatMap->assignments->pluck('employee')->unique('id');
+
+
+        $progressTimeline = $project->milestones->groupBy('type')->map(function($milestones, $type) {
+            $completed = $milestones->where('status', 'completed')->count();
+            $total = $milestones->count();
+            return $total > 0 ? round(($completed/$total)*100) : 0;
+        });
+
+
+        $activityNotes = [];
+
+        foreach ($project->milestones->flatMap->tasks->sortByDesc('updated_at')->take(5) as $task) {
+            if ($task->status === 'completed') {
+                $activityNotes[] = [
+                    'type' => 'task',
+                    'message' => "Task #{$task->id} completed by {$task->assignments->first()?->employee?->name}",
+                    'date' => $task->updated_at->toDateTimeString()
+                ];
+            }
+        }
+
+        foreach ($project->invoices->sortByDesc('updated_at')->take(5) as $invoice) {
+            $activityNotes[] = [
+                'type' => 'invoice',
+                'message' => "Invoice #{$invoice->id} issued",
+                'date' => $invoice->updated_at->toDateTimeString()
+            ];
+        }
+
+        foreach ($project->proposals->sortByDesc('updated_at')->take(5) as $proposal) {
+            $activityNotes[] = [
+                'type' => 'proposal',
+                'message' => "Client approved proposal #{$proposal->id}",
+                'date' => $proposal->updated_at->toDateTimeString()
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'project' => [
+                    'id' => $project->id,
+                    'name' => $project->name,
+                    'description' => $project->description,
+                    'team' => $team->map(fn($member) => [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'avatar' => $member->avatar ?? null
+                    ]),
+                    'start_date' => $startDate?->toDateString(),
+                    'deadline' => $deadline?->toDateString(),
+                    'budget' => $project->price,
+                    'tasks' => [
+                        'completed' => $completedTasks,
+                        'total' => $totalTasks
+                    ],
+                    'status' => $project->status,
+                    'last_update' => $project->updated_at->diffForHumans(),
+                    'attachments' => $project->attachments->map(fn($att) => [
+                        'id' => $att->id,
+                        'file_path' => asset($att->file_path)
+                    ]),
+                    'addons' => $project->addons->map(fn($addon) => [
+                        'id' => $addon->id,
+                        'name' => $addon->name,
+                        'price' => $addon->price
+                    ]),
+                    'progress_timeline' => $progressTimeline,
+                    'activity_notes' => $activityNotes,
+                    'open_tasks' => $totalTasks - $completedTasks,
+                    'days_left' => $deadline ? now()->diffInDays($deadline, false) : null
+                ]
+            ]
+        ]);
+    }
+
+
 
 }
 
