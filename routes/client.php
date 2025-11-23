@@ -171,7 +171,7 @@ Route::middleware('client')->group(function ()  {
     Route::get('project/tasks/{id}', [ProjectController::class, 'getProjectTasks']);
     Route::get('project/invoices/{id}', [ProjectController::class, 'getProjectInvoices']);
     Route::get('project/attachments/{id}', [ProjectController::class, 'getProjectAttachments']);
-    Route::delete('project/attachments/{id}', [ProjectController::class, 'deleteProjectAttachment']);
+    Route::delete('project/attachments/{id}', [ProjectController::class, 'deleteAttachment']);
 
 });
 Route::get('topics', [TopicController::class, 'getTopicsBySection']);
