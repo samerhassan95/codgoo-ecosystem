@@ -734,8 +734,8 @@ foreach ($fakeProposals as $p) {
                         'name' => $member->name,
                         'avatar' => $member->avatar ?? null
                     ]),
-                    'start_date' => $startDate?->toDateString(),
-                    'deadline' => $deadline?->toDateString(),
+                    'start_date' => $startDate,
+                    'deadline' => $deadline,
                     'budget' => $project->price,
                     'tasks' => [
                         'completed' => $completedTasks,
