@@ -601,6 +601,7 @@ class ProjectController extends BaseController
             $startDate = $project->milestones->min('start_date');
             $deadline = $project->milestones->max('end_date');
 
+
             $completedTasks = $project->milestones->flatMap->tasks->where('status', 'completed')->count();
             $totalTasks = $project->milestones->flatMap->tasks->count();
 
