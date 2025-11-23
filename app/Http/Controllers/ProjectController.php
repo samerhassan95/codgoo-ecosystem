@@ -881,7 +881,7 @@ class ProjectController extends BaseController
     {
         $project = Project::findOrFail($projectId);
 
-        $attachments = $project->attachment()
+        $attachments = $project->attachments()
             ->with('uploadedBy')
             ->latest()
             ->get()
