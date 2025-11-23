@@ -698,13 +698,29 @@ class ProjectController extends BaseController
             ];
         }
 
-        foreach ($project->proposals->sortByDesc('updated_at')->take(5) as $proposal) {
-            $activityNotes[] = [
-                'type' => 'proposal',
-                'message' => "Client approved proposal #{$proposal->id}",
-                'date' => $proposal->updated_at->toDateTimeString()
-            ];
-        }
+        $fakeProposals = [
+    [
+        'id' => 1,
+        'title' => 'Initial Design Proposal',
+        'status' => 'approved',
+        'date' => now()->subDays(10)->toDateTimeString()
+    ],
+    [
+        'id' => 2,
+        'title' => 'Backend Setup Proposal',
+        'status' => 'pending',
+        'date' => now()->subDays(5)->toDateTimeString()
+    ]
+];
+
+// add fake proposals to activity
+foreach ($fakeProposals as $p) {
+    $activityNotes[] = [
+        'type' => 'proposal',
+        'message' => "Client interacted with proposal #{$p['id']} ({$p['status']})",
+        'date' => $p['date']
+    ];
+}
 
         return response()->json([
             'status' => true,
