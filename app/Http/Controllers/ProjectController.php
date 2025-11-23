@@ -545,15 +545,7 @@ class ProjectController extends BaseController
     }
     public function deleteAttachment($attachmentId)
     {
-        $user = auth()->user();
-
-        $attachment = Attachment::where('id', $attachmentId)
-            ->where('attachable_type', Project::class)
-            ->whereHas('attachable', function ($query) use ($user) {
-                $query->where('client_id', $user->id);
-            })
-            ->first();
-
+        $attachment = Attachment::find($attachmentId);
 
         if (!$attachment) {
             return response()->json(['message' => 'Attachment not found.'], 404);
@@ -565,6 +557,7 @@ class ProjectController extends BaseController
 
         return response()->json(['message' => 'Attachment deleted successfully.'], 200);
     }
+
 
 
     public function listNames()
