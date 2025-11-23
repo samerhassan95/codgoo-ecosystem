@@ -732,7 +732,7 @@ foreach ($fakeProposals as $p) {
                     'team' => $team->map(fn($member) => [
                         'id' => $member->id,
                         'name' => $member->name,
-                        'avatar' => $member->avatar ?? null
+                        'avatar' => $member->image ?? null
                     ]),
                     'start_date' => $startDate,
                     'deadline' => $deadline,
