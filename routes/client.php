@@ -165,6 +165,7 @@ Route::middleware('client')->group(function ()  {
     Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
 
     Route::post('pay-invoice/{invoiceId}', [PaymentController::class, 'payInvoice']);
-
+    ///Software Dashboard Routes
+    Route::get('dashboard/projects', [ProjectController::class, 'getClientDashboardProjects']);
 });
 Route::get('topics', [TopicController::class, 'getTopicsBySection']);

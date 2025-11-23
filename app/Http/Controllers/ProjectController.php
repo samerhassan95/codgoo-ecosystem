@@ -577,6 +577,75 @@ class ProjectController extends BaseController
         ]);
     }
 
+    public function getClientDashboardProjects(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user || $user instanceof \App\Models\Admin) {
+            return response()->json(['message' => 'Access denied.'], 403);
+        }
+
+
+        $projects = Project::with(['milestones.tasks', 'team', 'attachments', 'addons'])
+            ->where('client_id', $user->id)
+            ->get();
+
+        $statusCounts = [
+            'all' => $projects->count(),
+            'completed' => $projects->where('status', 'completed')->count(),
+            'ongoing' => $projects->where('status', 'ongoing')->count(),
+            'pending' => $projects->where('status', 'requested')->count(),
+        ];
+
+        $projectsData = $projects->map(function ($project) {
+            $startDate = $project->milestones->min('start_date');
+            $deadline = $project->milestones->max('end_date');
+
+            $completedTasks = $project->milestones->flatMap->tasks->where('status', 'completed')->count();
+            $totalTasks = $project->milestones->flatMap->tasks->count();
+
+            return [
+                'id' => $project->id,
+                'name' => $project->name,
+                'description' => $project->description,
+                'team' => $project->team->map(fn($member) => [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'avatar' => $member->avatar ?? null
+                ]),
+                'start_date' => $startDate ? $startDate->toDateString() : null,
+                'deadline' => $deadline ? $deadline->toDateString() : null,
+                'budget' => $project->price,
+                'tasks' => [
+                    'completed' => $completedTasks,
+                    'total' => $totalTasks
+                ],
+                'type' => $project->type ?? 'N/A',
+                'status' => $project->status,
+                'last_update' => $project->updated_at->diffForHumans(),
+                'attachments' => $project->attachments->map(fn($att) => [
+                    'id' => $att->id,
+                    'file_path' => asset($att->file_path),
+                    'uploaded_by_id' => $att->uploaded_by_id
+                ]),
+                'addons' => $project->addons->map(fn($addon) => [
+                    'id' => $addon->id,
+                    'name' => $addon->name,
+                    'price' => $addon->price
+                ]),
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'status_cards' => $statusCounts,
+                'projects' => $projectsData,
+            ]
+        ]);
+    }
+
+
 
 }
 
