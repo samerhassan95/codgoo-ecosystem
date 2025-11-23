@@ -877,6 +877,31 @@ class ProjectController extends BaseController
     }
 
 
+     public function getProjectAtt($projectId)
+    {
+        $project = Project::findOrFail($projectId);
+
+        $attachments = $project->attachment()
+            ->with('uploadedBy')
+            ->latest()
+            ->get()
+            ->map(function ($att) {
+                return [
+                    'id' => $att->id,
+                    'file' => asset($att->file_path),
+                    'uploaded_by' => $att->uploadedBy?->name ?? 'Unknown',
+                    'uploaded_by_type' => class_basename($att->uploaded_by_type),
+                    'created_at' => $att->created_at->format('Y-m-d H:i'),
+                    'updated_at' => $att->updated_at->format('Y-m-d H:i'),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $attachments
+        ]);
+    }
+
 
 
 }
