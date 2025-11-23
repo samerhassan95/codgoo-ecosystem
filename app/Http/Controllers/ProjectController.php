@@ -598,43 +598,39 @@ class ProjectController extends BaseController
         ];
 
         $projectsData = $projects->map(function ($project) {
-            $startDate = $project->milestones->min('start_date');
-            $deadline = $project->milestones->max('end_date');
+        $startDate = $project->milestones->min('start_date');
+        $deadline = $project->milestones->max('end_date');
 
-            $completedTasks = $project->milestones->flatMap->tasks->where('status', 'completed')->count();
-            $totalTasks = $project->milestones->flatMap->tasks->count();
+        $completedTasks = $project->milestones->flatMap->tasks->where('status', 'completed')->count();
+        $totalTasks = $project->milestones->flatMap->tasks->count();
 
-            return [
-                'id' => $project->id,
-                'name' => $project->name,
-                'description' => $project->description,
-                'team' => $project->team->map(fn($member) => [
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'avatar' => $member->avatar ?? null
-                ]),
-                'start_date' => $startDate ? $startDate->toDateString() : null,
-                'deadline' => $deadline ? $deadline->toDateString() : null,
-                'budget' => $project->price,
-                'tasks' => [
-                    'completed' => $completedTasks,
-                    'total' => $totalTasks
-                ],
-                'type' => $project->type ?? 'N/A',
-                'status' => $project->status,
-                'last_update' => $project->updated_at->diffForHumans(),
-                'attachments' => $project->attachments->map(fn($att) => [
-                    'id' => $att->id,
-                    'file_path' => asset($att->file_path),
-                    'uploaded_by_id' => $att->uploaded_by_id
-                ]),
-                'addons' => $project->addons->map(fn($addon) => [
-                    'id' => $addon->id,
-                    'name' => $addon->name,
-                    'price' => $addon->price
-                ]),
-            ];
-        });
+
+        $team = $project->milestones
+            ->flatMap->tasks
+            ->flatMap->assignments
+            ->pluck('employee')
+            ->unique('id');
+
+        return [
+            'id' => $project->id,
+            'name' => $project->name,
+            'description' => $project->description,
+            'team' => $team->map(fn($member) => [
+                'id' => $member->id,
+                'name' => $member->name,
+                'avatar' => $member->avatar ?? null,
+            ]),
+            'start_date' => $startDate ? $startDate->toDateString() : null,
+            'deadline' => $deadline ? $deadline->toDateString() : null,
+            'budget' => $project->price,
+            'tasks' => [
+                'completed' => $completedTasks,
+                'total' => $totalTasks
+            ],
+            'status' => $project->status,
+            'last_update' => $project->updated_at->diffForHumans(),
+        ];
+    });
 
         return response()->json([
             'status' => true,
