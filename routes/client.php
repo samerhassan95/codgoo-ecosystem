@@ -169,5 +169,7 @@ Route::middleware('client')->group(function ()  {
     Route::get('dashboard/projects', [ProjectController::class, 'getClientDashboardProjects']);
     Route::get('project/overview/{id}', [ProjectController::class, 'getProjectFullDetails']);
     Route::get('project/tasks/{id}', [ProjectController::class, 'getProjectTasks']);
+    Route::get('project/invoices/{id}', [ProjectController::class, 'getProjectInvoices']);
+
 });
 Route::get('topics', [TopicController::class, 'getTopicsBySection']);
