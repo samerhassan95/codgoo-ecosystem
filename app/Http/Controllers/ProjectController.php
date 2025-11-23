@@ -440,7 +440,9 @@ class ProjectController extends BaseController
                 $project->attachments()->create([
                     'file_path' => $path,
                     'uploaded_by_id' => $user->id,
+                    'uploaded_by_type' => get_class($user),   // ← السبب الأساسي
                 ]);
+
             }
         }
 
