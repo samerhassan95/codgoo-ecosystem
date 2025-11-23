@@ -10,13 +10,14 @@ use App\Models\attachment;
 use App\Models\Client;
 use App\Models\NotificationTemplate;
 use App\Models\Project;
+use App\Models\Task;
 use App\Repositories\NotificationRepository;
 use App\Repositories\ProjectRepositoryInterface;
 use App\Repositories\SliderRepositoryInterface;
 use App\Services\FirebaseService;
+use App\Services\ImageService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Services\ImageService;
 use Illuminate\Support\Facades\Log;
 
 class ProjectController extends BaseController
@@ -699,28 +700,28 @@ class ProjectController extends BaseController
         }
 
         $fakeProposals = [
-    [
-        'id' => 1,
-        'title' => 'Initial Design Proposal',
-        'status' => 'approved',
-        'date' => now()->subDays(10)->toDateTimeString()
-    ],
-    [
-        'id' => 2,
-        'title' => 'Backend Setup Proposal',
-        'status' => 'pending',
-        'date' => now()->subDays(5)->toDateTimeString()
-    ]
-];
+            [
+                'id' => 1,
+                'title' => 'Initial Design Proposal',
+                'status' => 'approved',
+                'date' => now()->subDays(10)->toDateTimeString()
+            ],
+            [
+                'id' => 2,
+                'title' => 'Backend Setup Proposal',
+                'status' => 'pending',
+                'date' => now()->subDays(5)->toDateTimeString()
+            ]
+        ];
 
-// add fake proposals to activity
-foreach ($fakeProposals as $p) {
-    $activityNotes[] = [
-        'type' => 'proposal',
-        'message' => "Client interacted with proposal #{$p['id']} ({$p['status']})",
-        'date' => $p['date']
-    ];
-}
+        // add fake proposals to activity
+        foreach ($fakeProposals as $p) {
+            $activityNotes[] = [
+                'type' => 'proposal',
+                'message' => "Client interacted with proposal #{$p['id']} ({$p['status']})",
+                'date' => $p['date']
+            ];
+        }
 
         return response()->json([
             'status' => true,
@@ -760,6 +761,66 @@ foreach ($fakeProposals as $p) {
             ]
         ]);
     }
+
+    public function getProjectTasks($projectId)
+    {
+        $user = auth()->user();
+
+
+        $project = Project::where('id', $projectId)
+            ->where('client_id', $user->id)
+            ->first();
+
+        if (!$project) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Project not found or access denied'
+            ], 404);
+        }
+
+
+        $tasks = Task::with(['assignments.employee'])
+            ->whereHas('milestone', fn($q) => $q->where('project_id', $projectId))
+            ->get();
+
+
+            $statusCounts = [
+            'all' => $tasks->count(),
+            'not_started' => $tasks->where('status', 'not_started')->count(),
+            'in_progress' => $tasks->where('status', 'in_progress')->count(),
+            'completed' => $tasks->where('status', 'completed')->count(),
+            'awaiting_feedback' => $tasks->where('status', 'awaiting_feedback')->count(),
+        ];
+
+
+        $tasksData = $tasks->map(function ($task) {
+            return [
+                'id' => $task->id,
+                'name' => $task->label,
+                'start_date' => $task->start_date,
+                'end_date' => $task->due_date,
+                'status' => $task->status,
+
+                'assigned_to' => $task->assignments->map(function ($assignment) {
+                    return [
+                        'id' => $assignment->employee->id,
+                        'name' => $assignment->employee->name,
+                        'avatar' => $assignment->employee->avatar ?? null,
+                        'assignment_status' => $assignment->status,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'cards' => $statusCounts,
+                'tasks' => $tasksData,
+            ]
+        ]);
+    }
+
 
 
 

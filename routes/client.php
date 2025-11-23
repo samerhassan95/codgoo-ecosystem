@@ -168,5 +168,6 @@ Route::middleware('client')->group(function ()  {
     ///Software Dashboard Routes
     Route::get('dashboard/projects', [ProjectController::class, 'getClientDashboardProjects']);
     Route::get('project/overview/{id}', [ProjectController::class, 'getProjectFullDetails']);
+    Route::get('project/tasks/{id}', [ProjectController::class, 'getProjectTasks']);
 });
 Route::get('topics', [TopicController::class, 'getTopicsBySection']);
