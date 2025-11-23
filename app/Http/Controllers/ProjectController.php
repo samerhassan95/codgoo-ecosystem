@@ -877,7 +877,7 @@ class ProjectController extends BaseController
     }
 
 
-     public function getProjectAtt($projectId)
+     public function getProjectAttachments($projectId)
     {
         $project = Project::findOrFail($projectId);
 
