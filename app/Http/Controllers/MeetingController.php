@@ -256,6 +256,41 @@ class MeetingController extends Controller
         }
     }
 
+    public function getClientMeetings(Request $request)
+    {
+        $user = auth()->user(); 
+
+        $query = Meeting::with(['project'])
+            ->where('client_id', $user->id);
+
+
+        if ($request->has('search') && $request->search !== null) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('meeting_name', 'LIKE', "%$search%")
+                ->orWhereHas('project', function ($projectQuery) use ($search) {
+                    $projectQuery->where('name', 'LIKE', "%$search%");
+                });
+            });
+        }
+
+        if ($request->has('status') && $request->status !== null) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('from_date') && $request->has('to_date')) {
+            $query->whereBetween('start_time', [$request->from_date, $request->to_date]);
+        }
+
+        $meetings = $query
+            ->orderBy('start_time', 'desc')
+            ->get();
+        return response()->json([
+            'status' => true,
+            'data' => $meetings
+        ]);
+    }
+
 
 
 }

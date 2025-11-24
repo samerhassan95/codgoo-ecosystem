@@ -172,6 +172,8 @@ Route::middleware('client')->group(function ()  {
     Route::get('project/invoices/{id}', [ProjectController::class, 'getProjectInvoices']);
     Route::get('project/attachments/{id}', [ProjectController::class, 'getProjectAttachments']);
     Route::delete('project/attachments/{id}', [ProjectController::class, 'deleteAttachment']);
+    Route::get('meetings', [MeetingController::class, 'getClientMeetings']);
+
 
 });
 Route::get('topics', [TopicController::class, 'getTopicsBySection']);
