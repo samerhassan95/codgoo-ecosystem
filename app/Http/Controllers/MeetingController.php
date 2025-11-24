@@ -291,6 +291,56 @@ class MeetingController extends Controller
         ]);
     }
 
+    public function getMeetingSummary($id)
+    {
+        $user = auth()->user();
+
+        $meeting = Meeting::with([
+            'project:id,name',
+            'logs',
+            'client:id,name',
+            'slot'
+        ])
+            ->where('client_id', $user->id)
+            ->find($id);
+
+        if (!$meeting) {
+            return response()->json(['status' => false, 'message' => 'Meeting not found'], 404);
+        }
+
+        $start = \Carbon\Carbon::parse($meeting->start_time);
+        $end = \Carbon\Carbon::parse($meeting->end_time);
+        $duration = $start->diffInMinutes($end);
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'id' => $meeting->id,
+                'meeting_name' => $meeting->meeting_name,
+                'project_name' => $meeting->project?->name,
+                'date' => $meeting->slot?->date,
+                'time' => [
+                    'start' => $meeting->start_time,
+                    'end' => $meeting->end_time
+                ],
+                'duration_minutes' => $duration,
+                'status' => $meeting->status,
+                'meeting_platform' => 'Jitsi',
+                'jitsi_url' => $meeting->jitsi_url,
+
+                'notes' => $meeting->description ? explode("\n", trim($meeting->description)) : [],
+
+                'action_log' => $meeting->logs->map(function ($log) {
+                    return [
+                        'date' => $log->created_at->format('d M Y'),
+                        'action' => $log->action,
+                        'details' => $log->details
+                    ];
+                }),
+            ]
+        ]);
+    }
+
 
 
 }

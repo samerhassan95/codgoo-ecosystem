@@ -22,4 +22,10 @@ class Meeting extends Model
     {
         return $this->belongsTo(Project::class, 'project_id');
     }
+    public function logs()
+    {
+        return $this->hasMany(MeetingLog::class);
+    }
+
+
 }
