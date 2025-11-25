@@ -173,8 +173,8 @@ Route::middleware('client')->group(function ()  {
     Route::get('project/attachments/{id}', [ProjectController::class, 'getProjectAttachments']);
     Route::delete('project/attachments/{id}', [ProjectController::class, 'deleteAttachment']);
     Route::get('meetings', [MeetingController::class, 'getClientMeetings']);
-    Route::delete('meetings', [MeetingController::class, 'destroy']);
-    Route::put('meetings', [MeetingController::class, 'update']);
+    Route::delete('meetings/{id}', [MeetingController::class, 'destroy']);
+    Route::put('meetings/{id}', [MeetingController::class, 'update']);
     Route::get('meeting-summary/{id}', [MeetingController::class, 'getMeetingSummary']);
 
 
