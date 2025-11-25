@@ -339,6 +339,23 @@ class MeetingController extends Controller
                 }),
             ]
         ]);
+    } public function destroy($id)
+    {
+        $meeting = Meeting::find($id);
+
+        if (!$meeting) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Meeting not found.',
+            ], 404);
+        }
+
+        $meeting->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Meeting deleted successfully.',
+        ]);
     }
 
 
