@@ -247,12 +247,26 @@ class ProductController extends BaseController
             ];
         });
 
-    $sliders = Slider::with([
-            'product' => function ($q) {
-                $q->select('id', 'name', 'category_id', 'price', 'description')
-                  ->with(['category:id,name']);
-            }
-        ])->get();
+   $sliders = Slider::with([
+        'product' => function ($q) {
+            $q->select('id', 'name', 'category_id', 'price', 'description')
+              ->with(['category:id,name']);
+        }
+    ])
+    ->get()
+    ->map(function ($slider) {
+
+        return [
+            'id' => $slider->id,
+            'image' => $slider->image ? url($slider->image) : null,
+
+            'product' => [
+                'id' => $slider->product->id,
+                'name' => $slider->product->name
+            ]
+        ];
+    });
+
 
     return response()->json([
         'status' => true,
