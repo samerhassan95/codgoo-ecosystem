@@ -256,16 +256,19 @@ class ProductController extends BaseController
     ->get()
     ->map(function ($slider) {
 
+        $product = $slider->product; 
+
         return [
             'id' => $slider->id,
-            'image' => $slider->image ? asset($slider->image) : null,
+            'image' => $slider->image ? url($slider->image) : null,
 
-            // 'product' => [
-            //     'id' => $slider->product->id,
-            //     'name' => $slider->product->name
-            // ]
+            'product' => $product ? [
+                'id' => $product->id,
+                'name' => $product->name,
+            ] : null
         ];
     });
+
 
 
     return response()->json([
