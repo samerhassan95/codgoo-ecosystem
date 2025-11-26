@@ -223,29 +223,44 @@ class ProductController extends BaseController
         return response()->json(['message' => 'Media deleted successfully.'], 200);
     }
 
-    public function ourProducts(Request $request)
-    {
-        $search = $request->search;
+ public function ourProducts(Request $request)
+{
+    $search = $request->search;
 
-        $products = Product::with(['media', 'addons'])
-            ->when($search, function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%");
-            })
-            ->select('id', 'name', 'price', 'description')
-            ->paginate(20);
-        $sliders = Slider::with([
-                'product' => function ($q) {
-                    $q->select('id', 'name', 'price', 'description');
-                }
-            ])->get();
-        return response()->json([
-            'status' => true,
-            'products' => $products,
-            'sliders' => $sliders
+    $products = Product::with([
+            'media:id,model_id,file_name',
+            'category:id,name',
+            'addons'
+        ])
+        ->when($search, function ($q) use ($search) {
+            $q->where('name', 'LIKE', "%{$search}%");
+        })
+        ->select('id', 'name', 'category_id', 'price', 'description')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'price' => $item->price,
+                'description' => $item->description,
+                'image' => $item->media->first()->file_name ?? null,
+                'category_name' => $item->category->name ?? null,
+            ];
+        });
 
-        ]);
+    $sliders = Slider::with([
+            'product' => function ($q) {
+                $q->select('id', 'name', 'category_id', 'price', 'description')
+                  ->with(['media:id,model_id,file_name', 'category:id,name']);
+            }
+        ])->get();
 
-    }
+    return response()->json([
+        'status' => true,
+        'products' => $products,
+        'sliders' => $sliders,
+    ]);
+}
 
 
 }
