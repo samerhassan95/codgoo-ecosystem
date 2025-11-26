@@ -287,16 +287,25 @@ class InvoiceController extends BaseController
         ], 200);
     }
 
-    public function getUserInvoices()
+    public function getUserInvoices(Request $request)
     {
         $user = auth()->user();
 
+        $search = $request->project_name;
 
-        $projectIds = Project::where('client_id', $user->id)->pluck('id');
+        $projectsQuery = Project::where('client_id', $user->id);
+
+        if ($search) {
+            $projectsQuery->where('name', 'like', '%' . $search . '%');
+        }
+
+        $projectIds = $projectsQuery->pluck('id');
+
 
         $invoices = Invoice::with(['project', 'project.client'])
             ->whereIn('project_id', $projectIds)
             ->get();
+
 
         $cards = [
             'all' => $invoices->count(),
@@ -307,8 +316,18 @@ class InvoiceController extends BaseController
             })->count(),
         ];
 
-        $totalInvoices = $invoices->count();
-        $invoiceData = $invoices->values()->map(function ($invoice, $index) use ($totalInvoices) {
+
+        $invoiceData = $invoices->map(function ($invoice) {
+
+
+            $projectTotal = Invoice::where('project_id', $invoice->project_id)->count();
+
+
+            $currentIndex = Invoice::where('project_id', $invoice->project_id)
+                ->orderBy('id')
+                ->pluck('id')
+                ->search($invoice->id) + 1; 
+
             return [
                 'id' => "INV-" . $invoice->id,
                 'amount' => $invoice->amount,
@@ -317,7 +336,7 @@ class InvoiceController extends BaseController
                 'status' => $invoice->status,
                 'payment_method' => $invoice->payment_method,
                 'due_date' => $invoice->due_date,
-                'invoice_no' => ($index + 1) . " Of " . $totalInvoices,
+                'invoice_no' => $currentIndex . " of " . $projectTotal,
                 'overdue_flag' => $invoice->status === 'unpaid' && now()->gt($invoice->due_date),
             ];
         });
@@ -330,6 +349,7 @@ class InvoiceController extends BaseController
             ]
         ]);
     }
+
 
 
 
