@@ -288,67 +288,81 @@ class InvoiceController extends BaseController
     }
 
     public function getUserInvoices(Request $request)
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        $search = $request->project_name;
+    $search = $request->project_name;
 
-        $projectsQuery = Project::where('client_id', $user->id);
+  
+    $allProjectIds = Project::where('client_id', $user->id)->pluck('id');
 
-        if ($search) {
-            $projectsQuery->where('name', 'like', '%' . $search . '%');
+  
+    $allInvoices = Invoice::whereIn('project_id', $allProjectIds)->get();
+
+    $cards = [
+        'all' => $allInvoices->count(),
+        'paid' => $allInvoices->where('status', 'paid')->count(),
+        'unpaid' => $allInvoices->where('status', 'unpaid')->count(),
+        'overdue' => $allInvoices->filter(function ($inv) {
+            return $inv->status === 'unpaid' && now()->gt($inv->due_date);
+        })->count(),
+    ];
+
+
+   
+    $projectsQuery = Project::where('client_id', $user->id);
+
+    if ($search) {
+        $projectsQuery->where('name', 'like', '%' . $search . '%');
+    }
+
+    $filteredProjectIds = $projectsQuery->pluck('id');
+
+    $invoices = Invoice::with(['project', 'project.client'])
+        ->whereIn('project_id', $filteredProjectIds)
+        ->get();
+
+
+
+    $invoiceData = $invoices->map(function ($invoice) {
+
+        $projectTotal = Invoice::where('project_id', $invoice->project_id)->count();
+
+        $currentIndex = Invoice::where('project_id', $invoice->project_id)
+            ->orderBy('id')
+            ->pluck('id')
+            ->search($invoice->id) + 1;
+
+
+            $statusText = $invoice->status;
+        if ($invoice->status === 'unpaid' && now()->gt($invoice->due_date)) {
+            $statusText = 'overdue';
         }
 
-        $projectIds = $projectsQuery->pluck('id');
-
-
-        $invoices = Invoice::with(['project', 'project.client'])
-            ->whereIn('project_id', $projectIds)
-            ->get();
-
-
-        $cards = [
-            'all' => $invoices->count(),
-            'paid' => $invoices->where('status', 'paid')->count(),
-            'unpaid' => $invoices->where('status', 'unpaid')->count(),
-            'overdue' => $invoices->filter(function ($inv) {
-                return $inv->status === 'unpaid' && now()->gt($inv->due_date);
-            })->count(),
+        return [
+            'id' => "INV-" . $invoice->id,
+            'amount' => $invoice->amount,
+            'project_name' => $invoice->project->name ?? '',
+            'client_name' => $invoice->project->client->name ?? '',
+            'status' => $statusText,
+            'payment_method' => $invoice->payment_method,
+            'due_date' => $invoice->due_date,
+            'invoice_no' => $currentIndex . " of " . $projectTotal,
         ];
+    });
 
 
-        $invoiceData = $invoices->map(function ($invoice) {
 
 
-            $projectTotal = Invoice::where('project_id', $invoice->project_id)->count();
+    return response()->json([
+        'status' => true,
+        'data' => [
+            'cards' => $cards,
+            'invoices' => $invoiceData,
+        ]
+    ]);
+}
 
-
-            $currentIndex = Invoice::where('project_id', $invoice->project_id)
-                ->orderBy('id')
-                ->pluck('id')
-                ->search($invoice->id) + 1; 
-
-            return [
-                'id' => "INV-" . $invoice->id,
-                'amount' => $invoice->amount,
-                'project_name' => $invoice->project->name ?? '',
-                'client_name' => $invoice->project->client->name ?? '',
-                'status' => $invoice->status,
-                'payment_method' => $invoice->payment_method,
-                'due_date' => $invoice->due_date,
-                'invoice_no' => $currentIndex . " of " . $projectTotal,
-                'overdue_flag' => $invoice->status === 'unpaid' && now()->gt($invoice->due_date),
-            ];
-        });
-
-        return response()->json([
-            'status' => true,
-            'data' => [
-                'cards' => $cards,
-                'invoices' => $invoiceData
-            ]
-        ]);
-    }
 
 
 
