@@ -291,15 +291,13 @@ class InvoiceController extends BaseController
     {
         $user = auth()->user();
 
-        // 1) هجيب ids بتاعة المشاريع اللي تخص العميل
+
         $projectIds = Project::where('client_id', $user->id)->pluck('id');
 
-        // 2) هجيب كل الفواتير المتعلقة بالمشاريع دي
         $invoices = Invoice::with(['project', 'project.client'])
             ->whereIn('project_id', $projectIds)
             ->get();
 
-        // 3) الكروت
         $cards = [
             'all' => $invoices->count(),
             'paid' => $invoices->where('status', 'paid')->count(),
@@ -309,7 +307,6 @@ class InvoiceController extends BaseController
             })->count(),
         ];
 
-        // 4) تجهيز بيانات الفواتير مع invoice_no و overdue_flag
         $totalInvoices = $invoices->count();
         $invoiceData = $invoices->values()->map(function ($invoice, $index) use ($totalInvoices) {
             return [
