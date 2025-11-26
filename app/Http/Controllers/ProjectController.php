@@ -819,59 +819,6 @@ class ProjectController extends BaseController
         ]);
     }
 
-    public function getProjectInvoices($projectId)
-    {
-        $user = auth()->user();
-
-
-        $project = Project::where('id', $projectId)
-            ->where('client_id', $user->id)
-            ->first();
-
-        if (!$project) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Project not found or access denied'
-            ], 404);
-        }
-
-
-        $invoices = Invoice::with(['project', 'project.client'])
-            ->where('project_id', $projectId)
-            ->get();
-
-
-            $cards = [
-            'all' => $invoices->count(),
-            'paid' => $invoices->where('status', 'paid')->count(),
-            'unpaid' => $invoices->where('status', 'unpaid')->count(),
-            'overdue' => $invoices->filter(function ($inv) {
-                return $inv->status === 'unpaid' &&
-                    now()->gt($inv->due_date);
-            })->count()
-        ];
-
-
-        $invoiceData = $invoices->map(function ($invoice) {
-            return [
-                'id' => "INV-" . $invoice->id,
-                'project_name' => $invoice->project->name ?? '',
-                'amount' => $invoice->amount,
-                'client_name' => $invoice->project->client->name ?? '',
-                'status' => $invoice->status,
-                'payment_method' => $invoice->payment_method,
-                'due_date' => $invoice->due_date,
-            ];
-        });
-
-        return response()->json([
-            'status' => true,
-            'data' => [
-                'cards' => $cards,
-                'invoices' => $invoiceData
-            ]
-        ]);
-    }
 
 
      public function getProjectAttachments($projectId)

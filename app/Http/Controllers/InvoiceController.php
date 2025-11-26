@@ -287,6 +287,50 @@ class InvoiceController extends BaseController
         ], 200);
     }
 
+    public function getUserInvoices()
+    {
+        $user = auth()->user();
+
+
+        $projectIds = Project::where('client_id', $user->id)->pluck('id');
+
+
+        $invoices = Invoice::with(['project', 'project.client'])
+            ->whereIn('project_id', $projectIds)
+            ->get();
+
+
+            $cards = [
+            'all' => $invoices->count(),
+            'paid' => $invoices->where('status', 'paid')->count(),
+            'unpaid' => $invoices->where('status', 'unpaid')->count(),
+            'overdue' => $invoices->filter(function ($inv) {
+                return $inv->status === 'unpaid' &&
+                    now()->gt($inv->due_date);
+            })->count(),
+        ];
+
+
+        $invoiceData = $invoices->map(function ($invoice) {
+            return [
+                'id' => "INV-" . $invoice->id,
+                'project_name' => $invoice->project->name ?? '',
+                'amount' => $invoice->amount,
+                'client_name' => $invoice->project->client->name ?? '',
+                'status' => $invoice->status,
+                'payment_method' => $invoice->payment_method,
+                'due_date' => $invoice->due_date,
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'cards' => $cards,
+                'invoices' => $invoiceData
+            ]
+        ]);
+    }
 
 
 }

@@ -169,7 +169,7 @@ Route::middleware('client')->group(function ()  {
     Route::get('dashboard/projects', [ProjectController::class, 'getClientDashboardProjects']);
     Route::get('project/overview/{id}', [ProjectController::class, 'getProjectFullDetails']);
     Route::get('project/tasks/{id}', [ProjectController::class, 'getProjectTasks']);
-    Route::get('project/invoices/{id}', [ProjectController::class, 'getProjectInvoices']);
+    Route::get('client-invoices', [InvoiceController::class, 'getUserInvoices']);
     Route::get('project/attachments/{id}', [ProjectController::class, 'getProjectAttachments']);
     Route::delete('project/attachments/{id}', [ProjectController::class, 'deleteAttachment']);
     Route::get('meetings', [MeetingController::class, 'getClientMeetings']);
