@@ -228,7 +228,6 @@ class ProductController extends BaseController
     $search = $request->search;
 
     $products = Product::with([
-            'media:id,file_name',
             'category:id,name',
             'addons'
         ])
@@ -251,7 +250,7 @@ class ProductController extends BaseController
     $sliders = Slider::with([
             'product' => function ($q) {
                 $q->select('id', 'name', 'category_id', 'price', 'description')
-                  ->with(['media:id,model_id,file_name', 'category:id,name']);
+                  ->with(['category:id,name']);
             }
         ])->get();
 
