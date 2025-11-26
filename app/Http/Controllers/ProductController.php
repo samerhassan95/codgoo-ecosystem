@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
-use App\Models\NotificationTemplate;
-use App\Repositories\NotificationRepository;
-use App\Services\FirebaseService;
-use Illuminate\Http\Request;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\ProductRequest;
 use App\Http\Resources\ProductResource;
-use App\Repositories\ProductRepositoryInterface;
-use App\Models\Product;
 use App\Models\Attachment;
+use App\Models\Client;
+use App\Models\NotificationTemplate;
+use App\Models\Product;
+use App\Models\Slider;
+use App\Repositories\NotificationRepository;
+use App\Repositories\ProductRepositoryInterface;
+use App\Services\FirebaseService;
 use App\Services\ImageService;
+use Illuminate\Http\Request;
+
 class ProductController extends BaseController
 {
     private $repository;
@@ -220,5 +222,30 @@ class ProductController extends BaseController
 
         return response()->json(['message' => 'Media deleted successfully.'], 200);
     }
+
+    public function ourProducts(Request $request)
+    {
+        $search = $request->search;
+
+        $products = Product::with(['media', 'addons'])
+            ->when($search, function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%");
+            })
+            ->select('id', 'name', 'price', 'description')
+            ->paginate(20);
+        $sliders = Slider::with([
+                'product' => function ($q) {
+                    $q->select('id', 'name', 'price', 'description');
+                }
+            ])->get();
+        return response()->json([
+            'status' => true,
+            'products' => $products,
+            'sliders' => $sliders
+
+        ]);
+
+    }
+
 
 }
