@@ -25,4 +25,9 @@ class Product extends Model
     {
         return $this->morphMany(attachment::class, 'attachable');
     }    
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
 }
