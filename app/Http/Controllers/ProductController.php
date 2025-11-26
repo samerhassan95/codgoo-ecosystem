@@ -228,7 +228,7 @@ class ProductController extends BaseController
     $search = $request->search;
 
     $products = Product::with([
-            'media:id,model_id,file_name',
+            'media:id,file_name',
             'category:id,name',
             'addons'
         ])
