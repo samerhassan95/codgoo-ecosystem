@@ -291,35 +291,37 @@ class InvoiceController extends BaseController
     {
         $user = auth()->user();
 
-
+        // 1) هجيب ids بتاعة المشاريع اللي تخص العميل
         $projectIds = Project::where('client_id', $user->id)->pluck('id');
 
-
+        // 2) هجيب كل الفواتير المتعلقة بالمشاريع دي
         $invoices = Invoice::with(['project', 'project.client'])
             ->whereIn('project_id', $projectIds)
             ->get();
 
-
-            $cards = [
+        // 3) الكروت
+        $cards = [
             'all' => $invoices->count(),
             'paid' => $invoices->where('status', 'paid')->count(),
             'unpaid' => $invoices->where('status', 'unpaid')->count(),
             'overdue' => $invoices->filter(function ($inv) {
-                return $inv->status === 'unpaid' &&
-                    now()->gt($inv->due_date);
+                return $inv->status === 'unpaid' && now()->gt($inv->due_date);
             })->count(),
         ];
 
-
-        $invoiceData = $invoices->map(function ($invoice) {
+        // 4) تجهيز بيانات الفواتير مع invoice_no و overdue_flag
+        $totalInvoices = $invoices->count();
+        $invoiceData = $invoices->values()->map(function ($invoice, $index) use ($totalInvoices) {
             return [
                 'id' => "INV-" . $invoice->id,
-                'project_name' => $invoice->project->name ?? '',
                 'amount' => $invoice->amount,
+                'project_name' => $invoice->project->name ?? '',
                 'client_name' => $invoice->project->client->name ?? '',
                 'status' => $invoice->status,
                 'payment_method' => $invoice->payment_method,
                 'due_date' => $invoice->due_date,
+                'invoice_no' => ($index + 1) . " Of " . $totalInvoices,
+                'overdue_flag' => $invoice->status === 'unpaid' && now()->gt($invoice->due_date),
             ];
         });
 
@@ -331,6 +333,7 @@ class InvoiceController extends BaseController
             ]
         ]);
     }
+
 
 
 }
