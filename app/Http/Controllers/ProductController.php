@@ -258,12 +258,12 @@ class ProductController extends BaseController
 
         return [
             'id' => $slider->id,
-            'image' => $slider->image ? url($slider->image) : null,
+            'image' => $slider->image ? asset($slider->image) : null,
 
-            'product' => [
-                'id' => $slider->product->id,
-                'name' => $slider->product->name
-            ]
+            // 'product' => [
+            //     'id' => $slider->product->id,
+            //     'name' => $slider->product->name
+            // ]
         ];
     });
 
