@@ -260,9 +260,8 @@ class MeetingController extends Controller
     {
         $user = auth()->user(); 
 
-        $query = Meeting::with(['project'])
+        $query = Meeting::with(['project', 'employees:id,name,image'])
             ->where('client_id', $user->id);
-
 
         if ($request->has('search') && $request->search !== null) {
             $search = $request->search;
@@ -284,13 +283,32 @@ class MeetingController extends Controller
 
         $meetings = $query
             ->orderBy('start_time', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($meeting) {
+                return [
+                    'id' => $meeting->id,
+                    'meeting_name' => $meeting->meeting_name,
+                    'project_name' => $meeting->project?->name,
+                    'start_time' => $meeting->start_time,
+                    'end_time' => $meeting->end_time,
+                    'status' => $meeting->status,
+
+                    'employees' => $meeting->employees->map(function ($emp) {
+                        return [
+                            'id' => $emp->id,
+                            'name' => $emp->name,
+                            'image' => $emp->image ? asset('uploads/employees/' . $emp->image) : null,
+                        ];
+                    }),
+                ];
+            });
+
         return response()->json([
             'status' => true,
             'data' => $meetings
         ]);
     }
-
+    
     public function getMeetingSummary($id)
     {
         $user = auth()->user();
@@ -299,7 +317,8 @@ class MeetingController extends Controller
             'project:id,name',
             'logs',
             'client:id,name',
-            'slot'
+            'slot',
+            'employees:id,name,image' 
         ])
             ->where('client_id', $user->id)
             ->find($id);
@@ -330,6 +349,14 @@ class MeetingController extends Controller
 
                 'notes' => $meeting->description ? explode("\n", trim($meeting->description)) : [],
 
+                'employees' => $meeting->employees->map(function ($emp) {
+                    return [
+                        'id' => $emp->id,
+                        'name' => $emp->name,
+                        'image' => $emp->image ? asset('uploads/employees/' . $emp->image) : null,
+                    ];
+                }),
+
                 'action_log' => $meeting->logs->map(function ($log) {
                     return [
                         'date' => $log->created_at->format('d M Y'),
@@ -339,7 +366,9 @@ class MeetingController extends Controller
                 }),
             ]
         ]);
-    } public function destroy($id)
+    }
+
+    public function destroy($id)
     {
         $meeting = Meeting::find($id);
 

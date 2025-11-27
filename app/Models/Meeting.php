@@ -26,6 +26,11 @@ class Meeting extends Model
     {
         return $this->hasMany(MeetingLog::class);
     }
+    public function employees()
+    {
+        return $this->belongsToMany(Employee::class, 'meeting_employees');
+    }
+
 
 
 }
