@@ -223,60 +223,60 @@ class ProductController extends BaseController
         return response()->json(['message' => 'Media deleted successfully.'], 200);
     }
 
- public function ourProducts(Request $request)
-{
-    $search = $request->search;
+    public function ourProducts(Request $request)
+    {
+        $search = $request->search;
 
-    $products = Product::with([
-            'category:id,name',
-            'addons'
-        ])
-        ->when($search, function ($q) use ($search) {
-            $q->where('name', 'LIKE', "%{$search}%");
-        })
-        ->select('id', 'name', 'category_id', 'price', 'description')
-        ->get()
-        ->map(function ($item) {
+        $products = Product::with([
+                'category:id,name',
+                'addons'
+            ])
+            ->when($search, function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%");
+            })
+            ->select('id', 'name', 'category_id', 'price', 'description')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'price' => $item->price,
+                    'description' => $item->description,
+                    'image' => $item->media->first()->file_name ?? null,
+                    'category_name' => $item->category->name ?? null,
+                ];
+            });
+
+        $sliders = Slider::with([
+                'product' => function ($q) {
+                    $q->select('id', 'name', 'category_id', 'price', 'description')
+                    ->with(['category:id,name']);
+                }
+            ])
+            ->get()
+            ->map(function ($slider) {
+
+            $product = $slider->product; 
+
             return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'price' => $item->price,
-                'description' => $item->description,
-                'image' => $item->media->first()->file_name ?? null,
-                'category_name' => $item->category->name ?? null,
+                'id' => $slider->id,
+                'image' => $slider->image ? url($slider->image) : null,
+
+                'product' => $product ? [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                ] : null
             ];
         });
 
-   $sliders = Slider::with([
-        'product' => function ($q) {
-            $q->select('id', 'name', 'category_id', 'price', 'description')
-              ->with(['category:id,name']);
-        }
-    ])
-    ->get()
-    ->map(function ($slider) {
-
-        $product = $slider->product; 
-
-        return [
-            'id' => $slider->id,
-            'image' => $slider->image ? url($slider->image) : null,
-
-            'product' => $product ? [
-                'id' => $product->id,
-                'name' => $product->name,
-            ] : null
-        ];
-    });
 
 
-
-    return response()->json([
-        'status' => true,
-        'products' => $products,
-        'sliders' => $sliders,
-    ]);
-}
+        return response()->json([
+            'status' => true,
+            'products' => $products,
+            'sliders' => $sliders,
+        ]);
+    }
 
 
 }

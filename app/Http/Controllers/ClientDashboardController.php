@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Project;
-use App\Models\Task;
-use App\Models\Meeting;
 use App\Models\Invoice;
+use App\Models\Meeting;
+use App\Models\Project;
+use App\Models\Slider;
+use App\Models\Task;
 use Illuminate\Http\Request;
 
 class ClientDashboardController extends Controller
@@ -78,6 +79,27 @@ class ClientDashboardController extends Controller
             ];
         });
 
+        $sliders = Slider::with([
+                'product' => function ($q) {
+                    $q->select('id', 'name', 'category_id', 'price', 'description')
+                    ->with(['category:id,name']);
+                }
+            ])
+            ->get()
+            ->map(function ($slider) {
+
+            $product = $slider->product; 
+
+            return [
+                'id' => $slider->id,
+                'image' => $slider->image ? url($slider->image) : null,
+
+                'product' => $product ? [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                ] : null
+            ];
+        });
         return response()->json([
             'status' => true,
             'data' => [
@@ -88,8 +110,9 @@ class ClientDashboardController extends Controller
                 'tasks' => $tasks,
                 'meetings' => $meetings,
                 'invoice_status' => $invoiceStatus,
-                'projects' => $projectsList
-            ]
+                'projects' => $projectsList,
+                'sliders' => $sliders
+            ],
         ]);
     }
 }
