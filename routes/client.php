@@ -21,8 +21,8 @@ use App\Http\Controllers\{CategoryController,
     AvailableSlotController,
     NotificationController,
     PaymentController,
-    ChatController, 
-
+    ChatController,
+    ClientDashboardController,
 };
 use Illuminate\Support\Facades\Route;
 
@@ -177,6 +177,7 @@ Route::middleware('client')->group(function ()  {
     Route::put('meetings/{id}', [MeetingController::class, 'update']);
     Route::get('meeting-summary/{id}', [MeetingController::class, 'getMeetingSummary']);
     Route::get('our-products', [ProductController::class, 'ourProducts']);
+    Route::get('dashboard', [ClientDashboardController::class, 'dashboard']);
 
 
 });
