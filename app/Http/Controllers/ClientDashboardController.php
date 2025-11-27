@@ -47,9 +47,9 @@ class ClientDashboardController extends Controller
             ->map(function($meeting){
                 return [
                     'meeting_name' => $meeting->meeting_name,
-                    'date' => $meeting->start_time->format('Y-m-d'),
-                    'start' => $meeting->start_time->format('H:i'),
-                    'end' => $meeting->end_time->format('H:i'),
+                    'date' => $meeting->start_time,
+                    'start' => $meeting->start_time,
+                    'end' => $meeting->end_time,
                     'project' => $meeting->project->name ?? null,
                 ];
             });
