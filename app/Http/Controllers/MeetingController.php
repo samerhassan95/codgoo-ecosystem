@@ -44,10 +44,13 @@ class MeetingController extends Controller
             'status' => 'Request Sent',
         ]);
 
-        // Send notification to all admins
+        if (!empty($validated['employee_ids'])) {
+            $meeting->employees()->sync($validated['employee_ids']);
+        }
+
         $this->sendMeetingCreatedNotification($meeting);
 
-        return response()->json(new MeetingResource($meeting), 201);
+        return response()->json(new MeetingResource($meeting->load('employees')), 201);
     }
 
     private function sendMeetingCreatedNotification(Meeting $meeting)
@@ -308,7 +311,7 @@ class MeetingController extends Controller
             'data' => $meetings
         ]);
     }
-    
+
     public function getMeetingSummary($id)
     {
         $user = auth()->user();

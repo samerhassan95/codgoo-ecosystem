@@ -9,6 +9,7 @@ use App\Models\Admin;
 use App\Models\attachment;
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\Milestone;
 use App\Models\NotificationTemplate;
 use App\Models\Project;
 use App\Models\Task;
@@ -760,64 +761,64 @@ class ProjectController extends BaseController
         ]);
     }
 
-    public function getProjectTasks($projectId)
-    {
-        $user = auth()->user();
+    // public function getProjectTasks($projectId)
+    // {
+    //     $user = auth()->user();
 
 
-        $project = Project::where('id', $projectId)
-            ->where('client_id', $user->id)
-            ->first();
+    //     $project = Project::where('id', $projectId)
+    //         ->where('client_id', $user->id)
+    //         ->first();
 
-        if (!$project) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Project not found or access denied'
-            ], 404);
-        }
-
-
-        $tasks = Task::with(['assignments.employee'])
-            ->whereHas('milestone', fn($q) => $q->where('project_id', $projectId))
-            ->get();
+    //     if (!$project) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Project not found or access denied'
+    //         ], 404);
+    //     }
 
 
-            $statusCounts = [
-            'all' => $tasks->count(),
-            'not_started' => $tasks->where('status', 'not_started')->count(),
-            'in_progress' => $tasks->where('status', 'in_progress')->count(),
-            'completed' => $tasks->where('status', 'completed')->count(),
-            'awaiting_feedback' => $tasks->where('status', 'awaiting_feedback')->count(),
-        ];
+    //     $tasks = Task::with(['assignments.employee'])
+    //         ->whereHas('milestone', fn($q) => $q->where('project_id', $projectId))
+    //         ->get();
 
 
-        $tasksData = $tasks->map(function ($task) {
-            return [
-                'id' => $task->id,
-                'name' => $task->label,
-                'start_date' => $task->start_date,
-                'end_date' => $task->due_date,
-                'status' => $task->status,
+    //         $statusCounts = [
+    //         'all' => $tasks->count(),
+    //         'not_started' => $tasks->where('status', 'not_started')->count(),
+    //         'in_progress' => $tasks->where('status', 'in_progress')->count(),
+    //         'completed' => $tasks->where('status', 'completed')->count(),
+    //         'awaiting_feedback' => $tasks->where('status', 'awaiting_feedback')->count(),
+    //     ];
 
-                'assigned_to' => $task->assignments->map(function ($assignment) {
-                    return [
-                        'id' => $assignment->employee->id,
-                        'name' => $assignment->employee->name,
-                        'image' => $assignment->employee->image ?? null,
-                        'assignment_status' => $assignment->status,
-                    ];
-                }),
-            ];
-        });
 
-        return response()->json([
-            'status' => true,
-            'data' => [
-                'cards' => $statusCounts,
-                'tasks' => $tasksData,
-            ]
-        ]);
-    }
+    //     $tasksData = $tasks->map(function ($task) {
+    //         return [
+    //             'id' => $task->id,
+    //             'name' => $task->label,
+    //             'start_date' => $task->start_date,
+    //             'end_date' => $task->due_date,
+    //             'status' => $task->status,
+
+    //             'assigned_to' => $task->assignments->map(function ($assignment) {
+    //                 return [
+    //                     'id' => $assignment->employee->id,
+    //                     'name' => $assignment->employee->name,
+    //                     'image' => $assignment->employee->image ?? null,
+    //                     'assignment_status' => $assignment->status,
+    //                 ];
+    //             }),
+    //         ];
+    //     });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => [
+    //             'cards' => $statusCounts,
+    //             'tasks' => $tasksData,
+    //         ]
+    //     ]);
+    // }
 
 
 
@@ -846,6 +847,174 @@ class ProjectController extends BaseController
         ]);
     }
 
+    public function getMilestoneTasks($milestoneId)
+    {
+        $user = auth()->user();
+
+        $milestone = Milestone::where('id', $milestoneId)
+            ->whereHas('project', function ($q) use ($user) {
+                $q->where('client_id', $user->id);
+            })
+            ->first();
+
+        if (!$milestone) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Milestone not found or access denied'
+            ], 404);
+        }
+
+        $tasks = Task::with(['assignments.employee'])
+            ->where('milestone_id', $milestoneId)
+            ->get();
+
+        $statusCounts = [
+            'all' => $tasks->count(),
+            'not_started' => $tasks->where('status', 'not_started')->count(),
+            'in_progress' => $tasks->where('status', 'in_progress')->count(),
+            'completed' => $tasks->where('status', 'completed')->count(),
+            'awaiting_feedback' => $tasks->where('status', 'awaiting_feedback')->count(),
+        ];
+
+        $tasksData = $tasks->map(function ($task) {
+            return [
+                'id' => $task->id,
+                'name' => $task->label,
+                'start_date' => $task->start_date,
+                'end_date' => $task->due_date,
+                'priority' => $task->priority,
+                'status' => $task->status,
+
+                'assigned_to' => $task->assignments->map(function ($assignment) {
+                    return [
+                        'id' => $assignment->employee->id,
+                        'name' => $assignment->employee->name,
+                        'image' => $assignment->employee->image ?? null,
+                        'assignment_status' => $assignment->status,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'milestone' => [
+                    'id' => $milestone->id,
+                    'name' => $milestone->label,
+                    'start_date' => $milestone->start_date,
+                    'end_date' => $milestone->end_date,
+                    'cost' => $milestone->cost,
+                    'status' => $milestone->status,
+                ],
+                'cards' => $statusCounts,
+                'tasks' => $tasksData,
+            ]
+        ]);
+    }
+
+    public function getTaskFullDetails($taskId)
+    {
+        $task = Task::with([
+            'milestone.project',
+            'assignments.employee',
+            'screens'
+        ])->find($taskId);
+
+        if (!$task) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Task not found.',
+            ], 404);
+        }
+
+       
+        $totalScreens = $task->screens->count();
+        $completedScreens = $task->screens->where('implemented', 1)->count();
+
+        $progress = $totalScreens > 0
+            ? round(($completedScreens / $totalScreens) * 100, 2)
+            : 0;
+
+         $completedScreensList = $task->screens
+            ->where('implemented', 1)
+            ->values()
+            ->map(function ($screen) {
+                return [
+                    'id' => $screen->id,
+                    'name' => $screen->name,
+                    'screen_code' => $screen->screen_code,
+                    'comment' => $screen->comment,
+                    'image' => $screen->image ?? null,
+                    'implemented' => $screen->implemented,
+                    'integrated' => $screen->integrated,
+                ];
+            });
+
+        $remainingScreensList = $task->screens
+            ->where('implemented', 0)
+            ->values()
+            ->map(function ($screen) {
+                return [
+                    'id' => $screen->id,
+                    'name' => $screen->name,
+                    'screen_code' => $screen->screen_code,
+                    'comment' => $screen->comment,
+                    'image' => $screen->image ?? null,
+                    'implemented' => $screen->implemented,
+                    'integrated' => $screen->integrated,
+                ];
+            });
+
+        // -----------------------------
+        // 👤 الفريق Assigned Team
+        // -----------------------------
+        $team = $task->assignments->map(function ($assignment) {
+            return [
+                'id' => $assignment->employee->id,
+                'name' => $assignment->employee->name,
+                'image' => $assignment->employee->image ?? null,
+                'status' => $assignment->status,
+            ];
+        });
+
+        // -----------------------------
+        // 🏁 Final Response
+        // -----------------------------
+        return response()->json([
+            'status' => true,
+            'message' => 'Task full details retrieved.',
+            'data' => [
+                'task' => [
+                    'id' => $task->id,
+                    'label' => $task->label,
+                    'description' => $task->description,
+                    'priority' => $task->priority,
+                    'status' => $task->status,
+                    'start_date' => $task->start_date,
+                    'due_date' => $task->due_date,
+                    'progress' => $progress,
+                ],
+
+                'project' => [
+                    'id' => $task->milestone->project->id,
+                    'name' => $task->milestone->project->name,
+                ],
+
+                'milestone' => [
+                    'id' => $task->milestone->id,
+                    'name' => $task->milestone->label,
+                ],
+
+                'team' => $team,
+
+                'screens' => [
+                    'completed' => $completedScreensList,
+                    'remaining' => $remainingScreensList,
+                ],
+            ]
+        ]);
+    }
 
 
 }

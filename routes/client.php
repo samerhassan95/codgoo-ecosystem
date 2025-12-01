@@ -168,7 +168,7 @@ Route::middleware('client')->group(function ()  {
     ///Software Dashboard Routes
     Route::get('dashboard/projects', [ProjectController::class, 'getClientDashboardProjects']);
     Route::get('project/overview/{id}', [ProjectController::class, 'getProjectFullDetails']);
-    Route::get('project/tasks/{id}', [ProjectController::class, 'getProjectTasks']);
+    // Route::get('project/tasks/{id}', [ProjectController::class, 'getProjectTasks']);
     Route::get('all-client-invoices', [InvoiceController::class, 'getUserInvoices']);
     Route::get('project/attachments/{id}', [ProjectController::class, 'getProjectAttachments']);
     Route::delete('project/attachments/{id}', [ProjectController::class, 'deleteAttachment']);
@@ -178,6 +178,7 @@ Route::middleware('client')->group(function ()  {
     Route::get('meeting-summary/{id}', [MeetingController::class, 'getMeetingSummary']);
     Route::get('our-products', [ProductController::class, 'ourProducts']);
     Route::get('dashboard', [ClientDashboardController::class, 'dashboard']);
+    Route::get('project/tasks/{id}', [ProjectController::class, 'getMilestoneTasks']);
 
 
 });
