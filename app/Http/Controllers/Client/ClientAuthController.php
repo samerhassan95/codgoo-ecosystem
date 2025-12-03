@@ -53,7 +53,15 @@ class ClientAuthController extends Controller
             ],
             'password' => 'required|min:6|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'unique:clients,username',
+                function ($attribute, $value, $fail) {
+                    if (Admin::where('username', $value)->exists()) {
+                        $fail("This username is already registered as an admin.");
+                    }
+                },
+            ],
             'email' => 'required|email|unique:clients,email',
             'company_name' => 'nullable|string|max:255',
             'website' => 'nullable|url|max:255',
@@ -62,7 +70,7 @@ class ClientAuthController extends Controller
             'country' => 'nullable|string|max:255',
             'device_token' => 'nullable|string',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 "status" => false,
@@ -71,14 +79,14 @@ class ClientAuthController extends Controller
                 'data' => null,
             ], 402);
         }
-    
+
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = ImageService::upload($request->file('photo'), 'client_photos');
         }
-    
+
         $otp = rand(1000, 9999);
-    
+
         $client = Client::create([
             'username' => $request->username,
             'phone' => $request->phone,
@@ -93,20 +101,21 @@ class ClientAuthController extends Controller
             'country' => $request->country,
             'device_token' => $request->device_token,
         ]);
-    
+
         // Store OTP in cache for 10 minutes
         Cache::put('otp_' . $client->phone, $otp, now()->addMinutes(10));
-    
+
         // Send OTP via email
         Mail::to($client->email)->send(new OtpMail($otp));
-    
+
         return response()->json([
             'status' => true,
             'message' => "OTP sent successfully to your email, please verify.",
             'data' => null,
         ]);
     }
-    
+
+
 
 
     public function verifyOtpAndCreateClient(Request $request)
@@ -168,8 +177,8 @@ class ClientAuthController extends Controller
                 'address' => $client->address,
                 'city' => $client->city,
                 'country' => $client->country,
-                'type' =>"Client",
-                'token'=>$token
+                'type' => "Client",
+                'token' => $token
 
             ],
         ]);
@@ -178,7 +187,7 @@ class ClientAuthController extends Controller
     public function updateProfile(Request $request)
     {
         $client = auth()->user();
-    
+
         $request->validate([
             'username' => 'sometimes|required|string|max:255|unique:clients,username,' . $client->id,
             'email' => 'sometimes|required|email|max:255|unique:clients,email,' . $client->id,
@@ -191,12 +200,12 @@ class ClientAuthController extends Controller
             'city' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
         ]);
-    
+
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = (new ImageService())->upload($request->file('photo'), 'client_photos');
         }
-    
+
         $updated = $client->update([
             'username' => $request->username ?? $client->username,
             'name' => $request->name ?? $client->name,
@@ -209,27 +218,27 @@ class ClientAuthController extends Controller
             'city' => $request->city ?? $client->city,
             'country' => $request->country ?? $client->country,
         ]);
-    
+
         if ($updated) {
             return response()->json([
                 'status' => true,
                 'message' => 'Profile updated successfully.',
                 'data' => array_merge(
-                    $client->makeHidden(['remember_token', 'password'])->toArray(), 
+                    $client->makeHidden(['remember_token', 'password'])->toArray(),
                     [
-                        'token' => $request->bearerToken(), 
+                        'token' => $request->bearerToken(),
                         'type' => 'client'
                     ]
                 ),
             ], 200);
         }
-    
+
         return response()->json([
             'status' => false,
             'message' => 'Failed to update profile.',
         ]);
     }
-    
+
 
 
     public function logout()
@@ -260,9 +269,9 @@ class ClientAuthController extends Controller
             'status' => true,
             'message' => 'Profile retrieved successfully.',
             'data' => array_merge(
-                $client->makeHidden(['remember_token', 'password'])->toArray(), 
+                $client->makeHidden(['remember_token', 'password'])->toArray(),
                 [
-                    'token' => $request->bearerToken(), 
+                    'token' => $request->bearerToken(),
                     'type' => 'client'
                 ]
             ),
@@ -274,7 +283,7 @@ class ClientAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -282,29 +291,29 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 404);
         }
-    
+
         $client = Client::where('phone', $request->phone)->first();
         $otp = rand(1000, 9999); // Generate a 6-digit OTP
-    
+
         Cache::put('otp_' . $client->phone, $otp, now()->addMinutes(10));
-    
+
         // Send OTP via email
         Mail::to($client->email)->send(new OtpMail($otp));
-    
+
         return response()->json([
             'status' => true,
             'message' => 'OTP sent successfully. Please check your email.',
             'data' => null
         ], 200);
     }
-    
+
     public function verifyOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
             'otp' => 'required|numeric',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -312,12 +321,12 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-    
+
         $phone = $request->phone;
         $otp = $request->otp;
-    
+
         $storedOtp = Cache::get('otp_' . $phone);
-    
+
         if (!$storedOtp || $storedOtp != $otp) {
             return response()->json([
                 'status' => false,
@@ -325,23 +334,23 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-    
+
         Cache::forget('otp_' . $phone);
-    
+
         return response()->json([
             'status' => true,
             'message' => 'OTP verified successfully. You can now reset your password.',
             'data' => null
         ], 200);
     }
-    
+
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required|exists:clients,phone',
             'password' => 'required|min:6|confirmed',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -349,12 +358,12 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-    
+
         $phone = $request->phone;
         $newPassword = $request->password;
-    
+
         $client = Client::where('phone', $phone)->first();
-    
+
         if (!$client) {
             return response()->json([
                 'status' => false,
@@ -362,17 +371,17 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 404);
         }
-    
+
         $client->password = Hash::make($newPassword);
         $client->save();
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Password reset successfully.',
             'data' => null
         ], 200);
     }
-    
+
 
     public function changePassword(Request $request)
     {
@@ -407,13 +416,13 @@ class ClientAuthController extends Controller
             'data' => null
         ], 200);
     }
-    
+
     public function changePhoneRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'new_phone' => 'required|unique:clients,phone',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -421,9 +430,9 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-    
+
         $client = auth('client')->user();
-    
+
         if (!$client) {
             return response()->json([
                 'status' => false,
@@ -431,30 +440,30 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 401);
         }
-    
-        $otp = rand(1000, 9999);// Generate a 6-digit OTP
-    
+
+        $otp = rand(1000, 9999); // Generate a 6-digit OTP
+
         Cache::put('otp_change_phone_' . $client->id, [
             'otp' => $otp,
             'new_phone' => $request->new_phone,
         ], now()->addMinutes(10));
-    
+
         // Send OTP via email
         Mail::to($client->email)->send(new OtpMail($otp));
-    
+
         return response()->json([
             'status' => true,
             'message' => 'OTP sent to your email.',
             'data' => null,
         ], 200);
     }
-    
+
     public function verifyChangePhone(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'otp' => 'required|numeric',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -462,9 +471,9 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 402);
         }
-    
+
         $client = auth('client')->user();
-    
+
         if (!$client) {
             return response()->json([
                 'status' => false,
@@ -472,9 +481,9 @@ class ClientAuthController extends Controller
                 'data' => null
             ], 401);
         }
-    
+
         $cachedData = Cache::get('otp_change_phone_' . $client->id);
-    
+
         if (!$cachedData || $cachedData['otp'] != $request->otp) {
             return response()->json([
                 'status' => false,
@@ -482,12 +491,12 @@ class ClientAuthController extends Controller
                 'data' => null,
             ], 402);
         }
-    
+
         $client->phone = $cachedData['new_phone'];
         $client->save();
-    
+
         Cache::forget('otp_change_phone_' . $client->id);
-    
+
         return response()->json([
             'status' => true,
             'message' => 'Phone number updated successfully.',
@@ -496,7 +505,7 @@ class ClientAuthController extends Controller
             ],
         ], 200);
     }
-    
+
 
     public function getAllClients()
     {
@@ -511,7 +520,7 @@ class ClientAuthController extends Controller
 
     public function deleteAccount()
     {
-        $client = auth()->user(); 
+        $client = auth()->user();
 
         if (!$client) {
             return response()->json(['message' => 'Unauthorized'], 401);
@@ -523,6 +532,4 @@ class ClientAuthController extends Controller
 
         return response()->json(['message' => 'Account deleted successfully.'], 200);
     }
-
-
 }

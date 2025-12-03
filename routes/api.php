@@ -13,13 +13,13 @@ use Illuminate\Support\Facades\Broadcast;
 use App\Models\TaskDiscussionMessage;
 use App\Models\Employee;
 
-Route::prefix('admin')->group(function() {
+Route::prefix('admin')->group(function () {
     Route::post('register', [AdminAuthController::class, 'register']);
     Route::post('logout', [AdminAuthController::class, 'logout']);
     Route::post('forgot-password', [AdminAuthController::class, 'forgotPassword']);
 });
 
-Route::prefix('client')->group(function() {
+Route::prefix('client')->group(function () {
     Route::post('register', [ClientAuthController::class, 'register']);
     // Route::post('login', [ClientAuthController::class, 'login']);
     Route::post('logout', [ClientAuthController::class, 'logout']);
@@ -27,13 +27,12 @@ Route::prefix('client')->group(function() {
     Route::post('forgot-password', [ClientAuthController::class, 'forgotPasswordRequest']);
     Route::post('verify-otp-and-reset-password', [ClientAuthController::class, 'verifyOtp']);
     Route::post('reset-password', [ClientAuthController::class, 'resetPassword']);
-
 });
 
 
 Route::post('login', [AdminAuthController::class, 'login']);
 
-Route::prefix('employee')->group(function() {
+Route::prefix('employee')->group(function () {
     Route::post('register', [EmployeeAuthController::class, 'register']);
     Route::post('login', [EmployeeAuthController::class, 'login']);
     Route::post('logout', [EmployeeAuthController::class, 'logout']);
@@ -41,7 +40,6 @@ Route::prefix('employee')->group(function() {
     Route::post('forgot-password', [EmployeeAuthController::class, 'forgotPasswordRequest']);
     Route::post('verify-otp-and-reset-password', [EmployeeAuthController::class, 'verifyOtp']);
     Route::post('reset-password', [EmployeeAuthController::class, 'resetPassword']);
-
 });
 
 // Route::get('test-email', function () {
@@ -82,3 +80,28 @@ Route::get('/pusher-test', function () {
 Route::post('/broadcasting/auth', function (Illuminate\Http\Request $request) {
     return Broadcast::auth($request);
 })->middleware('auth:employee');
+
+
+use App\Http\Controllers\ServicesAppController;
+use App\Http\Controllers\MarketplaceController; // Use the combined controller
+
+Route::prefix('Marketplace')->group(function () {
+    // 1 - Services Apps
+    Route::get('ServicesApps', [ServicesAppController::class, 'index']);
+
+    // 2, 3, 8 - Bundle Packages
+    Route::get('packages', [MarketplaceController::class, 'indexPackages']);
+    Route::get('packages/{package}', [MarketplaceController::class, 'showPackage']); // Uses Route Model Binding
+    Route::get('packagesComparison', [MarketplaceController::class, 'comparison']);
+
+    // 4 - Build Custom Bundle
+    Route::post('BuildBundle', [MarketplaceController::class, 'storeCustomBundle']);
+
+    // 5, 7 - Custom Bundle Management
+    Route::get('Bundle/{bundle}', [MarketplaceController::class, 'showCustomBundle']); // Uses Route Model Binding
+    Route::patch('Bundle/{bundle}', [MarketplaceController::class, 'updateCustomBundle']); // Uses Route Model Binding
+});
+
+// 6 - Remove Application from Bundle
+Route::delete('bundle/{bundle}/applications/{appId}', [MarketplaceController::class, 'destroyApplication']);
+// {bundle} is bound to CustomBundle model via Route Model Binding
