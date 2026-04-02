@@ -16,9 +16,133 @@ use Illuminate\Support\Facades\DB;
 
 class TaskDiscussionController extends Controller
 {
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        try {
+            $discussions = TaskDiscussion::with(['task', 'createdBy'])->get();
+            
+            return response()->json([
+                'status' => true,
+                'message' => 'Task discussions retrieved successfully.',
+                'data' => $discussions
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to retrieve task discussions.',
+                'data' => null
+            ], 500);
+        }
+    }
 
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        try {
+            $request->validate([
+                'task_id' => 'required|exists:tasks,id',
+                'title' => 'required|string|max:255',
+                'created_by' => 'required|exists:employees,id',
+            ]);
 
-public function index($discussionId)
+            $discussion = TaskDiscussion::create($request->all());
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Task discussion created successfully.',
+                'data' => $discussion
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to create task discussion.',
+                'data' => null
+            ], 500);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        try {
+            $discussion = TaskDiscussion::with(['task', 'createdBy'])->findOrFail($id);
+            
+            return response()->json([
+                'status' => true,
+                'message' => 'Task discussion retrieved successfully.',
+                'data' => $discussion
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Task discussion not found.',
+                'data' => null
+            ], 404);
+        }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        try {
+            $discussion = TaskDiscussion::findOrFail($id);
+            
+            $request->validate([
+                'title' => 'sometimes|required|string|max:255',
+            ]);
+
+            $discussion->update($request->all());
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Task discussion updated successfully.',
+                'data' => $discussion
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update task discussion.',
+                'data' => null
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        try {
+            $discussion = TaskDiscussion::findOrFail($id);
+            $discussion->delete();
+            
+            return response()->json([
+                'status' => true,
+                'message' => 'Task discussion deleted successfully.',
+                'data' => null
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to delete task discussion.',
+                'data' => null
+            ], 500);
+        }
+    }
+
+    /**
+     * Get discussion messages (original method with parameter)
+     */
+    public function getDiscussionMessages($discussionId)
 {
     // 🔐 Determine authenticated user and guard
     if (auth('admin')->check()) {

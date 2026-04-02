@@ -29,6 +29,50 @@ class MeetingController extends Controller
         $this->firebaseService = $firebaseService;
     }
 
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        try {
+            $meetings = Meeting::with(['project'])->get();
+            
+            return response()->json([
+                'status' => true,
+                'message' => 'Meetings retrieved successfully.',
+                'data' => $meetings
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to retrieve meetings.',
+                'data' => null
+            ], 500);
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        try {
+            $meeting = Meeting::with(['project'])->findOrFail($id);
+            
+            return response()->json([
+                'status' => true,
+                'message' => 'Meeting retrieved successfully.',
+                'data' => $meeting
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Meeting not found.',
+                'data' => null
+            ], 404);
+        }
+    }
+
 
 public function store(MeetingRequest $request)
 {

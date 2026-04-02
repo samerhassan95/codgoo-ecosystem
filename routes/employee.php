@@ -25,7 +25,12 @@ use App\Http\Controllers\{DocumentTypeController,
     AchievementController,
     AttendanceController,
     TaskController,
-    TaskDiscussionController};
+    TaskDiscussionController,
+    SkillController,
+    MeetingController,
+    DepartmentController,
+    TicketController,
+    TicketReplyController};
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:employee')->group(function () {
@@ -61,6 +66,23 @@ Route::middleware('auth:employee')->group(function () {
     Route::apiResource('implemented-api-reviews', ImplementedApiReviewController::class);
     Route::apiResource('achievements', AchievementController::class);
     Route::apiResource('attendances', AttendanceController::class);
+    
+    // Skills Management (existing controller)
+    Route::apiResource('skills', SkillController::class);
+    
+    // Meetings Management (existing controller)
+    Route::apiResource('meetings', MeetingController::class);
+    Route::get('meetings/my-meetings', [MeetingController::class, 'getMeetingsForClient']);
+    
+    // Departments (existing controller)
+    Route::apiResource('departments', DepartmentController::class);
+    
+    // Tickets System (existing controller)
+    Route::apiResource('tickets', TicketController::class);
+    Route::apiResource('ticket-replies', TicketReplyController::class);
+    
+    // Task Discussions (existing controller)
+    Route::apiResource('task-discussions', TaskDiscussionController::class);
     Route::get('employee-tasks', [TaskController::class, 'employeeTasks']);
     Route::post('employee-meetings', [EmployeeMeetingController::class, 'store']);
     Route::prefix('employee-documents')->group(function () {

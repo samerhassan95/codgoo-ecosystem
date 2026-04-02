@@ -32,9 +32,15 @@ class FirebaseService
             if (file_exists($basePath)) {
                 $credentialsPath = $basePath;
             } else {
-                throw new \Exception(
-                    "Firebase credentials file not found at: {$credentialsPath} or {$basePath}"
-                );
+                // Try storage path
+                $storagePath = storage_path('firebase/codgoo-firebase.json');
+                if (file_exists($storagePath)) {
+                    $credentialsPath = $storagePath;
+                } else {
+                    throw new \Exception(
+                        "Firebase credentials file not found at: {$credentialsPath}, {$basePath}, or {$storagePath}"
+                    );
+                }
             }
         }
 

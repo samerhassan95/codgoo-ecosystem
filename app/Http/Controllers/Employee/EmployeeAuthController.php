@@ -428,7 +428,7 @@ Log::info('LOGIN VALUE', ['login' => $request->login]);
             ], 402);
         }
 
-        $Employee = auth('Employee')->user();
+        $Employee = auth('employee')->user();
 
         if (!$Employee) {
             return response()->json([
@@ -463,7 +463,7 @@ Log::info('LOGIN VALUE', ['login' => $request->login]);
             ], 402);
         }
 
-        $Employee = auth('Employee')->user();
+        $Employee = auth('employee')->user();
 
         if (!$Employee) {
             return response()->json([
@@ -503,7 +503,7 @@ Log::info('LOGIN VALUE', ['login' => $request->login]);
             ], 402);
         }
 
-        $Employee = auth('Employee')->user();
+        $Employee = auth('employee')->user();
 
         if (!$Employee) {
             return response()->json([
