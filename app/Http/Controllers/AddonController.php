@@ -7,6 +7,8 @@ use App\Repositories\AddonRepositoryInterface;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Addon;
+
 
 class AddonController extends BaseController
 {
@@ -17,6 +19,40 @@ class AddonController extends BaseController
         parent::__construct($repository);
         $this->repository = $repository;
     }
+    private function localizedText(?string $text): ?string
+{
+    if (!$text) {
+        return null;
+    }
+
+    $lang = request()->query('lang')
+        ?? request()->header('Accept-Language', 'en');
+
+    if (!str_contains($text, '|')) {
+        return $text;
+    }
+
+    [$ar, $en] = array_map('trim', explode('|', $text, 2));
+
+    return strtolower($lang) === 'ar' ? $ar : $en;
+}
+
+
+
+public function index(Request $request)
+{
+    $perPage = $request->query('per_page', 15);
+
+    $addons = Addon::paginate($perPage);
+
+    $addons->getCollection()->transform(function ($addon) {
+        $addon->name = $this->localizedText($addon->name);
+        $addon->description = $this->localizedText($addon->description);
+        return $addon;
+    });
+
+    return AddonResource::collection($addons);
+}
 
     public function store(Request $request)
     {

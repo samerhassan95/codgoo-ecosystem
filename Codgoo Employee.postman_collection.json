@@ -1,0 +1,819 @@
+{
+	"info": {
+		"_postman_id": "b4f70701-f5c6-419f-a5cd-b9f93e455b07",
+		"name": "Codgoo Employee",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32774630"
+	},
+	"item": [
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"login\": \"01019011276\",\r\n    \"password\": \"Zahra212001\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/api/employee/login",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"employee",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "zahra",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "phone",
+							"value": "01019011272",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "Zahra212001",
+							"type": "text"
+						},
+						{
+							"key": "name",
+							"value": "zahra",
+							"type": "text"
+						},
+						{
+							"key": "email",
+							"value": "fatmamohame212@gmail.com",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "/C:/Users/Zahra Osman/Downloads/276e801770.jpg",
+							"disabled": true
+						},
+						{
+							"key": "cover_photo",
+							"type": "file",
+							"src": "/C:/Users/Zahra Osman/Downloads/-260nw-2301864831.jpg",
+							"disabled": true
+						},
+						{
+							"key": "website",
+							"value": "https://codgoo.com/",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "address",
+							"value": "123 Doe Street",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "city",
+							"value": "assiut",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "country",
+							"value": "egypt",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "role",
+							"value": "ui_ux",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://crm.codgoo.com/api/employee/register",
+					"protocol": "https",
+					"host": [
+						"crm",
+						"codgoo",
+						"com"
+					],
+					"path": [
+						"api",
+						"employee",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Employee Profile",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "••••••"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "new_username",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "email",
+							"value": "new_email@example.com",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "phone",
+							"value": "+1234567890",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "name",
+							"value": "zahra othman",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "/C:/Users/Zahra Osman/Downloads/images.png"
+						},
+						{
+							"key": "intro",
+							"value": "about me",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/employee/update-profile",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"employee",
+						"update-profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Document",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "••••••"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "employee_id",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "document_type_id",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/Zahra Osman/Downloads/1871744034959.png"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/employee/employee-documents",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"employee",
+						"employee-documents"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Documents for Employee",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "••••••"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "new_username",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "email",
+							"value": "new_email@example.com",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "phone",
+							"value": "+1234567890",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "name",
+							"value": "zahra othman",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "/C:/Users/Zahra Osman/Downloads/images.png"
+						},
+						{
+							"key": "intro",
+							"value": "about me",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8000/api/employee/employee-documents/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"employee",
+						"employee-documents",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Documents Types",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "••••••"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "new_username",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "email",
+							"value": "new_email@example.com",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "phone",
+							"value": "+1234567890",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "name",
+							"value": "zahra othman",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": "/C:/Users/Zahra Osman/Downloads/images.png"
+						},
+						{
+							"key": "intro",
+							"value": "about me",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/api/employee/document-types",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"employee",
+						"document-types"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Document with ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "••••••"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/api/employee/employee-documents/show/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"employee",
+						"employee-documents",
+						"show",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Document with ID",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "••••••"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8000/api/employee/employee-documents/5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"employee",
+						"employee-documents",
+						"5"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "verify-otp",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "otp",
+							"value": "1234",
+							"type": "text"
+						},
+						{
+							"key": "phone",
+							"value": "01019011272",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url_local}}/api/employee/verify-otp",
+					"host": [
+						"{{url_local}}"
+					],
+					"path": [
+						"api",
+						"employee",
+						"verify-otp"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "forgot-password",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "otp",
+							"value": "1234",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "phone",
+							"value": "01019011271",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{local_url}}/api/employee/forgot-password",
+					"host": [
+						"{{local_url}}"
+					],
+					"path": [
+						"api",
+						"employee",
+						"forgot-password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "verify-otp-and-reset-password",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "otp",
+							"value": "1234",
+							"type": "text"
+						},
+						{
+							"key": "phone",
+							"value": "01012057636",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "newpassword123",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "password_confirmation",
+							"value": "newpassword123",
+							"type": "text",
+							"disabled": true
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/api/client/verify-otp-and-reset-password",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"client",
+						"verify-otp-and-reset-password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "reset-password",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "phone",
+							"value": "01012057636",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "Zahra212001",
+							"type": "text"
+						},
+						{
+							"key": "password_confirmation",
+							"value": "Zahra212001",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/api/client/reset-password",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"client",
+						"reset-password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "change-password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "new_password",
+							"value": "password123",
+							"type": "text"
+						},
+						{
+							"key": "new_password_confirmation",
+							"value": "password123",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/api/client/change-password",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"client",
+						"change-password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "verify-change-phone",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "otp",
+							"value": "1234",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/api/client/verify-change-phone",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"client",
+						"verify-change-phone"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "change-phone-request",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "new_phone",
+							"value": "01019011277",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/api/client/change-phone-request",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"client",
+						"change-phone-request"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get profile",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url_local}}/api/employee/profile",
+					"host": [
+						"{{url_local}}"
+					],
+					"path": [
+						"api",
+						"employee",
+						"profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "log out",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/client/logout",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"client",
+						"logout"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwMDAvYXBpL2VtcGxveWVlL2xvZ2luIiwiaWF0IjoxNzQ5OTAzOTkzLCJleHAiOjE3NTI0OTU5OTMsIm5iZiI6MTc0OTkwMzk5MywianRpIjoiYXdnVGM5a3hzUUNmaE5NWiIsInN1YiI6IjExIiwicHJ2IjoiMzI5NjNhNjA2YzJmMTcxZjFjMTQzMzFlNzY5NzY2Y2Q1OTEyZWQxNSIsInR5cGUiOiJlbXBsb3llZSJ9.OUbKP3JxT2SzVhw7NP5YE4MTHV26jkDC7XwqN_oeEuw",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url_local",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "url",
+			"value": "https://crm.codgoo.com",
+			"type": "string"
+		}
+	]
+}

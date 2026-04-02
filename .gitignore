@@ -21,3 +21,29 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Additional ignores for server deployment
+/public/attachments/*
+/public/client_photos/*
+/public/discussion_files/*
+/public/tickets/*
+/public/ticket_replies/*
+/public/product_images/*
+/public/product_media/*
+/public/slider_products/*
+/public/galleries/*
+/public/media/*
+/public/storage_backup/*
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/app/public/*
+/bootstrap/cache/*.php
+public/info.php
+slug
+public/untitled file
+
+# Security - JWT Keys (IMPORTANT: Never commit these!)
+/storage/keys/*.pem
+!/storage/keys/.gitkeep

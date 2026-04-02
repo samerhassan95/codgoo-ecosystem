@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TicketReplyRequest;
@@ -10,6 +11,7 @@ use App\Models\TicketReply;
 use App\Repositories\NotificationRepository;
 use App\Repositories\TicketReplyRepositoryInterface;
 use App\Services\FirebaseService;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -19,46 +21,85 @@ class TicketReplyController extends BaseController
     private $firebaseService;
     private $notificationRepository;
 
-    public function __construct(TicketReplyRepositoryInterface $repository, FirebaseService $firebaseService, NotificationRepository $notificationRepository)
-    {
+    public function __construct(
+        TicketReplyRepositoryInterface $repository,
+        FirebaseService $firebaseService,
+        NotificationRepository $notificationRepository
+    ) {
         parent::__construct($repository);
         $this->repository = $repository;
         $this->firebaseService = $firebaseService;
         $this->notificationRepository = $notificationRepository;
     }
 
+    /**
+     * Store new reply
+     */
     public function store(Request $request)
     {
         $creator = $request->user();
-
+        
         $validated = $request->validate([
             'ticket_id' => 'required|exists:tickets,id',
-            'reply' => 'required|string',
+            'reply' => 'nullable|string',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
-        $ticketReply = new TicketReply();
-        $ticketReply->ticket_id = $validated['ticket_id'];
-        $ticketReply->reply = $validated['reply'];
-        $ticketReply->creator_id = $creator->id;
-        $ticketReply->creator_type = get_class($creator);
-        $ticketReply->save();
-
+        // Check if user owns the ticket
         $ticket = Ticket::find($validated['ticket_id']);
-
-        if ($creator instanceof Admin && $ticket) {
-            $ticket->status = 'answered';
-            $ticket->save();
-
-            $this->sendTicketAnsweredNotification($ticket);
+        
+        if (!$creator instanceof Admin && $ticket->created_by !== $creator->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized to reply to this ticket.'
+            ], 403);
         }
 
-        return new TicketReplyResource($ticketReply);
+        // Handle attachments
+    $attachments = [];
+    if ($request->hasFile('attachments')) {
+        foreach ($request->file('attachments') as $file) {
+            // Save in storage/app/public/ticket_replies
+            $path = $file->store('ticket_replies', 'public');
+            $attachments[] = $path;
+        }
     }
 
+$ticketReply = new TicketReply();
+$ticketReply->ticket_id = $validated['ticket_id'];
+$ticketReply->reply = $validated['reply'] ?? null;
+
+$ticketReply->creator_id = $creator->id;
+$ticketReply->creator_type = get_class($creator);
+$ticketReply->attachments = $attachments ?: null;
+$ticketReply->save();
+
+        // Update ticket status
+        if ($creator instanceof Admin) {
+            $ticket->status = 'answered';
+            $ticket->save();
+            $this->sendTicketAnsweredNotification($ticket);
+        } else {
+            // Client replied - set to open
+            $ticket->status = 'open';
+            $ticket->save();
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Reply added successfully.',
+            'data' => new TicketReplyResource($ticketReply)
+        ], 201);
+    }
+
+    /**
+     * Send notification when admin answers
+     */
     private function sendTicketAnsweredNotification(Ticket $ticket)
     {
         $client = $ticket->client;
-
+        
         if (!$client || !$client->device_token) {
             Log::warning('Client not found or has no device token for ticket notification.', [
                 'ticket_id' => $ticket->id,
@@ -67,8 +108,8 @@ class TicketReplyController extends BaseController
             return;
         }
 
-        // **إحضار قالب الإشعار من قاعدة البيانات**
         $template = NotificationTemplate::where('type', 'ticket_answered')->first();
+        
         if (!$template) {
             Log::error('Notification template "ticket_answered" not found.');
             return;
@@ -76,8 +117,8 @@ class TicketReplyController extends BaseController
 
         $title = $template->title;
         $message = str_replace(
-            ['{ticket_id}'],
-            [$ticket->id],
+            ['{ticket_id}', '{ticket_subject}'],
+            [$ticket->id, $ticket->subject],
             $template->message
         );
 
@@ -87,11 +128,24 @@ class TicketReplyController extends BaseController
         ];
 
         try {
-            $this->firebaseService->sendNotification($client->device_token, $title, $message, $dataPayload);
-
-            $this->notificationRepository->createNotification($client, $title, $message, $client->device_token, 'ticket_answered');
-
-            Log::info('Ticket answered notification sent successfully.', ['client_id' => $client->id]);
+            $this->firebaseService->sendNotification(
+                $client->device_token,
+                $title,
+                $message,
+                $dataPayload
+            );
+            
+            $this->notificationRepository->createNotification(
+                $client,
+                $title,
+                $message,
+                $client->device_token,
+                'ticket_answered'
+            );
+            
+            Log::info('Ticket answered notification sent successfully.', [
+                'client_id' => $client->id
+            ]);
         } catch (\Exception $e) {
             Log::error('Error sending ticket answered notification: ' . $e->getMessage());
         }

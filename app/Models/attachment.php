@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class attachment extends Model
+class Attachment extends Model
 {
     protected $fillable = ['file_path', 'uploaded_by_id', 'uploaded_by_type'];
 

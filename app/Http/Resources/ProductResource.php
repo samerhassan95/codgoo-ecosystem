@@ -28,6 +28,8 @@ class ProductResource extends JsonResource
             'addons' => $addons,
             'image' => $this->image ? asset($this->image) : null,
             'total_price' => $totalPrice,
+            'background_image' => $this->background_image ? asset('uploads/products/' . $this->background_image) : null,
+            'type' => $this->type,
             'attachments' => $this->attachments->map(function ($attachment) {
                 return [
                     'file_path' => asset($attachment->file_path),

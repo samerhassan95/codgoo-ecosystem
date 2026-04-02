@@ -80,8 +80,8 @@ use App\Repositories\TaskAssignmentRepository;
 use App\Repositories\TaskAssignmentRepositoryInterface;
 use App\Repositories\ProjectGeneralNoteRepository;
 use App\Repositories\ProjectGeneralNoteRepositoryInterface;
-use app\Repositories\AddressRepository;
-use app\Repositories\AddressRepositoryInterface;
+use App\Repositories\AddressRepository;
+use App\Repositories\AddressRepositoryInterface;
 use App\Repositories\ScreenRepository;
 use App\Repositories\ScreenRepositoryInterface;
 use App\Repositories\RequestedApiRepository;
@@ -94,6 +94,8 @@ use App\Repositories\AchievementRepository;
 use App\Repositories\AchievementRepositoryInterface;
 use App\Repositories\AttendanceRepository;
 use App\Repositories\AttendanceRepositoryInterface;
+use App\Repositories\AttendanceSessionRepository;
+use App\Repositories\AttendanceSessionRepositoryInterface;
 use App\Models\Screen;
 use App\Observers\ScreenObserver;
 use App\Models\HolidayRequest;
@@ -151,6 +153,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ImplementedApiReviewRepositoryInterface::class, ImplementedApiReviewRepository::class);
         $this->app->bind(AchievementRepositoryInterface::class, AchievementRepository::class);
         $this->app->bind(AttendanceRepositoryInterface::class, AttendanceRepository::class);
+        $this->app->bind(AttendanceSessionRepositoryInterface::class, AttendanceSessionRepository::class);
         $this->app->bind(OvertimeRequestRepositoryInterface::class, OvertimeRequestRepository::class);
         $this->app->bind(HolidayRequestTypeRepositoryInterface::class, HolidayRequestTypeRepository::class);
 

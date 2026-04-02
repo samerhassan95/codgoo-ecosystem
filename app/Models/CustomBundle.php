@@ -4,26 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany; // 💡 Import for clarity
 
 class CustomBundle extends Model
 {
     use HasFactory;
 
-    // CustomBundles can't be soft deleted, but its pivot entries can.
     protected $fillable = [
         'customer_id',
         'bundle_package_id',
-        'total_price_amount',
-        'total_price_currency',
+        'bundle_price_id',
         'status',
         'purchased_at',
-        'expires_at',
+        'attachment_url',
+        'requested_app_ids',
     ];
 
     protected $casts = [
         'total_price_amount' => 'integer',
         'purchased_at' => 'datetime',
-        'expires_at' => 'datetime',
+        'requested_app_ids'=>'array',
     ];
 
     /**
@@ -39,36 +39,70 @@ class CustomBundle extends Model
      */
     public function customer()
     {
-        // Assuming your user model is App\Models\User
-        return $this->belongsTo(User::class);
+        // NOTE: Adjust the model reference if your customer model is named Client, not User.
+        return $this->belongsTo(Client::class);
     }
 
-    /**
-     * Relationship: Get all Service Apps included in this custom bundle.
-     */
-    public function applications()
-    {
-        return $this->belongsToMany(
-            ServiceApp::class,
-            'custom_bundle_service_app'
-        )
-            ->withTimestamps()
-            ->using(CustomBundleServiceApp::class) // 💡 This tells Eloquent to use your custom class
-            ->wherePivotNull('deleted_at');
+
+public function getExpiresAtAttribute()
+{
+    // Dynamically calculate expiration from purchased_at + price duration
+    if ($this->price && $this->purchased_at) {
+        return $this->purchased_at->copy()->addDays($this->price->duration_days);
     }
+    return null;
+}
+
+public function getIsActiveAttribute()
+{
+    $expiresAt = $this->expires_at;
+    return $this->status === 'active' && $expiresAt && now()->lt($expiresAt);
+}
+    /**
+     * Relationship: Get all Service Apps currently included in this custom bundle.
+     * * 🟢 MODIFICATION: Added withPivot() to retrieve the deep link URL.
+     */
+public function applicationsPivot(): BelongsToMany
+{
+    return $this->belongsToMany(
+        ServiceApp::class,
+        'custom_bundle_service_app',
+        'custom_bundle_id',
+        'service_app_id'
+    )
+    ->withTimestamps()
+    ->withPivot(['external_profile_url', 'deleted_at']);
+}
+
+// Used for reading apps (filters out soft-deleted pivots)
+public function applications(): BelongsToMany
+{
+    return $this->applicationsPivot()->wherePivotNull('deleted_at');
+}
 
     /**
      * Relationship: Get all Service Apps that were ever part of this custom bundle.
-     * This is useful for history and the DELETE endpoint.
      */
-    public function allApplications()
+    public function allApplications(): BelongsToMany
     {
         return $this->belongsToMany(
             ServiceApp::class,
             'custom_bundle_service_app'
         )
             ->withTimestamps()
+            ->withPivot([
+                'external_profile_url', // 🔑 REQUIRED: Fetch the deep link URL
+            ])
             ->using(CustomBundleServiceApp::class)
-            ->withTrashed(); // Include soft-deleted (removed) apps
+            ->withTrashed();
     }
+    
+    public function payment()
+{
+    return $this->morphOne(Payment::class, 'payable');
+}
+public function price()
+{
+    return $this->belongsTo(BundlePackagePrice::class, 'bundle_price_id');
+}
 }

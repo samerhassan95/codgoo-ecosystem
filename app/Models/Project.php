@@ -3,12 +3,33 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Admin;
 use App\Models\Client;
+use App\Models\Attachment;
 class Project extends Model
 {
     use HasFactory;
+    
+    protected $fillable = [
+    'client_id',
+    'name',
+    'description',
+    'category_id',
+    'start_time',
+    'end_time',
+    'price',
+    'status',
+    'product_id',
+];
+
+protected $casts = [
+    'product_id' => 'integer',
+    'price' => 'float',
+    'total_price' => 'float',
+    'completion_percentage' => 'integer',
+];
 
     protected $guarded = [];
 
@@ -29,7 +50,7 @@ class Project extends Model
 
     public function attachments()
     {
-        return $this->morphMany(attachment::class, 'attachable');
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 
     public function addons()
@@ -95,6 +116,11 @@ class Project extends Model
         }
     }
 
+
+     public function proposals()
+    {
+        return $this->hasMany(Proposal::class);
+    }
     public function contract()
     {
         return $this->hasOne(Contract::class);
@@ -105,4 +131,9 @@ class Project extends Model
         return $this->hasMany(Meeting::class);
     }
 
+
+public function banners()
+{
+    return $this->hasMany(ProjectBanner::class)->orderBy('order');
+}
 }

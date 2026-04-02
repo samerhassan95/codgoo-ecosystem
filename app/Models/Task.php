@@ -13,6 +13,10 @@ class Task extends Model
     {
         return $this->belongsTo(Milestone::class);
     }
+    public function project()
+{
+    return $this->belongsTo(Project::class);
+}
 
     public function assignedEmployee()
     {

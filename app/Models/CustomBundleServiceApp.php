@@ -11,12 +11,17 @@ class CustomBundleServiceApp extends Pivot // 💡 FIX IS HERE
 {
     use SoftDeletes;
 
-    // The table name is required when using a custom pivot model
     protected $table = 'custom_bundle_service_app';
 
-    // You may need to specify the primary keys if they are not the default 'id'
+    // 🎯 CRITICAL FIX 1: Define the composite keys from your migration
     protected $primaryKey = ['custom_bundle_id', 'service_app_id'];
 
-    // Make the keys public if you are using composite keys
+    // 🎯 CRITICAL FIX 2: Since the primary key is composite, disable auto-increment
     public $incrementing = false;
+
+    protected $fillable = [
+        'custom_bundle_id',
+        'service_app_id',
+        'external_profile_url', // Must be fillable for updates
+    ];
 }

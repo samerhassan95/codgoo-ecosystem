@@ -15,7 +15,9 @@ class SliderRequest extends FormRequest
     {
         return [
             'product_id' => 'nullable|exists:products,id',
-            'image' => 'required|image|max:10240', 
+            'image'      => 'required|array', 
+        // Validate each item inside the array is a file
+        'image.*'    => 'image|max:10240',
         
         ];
     }

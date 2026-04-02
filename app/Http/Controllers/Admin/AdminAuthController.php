@@ -67,125 +67,240 @@ class AdminAuthController extends Controller
         return response()->json([
             'status' => true,
             'code' => 200,
+             "device_token" => $request->device_token,
             'message' => "Admin account created successfully",
         ], 200);
     }
     
-    public function login(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'login' => 'required',
-            'password' => 'required',
+    // public function login(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'email' => 'required',
+    //         'password' => 'required',
+    //         'device_token' => 'nullable|string',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             "status" => false,
+    //             'code' => 402,
+    //             'message' => $validator->errors()->first(),
+    //             'data' => null,
+    //         ], 402);
+    //     }
+
+    //     $client = Client::where('email', $request->email)
+    //                     // ->orWhere('username', $request->login)
+    //                     ->first();
+
+    //     if ($client) {
+    //         $credentials = ['password' => $request->password];
+
+    //         if ($client->email == $request->email) {
+    //             $credentials['email'] = $request->email;}
+    //         // } else {
+    //         //     $credentials['username'] = $request->login;
+    //         // }
+
+    //         try {
+    //             if (!$token = auth('client')->attempt($credentials)) {
+    //                 return response()->json([
+    //                     'status' => false,
+    //                     'code' => 401,
+    //                     'message' => __('The phone/username or password is incorrect'),
+    //                     'data' => null,
+    //                 ], 401);
+    //             }
+
+    //             $client->update(['device_token' => $request->device_token]);
+
+    //             $data = $client->toArray();
+    //             $data['token'] = $token;
+    //             $data['photo'] = $client->photo ? asset($client->photo) : null;
+    //             $data['type'] = 'client';
+
+    //             return response()->json([
+    //                 'status' => true,
+    //                 'code' => 200,
+    //                 'message' => __('Client login successful'),
+    //                 'data' => $data,
+    //             ], 200);
+
+    //         } catch (JWTException $e) {
+    //             return response()->json([
+    //                 'status' => false,
+    //                 'code' => 500,
+    //                 'message' => __('Server error, please try again later'),
+    //                 'data' => null,
+    //             ], 500);
+    //         }
+    //     }
+
+    //     $admin = Admin::where('email', $request->email)
+    //                 // ->orWhere('username', $request->login)
+    //                 ->first();
+
+    //     if ($admin) {
+    //         $credentials = ['password' => $request->password];
+
+    //         if ($admin->email == $request->email) {
+    //             $credentials['email'] = $request->email;}
+    //         // } else {
+    //         //     $credentials['username'] = $request->login;
+    //         // }
+
+    //         try {
+    //             if (!$token = auth('admin')->attempt($credentials)) {
+    //                 return response()->json([
+    //                     'status' => false,
+    //                     'code' => 401,
+    //                     'message' => __('The phone/username or password is incorrect'),
+    //                     'data' => null,
+    //                 ], 401);
+    //             }
+
+    //             $admin->update(['device_token' => $request->device_token]);
+
+    //             $data = $admin->toArray();
+    //             $data['token'] = $token;
+    //             $data['type'] = 'admin';
+
+    //             return response()->json([
+    //                 'status' => true,
+    //                 'code' => 200,
+    //                 'message' => __('Admin login successful'),
+    //                 'data' => $data,
+    //             ], 200);
+
+    //         } catch (JWTException $e) {
+    //             return response()->json([
+    //                 'status' => false,
+    //                 'code' => 500,
+    //                 'message' => __('Server error, please try again later'),
+    //                 'data' => null,
+    //             ], 500);
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'status' => false,
+    //         'message' => __('The email/password does not exist'),
+    //     ], 404);
+    // }
+
+public function login(Request $request)
+{
+    $validator = Validator::make(
+        $request->all(),
+        [
+            'email' => 'required|email',
+            'password' => 'required|min:6',
             'device_token' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                "status" => false,
-                'code' => 402,
-                'message' => $validator->errors()->first(),
-                'data' => null,
-            ], 402);
-        }
-
-        $client = Client::where('phone', $request->login)
-                        ->orWhere('username', $request->login)
-                        ->first();
-
-        if ($client) {
-            $credentials = ['password' => $request->password];
-
-            if ($client->phone == $request->login) {
-                $credentials['phone'] = $request->login;
-            } else {
-                $credentials['username'] = $request->login;
-            }
-
-            try {
-                if (!$token = auth('client')->attempt($credentials)) {
-                    return response()->json([
-                        'status' => false,
-                        'code' => 401,
-                        'message' => __('The phone/username or password is incorrect'),
-                        'data' => null,
-                    ], 401);
-                }
-
-                $client->update(['device_token' => $request->device_token]);
-
-                $data = $client->toArray();
-                $data['token'] = $token;
-                $data['type'] = 'client';
-
-                return response()->json([
-                    'status' => true,
-                    'code' => 200,
-                    'message' => __('Client login successful'),
-                    'data' => $data,
-                ], 200);
-
-            } catch (JWTException $e) {
-                return response()->json([
-                    'status' => false,
-                    'code' => 500,
-                    'message' => __('Server error, please try again later'),
-                    'data' => null,
-                ], 500);
-            }
-        }
-
-        $admin = Admin::where('phone', $request->login)
-                    ->orWhere('username', $request->login)
-                    ->first();
-
-        if ($admin) {
-            $credentials = ['password' => $request->password];
-
-            if ($admin->phone == $request->login) {
-                $credentials['phone'] = $request->login;
-            } else {
-                $credentials['username'] = $request->login;
-            }
-
-            try {
-                if (!$token = auth('admin')->attempt($credentials)) {
-                    return response()->json([
-                        'status' => false,
-                        'code' => 401,
-                        'message' => __('The phone/username or password is incorrect'),
-                        'data' => null,
-                    ], 401);
-                }
-
-                $admin->update(['device_token' => $request->device_token]);
-
-                $data = $admin->toArray();
-                $data['token'] = $token;
-                $data['type'] = 'admin';
-
-                return response()->json([
-                    'status' => true,
-                    'code' => 200,
-                    'message' => __('Admin login successful'),
-                    'data' => $data,
-                ], 200);
-
-            } catch (JWTException $e) {
-                return response()->json([
-                    'status' => false,
-                    'code' => 500,
-                    'message' => __('Server error, please try again later'),
-                    'data' => null,
-                ], 500);
-            }
-        }
-
+            'device' => 'nullable|string',
+        ],
+        [
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 6 characters.',
+        ]
+    );
+    
+    if ($validator->fails()) {
         return response()->json([
             'status' => false,
-            'message' => __('The phone/username does not exist'),
-        ], 404);
+            'code' => 422,
+            'message' => 'Validation error',
+            'errors' => $validator->errors(),
+        ], 422);
     }
 
+    $invalidCredentialsResponse = response()->json([
+        'status' => false,
+        'code' => 401,
+        'message' => 'Invalid email or password.',
+        'data' => null,
+    ], 401);
+    
+    // ================= Client =================
+    $client = Client::where('email', $request->email)->first();
+    if ($client) {
+        try {
+            // Set TTL: 10 years for mobile, default for web
+            if ($request->device === 'mobile') {
+                auth('client')->factory()->setTTL(525600 * 10); // 10 years in minutes
+            }
+            
+            if (!$token = auth('client')->attempt([
+                'email' => $request->email,
+                'password' => $request->password
+            ])) {
+                return $invalidCredentialsResponse;
+            }
+            
+            $client->update(['device_token' => $request->device_token]);
+            
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Client login successful.',
+                'data' => [
+                    ...$client->toArray(),
+                    'token' => $token,
+                    'photo' => $client->photo ? asset($client->photo) : null,
+                    'type' => 'client',
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Server error, please try again later.',
+                'data' => null,
+            ], 500);
+        }
+    }
+    
+    // ================= Admin =================
+    $admin = Admin::where('email', $request->email)->first();
+    if ($admin) {
+        try {
+            // Set TTL: 10 years for mobile, default for web
+            if ($request->device === 'mobile') {
+                auth('admin')->factory()->setTTL(525600 * 10); // 10 years in minutes
+            }
+            
+            if (!$token = auth('admin')->attempt([
+                'email' => $request->email,
+                'password' => $request->password
+            ])) {
+                return $invalidCredentialsResponse;
+            }
+            
+            $admin->update(['device_token' => $request->device_token]);
+            
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Admin login successful.',
+                'data' => [
+                    ...$admin->toArray(),
+                    'token' => $token,
+                    'type' => 'admin',
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Server error, please try again later.',
+                'data' => null,
+            ], 500);
+        }
+    }
+    
+    return $invalidCredentialsResponse;
+}
 
 
 

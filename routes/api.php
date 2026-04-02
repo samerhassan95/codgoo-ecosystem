@@ -7,26 +7,78 @@ use App\Http\Controllers\Employee\EmployeeAuthController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Broadcast;
+use App\Http\Controllers\ServicesAppController;
+use App\Http\Controllers\MarketplaceController;
+use App\Http\Controllers\BusinessAppSubscriptionController;// Use the combined controller
+// use GPBMetadata\Google\Api\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth as FacadesAuth;
+use Illuminate\Support\Str;
+// use App\Http\Controllers\BusinessAppSubscriptionController;
 
 use App\Models\TaskDiscussionMessage;
+use App\Http\Controllers\TaskDiscussionController;
 use App\Models\Employee;
+
+
 
 Route::prefix('admin')->group(function () {
     Route::post('register', [AdminAuthController::class, 'register']);
     Route::post('logout', [AdminAuthController::class, 'logout']);
     Route::post('forgot-password', [AdminAuthController::class, 'forgotPassword']);
+Route::post('Marketplace/custom-bundles/{customBundle}/approve', [MarketplaceController::class, 'approveOfflineSubscription']);
+    Route::post(
+        'business-apps/subscriptions/{subscription}/approve',
+        [BusinessAppSubscriptionController::class, 'approve']
+    );
 });
 
+
+Route::get('/business-app-plans', [BusinessAppSubscriptionController::class, 'getAllPlans']);
+        ////admin approve
+
 Route::prefix('client')->group(function () {
-    Route::post('register', [ClientAuthController::class, 'register']);
-    // Route::post('login', [ClientAuthController::class, 'login']);
-    Route::post('logout', [ClientAuthController::class, 'logout']);
     Route::post('verify-otp', [ClientAuthController::class, 'verifyOtpAndCreateClient']);
     Route::post('forgot-password', [ClientAuthController::class, 'forgotPasswordRequest']);
     Route::post('verify-otp-and-reset-password', [ClientAuthController::class, 'verifyOtp']);
     Route::post('reset-password', [ClientAuthController::class, 'resetPassword']);
+    Route::post('login', [ClientAuthController::class, 'login'])->name('login');
+    Route::post('register', [ClientAuthController::class, 'register']);
+    Route::post('logout', [ClientAuthController::class, 'logout']);
+
+    Route::prefix('Marketplace')->middleware('client')->group(function () {
+
+        Route::get('ServicesApps', [ServicesAppController::class, 'index']);
+        Route::get('packages', [MarketplaceController::class, 'indexPackages']);
+        Route::get('packages/{package}', [MarketplaceController::class, 'showPackage']);
+        Route::get('packagesComparison', [MarketplaceController::class, 'comparison']);
+
+        Route::post('BuildBundle', [MarketplaceController::class, 'storeCustomBundle']);
+        Route::post('/bundles/{bundleId}/attach-apps', [MarketplaceController::class, 'attachAppsToBundle']);
+        Route::get('Bundle/{bundle}', [MarketplaceController::class, 'showCustomBundle']);
+Route::patch('Bundle/{bundlePackageId}', [MarketplaceController::class, 'updateCustomBundle']);
+        Route::delete('bundle/{bundle}/applications/{appId}', [MarketplaceController::class, 'destroyApplication']);
+        Route::get('launchApp/{app}', [MarketplaceController::class, 'launchApp'])->name('marketplace.launchApp');
+        
+        Route::get('applications',[MarketplaceController::class, 'mySubscribedApps']);
+        Route::post('custom-bundles/{customBundleId}/upload-attachment',[MarketplaceController::class, 'uploadPaymentAttachment'])->name('marketplace.uploadAttachment');
+        
+        
+        
+        
+        Route::post('bundles/paypal',[MarketplaceController::class, 'subscribeBundleWithPaypal']);
+        //////////////////bussiness apps subscription
+        Route::post('business-apps/subscribe', [BusinessAppSubscriptionController::class, 'subscribe']);
+        Route::post('business-apps/{subscription}/upload-payment', [BusinessAppSubscriptionController::class, 'uploadPayment']);
+
+                    // Route::post('custom-bundles/{customBundleId}/approve',[MarketplaceController::class, 'approveOfflineSubscription']);
+
+    });
 });
 
 
@@ -51,8 +103,8 @@ Route::prefix('employee')->group(function () {
 //     return 'Email has been sent!';
 // });
 Route::post('send-chat-notification', [NotificationController::class, 'sendChatNotification']);
-Route::get('payment/success', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
-Route::get('payment/cancel', [PaymentController::class, 'paymentCancel'])->name('payment.cancel');
+// Route::get('payment/success', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
+// Route::get('payment/cancel', [PaymentController::class, 'paymentCancel'])->name('payment.cancel');
 Route::post('opay/callback', [PaymentController::class, 'opayCallback'])->name('opay.callback');
 
 
@@ -64,7 +116,7 @@ Route::get('/pusher-test', function () {
         'message'     => 'Test message from route /pusher-test',
     ]);
 
-    \Log::info('Broadcasting test message', ['message_id' => $message->id]);
+    Log::info('Broadcasting test message', ['message_id' => $message->id]);
 
     broadcast(new TaskMessageSent($message))->toOthers();
 
@@ -82,26 +134,62 @@ Route::post('/broadcasting/auth', function (Illuminate\Http\Request $request) {
 })->middleware('auth:employee');
 
 
-use App\Http\Controllers\ServicesAppController;
-use App\Http\Controllers\MarketplaceController; // Use the combined controller
 
-Route::prefix('Marketplace')->group(function () {
-    // 1 - Services Apps
-    Route::get('ServicesApps', [ServicesAppController::class, 'index']);
 
-    // 2, 3, 8 - Bundle Packages
-    Route::get('packages', [MarketplaceController::class, 'indexPackages']);
-    Route::get('packages/{package}', [MarketplaceController::class, 'showPackage']); // Uses Route Model Binding
-    Route::get('packagesComparison', [MarketplaceController::class, 'comparison']);
 
-    // 4 - Build Custom Bundle
-    Route::post('BuildBundle', [MarketplaceController::class, 'storeCustomBundle']);
 
-    // 5, 7 - Custom Bundle Management
-    Route::get('Bundle/{bundle}', [MarketplaceController::class, 'showCustomBundle']); // Uses Route Model Binding
-    Route::patch('Bundle/{bundle}', [MarketplaceController::class, 'updateCustomBundle']); // Uses Route Model Binding
-});
+// In Marketplace routes/web.php (A regular, session-authenticated route)
 
-// 6 - Remove Application from Bundle
-Route::delete('bundle/{bundle}/applications/{appId}', [MarketplaceController::class, 'destroyApplication']);
-// {bundle} is bound to CustomBundle model via Route Model Binding
+// Route on the MAIN Laravel Application (Marketplace)
+// --- NEW SECURE SSO API ROUTE ---
+// This route is called by the Sub-App to validate the token and get user data.
+// Route::post('/sso/redeem-token', function (Illuminate\Http\Request $request) {
+//     $token = $request->input('token');
+
+//     \Log::info('SSO Token Redemption Request', ['token' => substr($token, 0, 10) . '...']);
+
+//     // 1. Find and validate the token
+//     $ssoToken = DB::table('sso_tokens')
+//         ->where('token', $token)
+//         ->where('expires_at', '>', now())
+//         ->first();
+
+//     if (!$ssoToken) {
+//         \Log::error('SSO Token Invalid or Expired', ['token' => substr($token, 0, 10) . '...']);
+//         return response()->json(['error' => 'Invalid or expired token.'], 401);
+//     }
+
+//     \Log::info('SSO Token Found', [
+//         'token_type' => $ssoToken->token_type,
+//         'client_id' => $ssoToken->client_id
+//     ]);
+
+//     // 2. Fetch required client details
+//     $client = App\Models\Client::find($ssoToken->client_id);
+
+//     if (!$client) {
+//         \Log::error('SSO Client Not Found', ['client_id' => $ssoToken->client_id]);
+//         return response()->json(['error' => 'Client not found.'], 404);
+//     }
+
+//     // 3. Only delete single-use tokens, NOT profile_access tokens
+//     if ($ssoToken->token_type !== 'profile_access') {
+//         DB::table('sso_tokens')->where('token', $token)->delete();
+//         \Log::info('Single-use SSO token deleted');
+//     } else {
+//         \Log::info('Profile access token preserved (long-lived)');
+//     }
+
+//     // 4. Return client data required for provisioning/login
+//     \Log::info('SSO Token Redeemed Successfully', [
+//         'client_id' => $client->id,
+//         'email' => $client->email
+//     ]);
+
+//     return response()->json([
+//         'success' => true,
+//         'main_app_user_id' => $client->id,
+//         'name' => $client->name,
+//         'email' => $client->email,
+//     ]);
+// })->name('sso.token.redeem');

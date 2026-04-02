@@ -16,8 +16,7 @@ return new class extends Migration
             $table->foreignId('service_app_id')->constrained('service_apps')->onDelete('cascade');
 
             $table->primary(['custom_bundle_id', 'service_app_id']);
-
-            // Soft Deletes for the DELETE endpoint (Endpoint 6)
+            $table->string('external_profile_url', 1000)->nullable(); // ✅ CORRECTED LINE            // Soft Deletes for the DELETE endpoint (Endpoint 6)
             // This allows us to track applications that were removed from the bundle.
             $table->softDeletes();
 

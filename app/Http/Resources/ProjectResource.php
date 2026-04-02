@@ -48,6 +48,8 @@ class ProjectResource extends JsonResource
             'addons' => $addons,
             'total_price' => $totalPrice,
             'category' => $this->category,
+        //             'start_time' => $this->start_time,      // ✅ added
+        // 'end_time' => $this->end_time,    
             'attachments' => $this->attachments->map(function ($attachment) {
                 return [
                     'id' => $attachment->id,

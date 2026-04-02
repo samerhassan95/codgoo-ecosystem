@@ -49,7 +49,13 @@ Route::middleware('auth:employee')->group(function () {
     Route::apiResource('addresses', AddressController::class);
     Route::apiResource('screen-reviews', ScreenReviewController::class);
     Route::apiResource('screens', ScreenController::class);
-    Route::apiResource('tasks', TaskController::class);
+    Route::apiResource('tasks', TaskController::class)->names([
+        'index' => 'client.tasks.index',
+        'show' => 'client.tasks.show',
+        // 'store' => 'client.tasks.store',
+        // 'update' => 'client.tasks.update',
+        // 'destroy' => 'client.tasks.destroy',
+    ]);
     Route::apiResource('requested-apis', RequestedApiController::class);
     Route::apiResource('implemented-apis', ImplementedApiController::class);
     Route::apiResource('implemented-api-reviews', ImplementedApiReviewController::class);
@@ -91,11 +97,12 @@ Route::middleware('auth:employee')->group(function () {
     Route::get('employees/search', [EmployeeAuthController::class, 'searchByName']);
     Route::get('holiday-request-types/visible', [HolidayRequestTypeController::class, 'getVisibleTypes']);
     Route::post('employee-achievements', [AchievementController::class, 'store']);
-    Route::get('tasks/{task}/discussion', [TaskDiscussionController::class, 'index']);
-    Route::post('tasks/{task}/discussion/send', [TaskDiscussionController::class, 'send']);
     Route::get('projects/names', [ProjectController::class, 'listNames']);
     Route::get('notifications', [NotificationController::class, 'getNotifications']);
     Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllNotificationsAsRead']);
 
+    // Route::post('tasks/{task}/discussion/send', [TaskDiscussionController::class, 'send']);
 });
+Route::middleware('auth:admin,employee,client')->post('tasks/{task}/discussion/send', [TaskDiscussionController::class, 'send']);
+// Route::middleware('auth:admin,employee,client')->get('tasks/{task}/discussion', [TaskDiscussionController::class, 'index']);

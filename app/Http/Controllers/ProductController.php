@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\ProductRequest;
 use App\Http\Resources\ProductResource;
-use App\Models\Attachment;
+use App\Models\attachment;
 use App\Models\Client;
 use App\Models\NotificationTemplate;
 use App\Models\Product;
@@ -149,134 +149,165 @@ class ProductController extends BaseController
     }
 
 
-    public function show($id)
-    {
-        $product = Product::with(['media', 'attachments', 'addons'])->find($id);
+private function resolveImage($image, string $device = 'web'): ?string
+{
+    if (!$image) return null;
 
+    if ($device === 'mobile') {
+        $info = pathinfo($image);
+        $image = $info['dirname'] . '/' . $info['filename'] . '-mobile.' . $info['extension'];
+    }
 
-        if (!$product) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Product not found.',
-            ], 404);
-        }
+    return asset($image);
+}
 
-        // Manually format the data
-        $data = [
-            'id' => $product->id,
-            'name' => $product->name,
-            'description' => $product->description,
-            'price' => $product->price,
-            'note' => $product->note,
-            'image' => $product->image ? asset($product->image) : null,
-            'created_at' => $product->created_at,
-            'updated_at' => $product->updated_at,
-            'media' => $product->media->map(function ($media) {
-                return [
-                    'id' => $media->id,
-                    'file_path' => asset($media->file_path),
-                    'type' => $media->type,
-                ];
-            }),
-            'attachments' => $product->attachments->map(function ($attachment) {
-                return [
-                    'id' => $attachment->id,
-                    'file_path' => asset($attachment->file_path),
-                ];
-            }),
-            'addons' => $product->addons->map(function ($addon) {
-                return [
-                    'id' => $addon->id,
-                    'name' => $addon->name,
-                    'price' => $addon->price,
-                ];
-            }),
-        ];
+public function show($id)
+{
+    $device = request()->input('device', 'web'); // 👈 no need for Request $request
 
+    $product = Product::with(['media', 'attachments', 'addons'])->find($id);
+
+    if (!$product) {
         return response()->json([
-            'status' => true,
-            'data' => $data,
-        ], 200);
+            'status' => false,
+            'message' => 'Product not found.',
+        ], 404);
     }
 
-
-    public function deleteMedia($productId, $mediaId)
-    {
-        $product = Product::find($productId);
-
-        if (!$product) {
-            return response()->json(['message' => 'Product not found.'], 404);
-        }
-
-        $media = $product->media()->find($mediaId);
-
-        if (!$media) {
-            return response()->json(['message' => 'Media not found.'], 404);
-        }
-
-        // Delete the media file from storage
-        ImageService::delete($media->file_path);
-
-        // Delete the media record from the database
-        $media->delete();
-
-        return response()->json(['message' => 'Media deleted successfully.'], 200);
-    }
-
-    public function ourProducts(Request $request)
-    {
-        $search = $request->search;
-
-        $products = Product::with([
-                'category:id,name',
-                'addons'
-            ])
-            ->when($search, function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%");
-            })
-            ->select('id', 'name', 'category_id', 'price', 'description')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'name' => $item->name,
-                    'price' => $item->price,
-                    'description' => $item->description,
-                    'image' => $item->media->first()->file_name ?? null,
-                    'category_name' => $item->category->name ?? null,
-                ];
-            });
-
-        $sliders = Slider::with([
-                'product' => function ($q) {
-                    $q->select('id', 'name', 'category_id', 'price', 'description')
-                    ->with(['category:id,name']);
-                }
-            ])
-            ->get()
-            ->map(function ($slider) {
-
-            $product = $slider->product; 
-
+    $data = [
+        'id'               => $product->id,
+        'name'             => $product->name,
+        'description'      => $this->localizedText($product->description),
+        'price'            => $product->price,
+        'note'             => $product->note,
+        'image'            => $this->resolveImage($product->image, $device),
+        'background_image' => $product->background_image,
+        'type'             => $product->type,
+        'created_at'       => $product->created_at,
+        'updated_at'       => $product->updated_at,
+        'media'            => $product->media->map(function ($media) {
             return [
-                'id' => $slider->id,
-                'image' => $slider->image ? url($slider->image) : null,
+                'id'        => $media->id,
+                'file_path' => $media->file_path ? asset($media->file_path) : null,
+                'type'      => $media->type,
+            ];
+        }),
+        'attachments'      => $product->attachments->map(function ($attachment) {
+            return [
+                'id'        => $attachment->id,
+                'file_path' => asset($attachment->file_path),
+            ];
+        }),
+        'addons'           => $product->addons->map(function ($addon) {
+            return [
+                'id'          => $addon->id,
+                'name'        => $addon->name,
+                'price'       => $addon->price,
+                'description' => $this->localizedText($addon->description),
+            ];
+        }),
+    ];
 
-                'product' => $product ? [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                ] : null
+    return response()->json([
+        'status' => true,
+        'data'   => $data,
+    ], 200);
+}
+
+public function deleteMedia($productId, $mediaId)
+{
+    $product = Product::find($productId);
+
+    if (!$product) {
+        return response()->json(['message' => 'Product not found.'], 404);
+    }
+
+    $media = $product->media()->find($mediaId);
+
+    if (!$media) {
+        return response()->json(['message' => 'Media not found.'], 404);
+    }
+
+    ImageService::delete($media->file_path);
+    $media->delete();
+
+    return response()->json(['message' => 'Media deleted successfully.'], 200);
+}
+
+public function ourProducts(Request $request)
+{
+    $search = $request->search;
+    $device = $request->input('device', 'web');
+
+    $products = Product::with(['category:id,name', 'addons'])
+        ->when($search, function ($q) use ($search) {
+            $q->where('name', 'LIKE', "%{$search}%");
+        })
+        ->select('id', 'name', 'category_id', 'price', 'description', 'background_image', 'type', 'image')
+        ->get()
+        ->map(function ($item) use ($device) {
+            return [
+                'id'               => $item->id,
+                'name'             => $item->name,
+                'price'            => $item->price,
+                'description'      => $this->localizedText($item->description),
+                'image'            => $this->resolveImage($item->image, $device),
+                'category_name'    => $item->category->name ?? null,
+                'background_image' => $item->background_image,
+                'type'             => $item->type,
             ];
         });
 
+    $sliders = Slider::with([
+            'product' => function ($q) {
+                $q->select('id', 'name', 'category_id', 'price', 'description')
+                  ->with(['category:id,name']);
+            }
+        ])
+        ->get()
+        ->map(function ($slider) {
+            $product = $slider->product;
 
+            $firstImage = null;
+            if (is_array($slider->image) && !empty($slider->image)) {
+                $firstImage = url($slider->image[0]);
+            } elseif (is_string($slider->image) && !empty($slider->image)) {
+                $firstImage = url($slider->image);
+            }
 
-        return response()->json([
-            'status' => true,
-            'products' => $products,
-            'sliders' => $sliders,
-        ]);
+            return [
+                'id'      => $slider->id,
+                'image'   => $firstImage,
+                'product' => $product ? [
+                    'id'   => $product->id,
+                    'name' => $product->name,
+                ] : null,
+            ];
+        });
+
+    return response()->json([
+        'status'   => true,
+        'products' => $products,
+        'sliders'  => $sliders,
+    ]);
+}
+private function localizedText(?string $text): ?string
+{
+    if (!$text) {
+        return null;
     }
+
+    $lang = request()->query('lang')
+        ?? request()->header('Accept-Language', 'en');
+
+    if (!str_contains($text, '|')) {
+        return $text;
+    }
+
+    [$ar, $en] = array_map('trim', explode('|', $text, 2));
+
+    return strtolower($lang) === 'ar' ? $ar : $en;
+}
 
 
 }

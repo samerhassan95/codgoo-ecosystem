@@ -2,33 +2,53 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TicketReply extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'ticket_id',
         'reply',
-        'admin_id',
+        'creator_id',
+        'creator_type',
+        'attachments',
     ];
 
-    // Relationship with Ticket
+    protected $casts = [
+        'attachments' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
+     * Get the ticket
+     */
     public function ticket()
     {
         return $this->belongsTo(Ticket::class);
     }
 
-    // // Relationship with Admin
-    // public function admin()
-    // {
-    //     return $this->belongsTo(Admin::class);
-    // }
-
+    /**
+     * Get the creator (polymorphic - can be Admin or Client)
+     */
     public function creator()
     {
         return $this->morphTo();
+    }
+
+    /**
+     * Check if reply is from admin
+     */
+    public function isFromAdmin()
+    {
+        return $this->creator_type === Admin::class;
+    }
+
+    /**
+     * Check if reply is from client
+     */
+    public function isFromClient()
+    {
+        return $this->creator_type === Client::class;
     }
 }

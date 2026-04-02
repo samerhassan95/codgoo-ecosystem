@@ -15,6 +15,8 @@ use Illuminate\Support\Carbon;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FirebaseService;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class InvoiceController extends BaseController
 {
@@ -98,63 +100,172 @@ class InvoiceController extends BaseController
         }
     }
 
+    // public function getInvoicesForProject($projectId, Request $request)
+    // {
+    //     $project = Project::find($projectId);
+
+    //     if (!$project) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Project not found.',
+    //             'data' => null
+    //         ], 404);
+    //     }
+
+    //     // Apply the filters and only include allowed ones
+    //     $invoicesQuery = QueryBuilder::for(Invoice::class)
+    //         ->where('project_id', $projectId)
+    //         ->with('milestone');
+
+    //     // Apply status filter if it's provided in the query string
+    //     $invoicesQuery->allowedFilters([
+    //         'status', // status can be 'paid', 'unpaid', etc.
+    //         'payment_method',
+    //         'due_date',
+    //     ]);
+
+    //     // Get the invoices
+    //     $invoices = $invoicesQuery->get();
+
+    //     if ($invoices->isEmpty()) {
+    //         return response()->json([
+    //             'status' => true,
+    //             'message' => 'No invoices found for this project.',
+    //             'data' => []
+    //         ], 200);
+    //     }
+
+    //     $client = Client::find($project->client_id);
+    //     $creatorName = $client ? $client->name : 'Unknown';
+
+    //     // Transform invoice data for response
+    //     $invoiceData = $invoices->map(function ($invoice) use ($project, $creatorName) {
+    //         return [
+    //             'id'=>$invoice->id,
+    //             'status' => $invoice->status,
+    //             'payment_method' => $invoice->payment_method,
+    //             'created_at' => $invoice->created_at->toDateTimeString(),
+    //             'due_date' => $invoice->due_date,
+    //             'amount' => $invoice->amount,
+    //             'project_name' => $project->name,
+    //             'client_name' => $creatorName,
+    //         ];
+    //     });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Invoices retrieved successfully.',
+    //         'data' => $invoiceData
+    //     ], 200);
+    // }
+    
     public function getInvoicesForProject($projectId, Request $request)
-    {
-        $project = Project::find($projectId);
+{
+    $project = Project::find($projectId);
 
-        if (!$project) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Project not found.',
-                'data' => null
-            ], 404);
-        }
+    if (!$project) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Project not found.',
+            'data' => null
+        ], 404);
+    }
 
-        // Apply the filters and only include allowed ones
-        $invoicesQuery = QueryBuilder::for(Invoice::class)
-            ->where('project_id', $projectId)
-            ->with('milestone');
-
-        // Apply status filter if it's provided in the query string
-        $invoicesQuery->allowedFilters([
-            'status', // status can be 'paid', 'unpaid', etc.
+    // Base query
+    $invoicesQuery = QueryBuilder::for(Invoice::class)
+        ->where('project_id', $projectId)
+        ->with('milestone')
+        ->allowedFilters([
+            'status',
             'payment_method',
             'due_date',
         ]);
 
-        // Get the invoices
-        $invoices = $invoicesQuery->get();
+    $invoices = $invoicesQuery->get();
 
-        if ($invoices->isEmpty()) {
-            return response()->json([
-                'status' => true,
-                'message' => 'No invoices found for this project.',
-                'data' => []
-            ], 200);
-        }
+    $client = Client::find($project->client_id);
+    $creatorName = $client ? $client->name : 'Unknown';
 
-        $client = Client::find($project->client_id);
-        $creatorName = $client ? $client->name : 'Unknown';
+    // =========================
+    // 🔹 INVOICES SUMMARY
+    // =========================
+    $now = Carbon::now();
 
-        // Transform invoice data for response
-        $invoiceData = $invoices->map(function ($invoice) use ($project, $creatorName) {
-            return [
-                'status' => $invoice->status,
-                'payment_method' => $invoice->payment_method,
-                'created_at' => $invoice->created_at->toDateTimeString(),
-                'due_date' => $invoice->due_date,
-                'amount' => $invoice->amount,
-                'project_name' => $project->name,
-                'client_name' => $creatorName,
-            ];
-        });
+    $summary = [
+        'all' => $invoices->count(),
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Invoices retrieved successfully.',
-            'data' => $invoiceData
-        ], 200);
+        'completed' => $invoices
+            ->where('status', 'paid')
+            ->count(),
+
+        'pending' => $invoices->filter(function ($invoice) use ($now) {
+            return
+                $invoice->status === 'unpaid' &&
+                $invoice->milestone &&
+                Carbon::parse($invoice->milestone->end_date)->lt($now);
+        })->count(),
+
+        'ongoing' => $invoices->filter(function ($invoice) use ($now) {
+            return
+                $invoice->status === 'unpaid' &&
+                $invoice->milestone &&
+                Carbon::parse($invoice->milestone->end_date)->gte($now);
+        })->count(),
+    ];
+
+    // =========================
+    // 🔹 FILTER BY UI STATUS
+    // =========================
+    if ($request->filled('ui_status')) {
+        $uiStatus = $request->ui_status;
+
+        $invoices = $invoices->filter(function ($invoice) use ($uiStatus, $now) {
+            return match ($uiStatus) {
+                'completed' => $invoice->status === 'paid',
+
+                'pending' =>
+                    $invoice->status === 'unpaid' &&
+                    $invoice->milestone &&
+                    Carbon::parse($invoice->milestone->end_date)->lt($now),
+
+                'ongoing' =>
+                    $invoice->status === 'unpaid' &&
+                    $invoice->milestone &&
+                    Carbon::parse($invoice->milestone->end_date)->gte($now),
+
+                default => true, // all
+            };
+        })->values();
     }
+
+    // =========================
+    // 🔹 TRANSFORM RESPONSE
+    // =========================
+    $invoiceData = $invoices->map(function ($invoice) use ($project, $creatorName) {
+        return [
+            'id'             => $invoice->id,
+            'status'         => $invoice->status,
+            'payment_method' => $invoice->payment_method,
+            'created_at'     => $invoice->created_at->toDateTimeString(),
+            'due_date'       => $invoice->due_date,
+            'amount'         => $invoice->amount,
+            'project_name'   => $project->name,
+            'client_name'    => $creatorName,
+            'milestone'      => $invoice->milestone?->name,
+        ];
+    });
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'Invoices retrieved successfully.',
+        'data' => [
+            'summary'  => $summary,
+            'invoices' => $invoiceData
+        ]
+    ], 200);
+}
+    
+    
     public function getInvoiceStatusCounts()
     {
         $user = auth()->user();
@@ -227,6 +338,7 @@ class InvoiceController extends BaseController
                 'client_name' => auth()->user()->name,
                 'created_at' => $invoice->created_at->format('d-m-Y'),
                 'amount' => number_format($invoice->amount, 2),
+                'due_date'=>$invoice->due_date,
                 'status' => ucfirst($status), // Overdue or Paid/Unpaid
             ];
         });
@@ -239,53 +351,64 @@ class InvoiceController extends BaseController
     }
 
 
-    public function getInvoiceDetails($invoiceId)
-    {
-        $invoice = Invoice::with([
-            'milestone.tasks',
-            'project'
-        ])->find($invoiceId);
+public function getInvoiceDetails(Request $request, $invoiceId)
+{
+    $invoice = Invoice::with([
+        'milestone.tasks',
+        'project'
+    ])->find($invoiceId);
 
-        if (!$invoice) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invoice not found.',
-                'data' => []
-            ], 404);
-        }
-
-        // Determine overdue status for unpaid invoices
-        $status = $invoice->status;
-        if ($status === 'unpaid' && $invoice->due_date && Carbon::parse($invoice->due_date)->isPast()) {
-            $status = 'overdue';
-        }
-
-        $formattedInvoice = [
-            'id' => $invoice->id,
-            'invoice_id' => 'INV-' . $invoice->id,
-            'status' => ucfirst($status), // Overdue or Paid/Unpaid
-            'created_at' => $invoice->created_at->format('d-m-Y'),
-            'due_date' => $invoice->due_date ? $invoice->due_date : null,
-            'payment_type' => $invoice->payment_method ?? 'N/A',
-            'amount' => number_format($invoice->amount, 2),
-            'tasks' => $invoice->milestone
-                ? $invoice->milestone->tasks->map(function ($task) {
-                    return [
-                        'task_id' => $task->id,
-                        'task_name' => $task->label,
-                        'status' => ucfirst($task->status),
-                        'created_at' => $task->created_at,
-                    ];
-                })
-                : []
-        ];
-
+    if (!$invoice) {
         return response()->json([
-            'status' => true,
-            'message' => 'Invoice details retrieved successfully.',
-            'data' => $formattedInvoice
-        ], 200);
+            'status' => false,
+            'message' => 'Invoice not found.',
+            'data' => []
+        ], 404);
     }
+
+    // Determine overdue status
+    $status = $invoice->status;
+    if ($status === 'unpaid' && $invoice->due_date && Carbon::parse($invoice->due_date)->isPast()) {
+        $status = 'overdue';
+    }
+
+    $formattedInvoice = [
+        'id' => $invoice->id,
+        'invoice_id' => 'INV-' . $invoice->id,
+        'status' => ucfirst($status),
+        'created_at' => $invoice->created_at->format('d-m-Y'),
+        'due_date' => $invoice->due_date,
+        'payment_type' => $invoice->payment_method ?? 'N/A',
+        'amount' => number_format($invoice->amount, 2),
+        'tasks' => $invoice->milestone
+            ? $invoice->milestone->tasks->map(function ($task) {
+                return [
+                    'task_id' => $task->id,
+                    'task_name' => $task->label,
+                    'status' => ucfirst($task->status),
+                    'created_at' => $task->created_at->format('d-m-Y'),
+                ];
+            })->toArray()
+            : []
+    ];
+
+    // ✅ If PDF requested
+    if ($request->query('format') === 'pdf') {
+        $pdf = Pdf::loadView('invoices.pdf', [
+            'invoice' => $formattedInvoice
+        ]);
+
+        return $pdf->download('invoice-' . $invoice->id . '.pdf');
+    }
+
+    // ✅ Default JSON response
+    return response()->json([
+        'status' => true,
+        'message' => 'Invoice details retrieved successfully.',
+        'data' => $formattedInvoice
+    ], 200);
+}
+
 
     public function getUserInvoices(Request $request)
 {

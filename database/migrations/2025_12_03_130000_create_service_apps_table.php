@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('type', ['General', 'Master']);
             $table->string('category');
             $table->text('description');
+            $table->boolean('is_external')->default(true)->comment('Whether this app uses external SSO authentication.');
 
             // Price structure (e.g., store 13500 for 135.00 EGP)
             $table->unsignedInteger('price_amount');
@@ -32,6 +33,8 @@ return new class extends Migration
             $table->string('icon_type')->default('image');
             $table->string('icon_url');
             $table->string('icon_alt')->nullable();
+            $table->string('app_url')->nullable()->comment('Root URL of the external service.');
+            $table->string('sso_entrypoint')->default('/sso/auth')->comment('SSO endpoint path on the external app.');
 
             $table->timestamps();
         });

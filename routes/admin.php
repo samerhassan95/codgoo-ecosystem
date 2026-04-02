@@ -148,6 +148,7 @@ Route::middleware('admin')->group(function () {
     Route::get('chats', [ChatController::class, 'getAllChats']);
     Route::post('chats/{chatId}/seen', [ChatController::class, 'markChatAsSeen']);
     Route::get('employees', [EmployeeAuthController::class, 'getAllEmployees']);
+    // Route::get('all-employees', [EmployeeAuthController::class, 'allEmployees']);
     Route::delete('products/{product}/media/{media}', [ProductController::class, 'deleteMedia']);
     Route::get('notifications', [NotificationController::class, 'getNotifications']);
     Route::post('notifications/{id}/read', [NotificationController::class, 'markNotificationAsRead']);

@@ -1,0 +1,2 @@
+# This file ensures the keys directory is created in Git
+# The actual .pem key files are ignored for security reasons

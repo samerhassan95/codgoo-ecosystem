@@ -62,6 +62,12 @@ class TaskController extends BaseController
 
     public function store(Request $request)
     {
+            if (!auth('admin')->check()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Only admins can create tasks'
+        ], 403);
+    }
         $validatedData = $request->validate((new TaskRequest())->rules());
 
         // Extract assigned employees if provided

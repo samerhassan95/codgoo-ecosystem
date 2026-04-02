@@ -15,7 +15,7 @@ class StoreCustomBundleRequest extends FormRequest
     {
         // Typically, you would check if the user is authenticated here.
         // For example: return auth()->check();
-        return true;
+return auth()->check();
     }
 
     /**
@@ -24,16 +24,23 @@ class StoreCustomBundleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // bundleId validation (must exist in the BundlePackages table)
-            'bundleId' => ['required', 'integer', 'exists:bundle_packages,id'],
+            // Bundle
+            'bundleId' => [
+                'required',
+                'integer',
+                'exists:bundle_packages,id'
+            ],
 
-            // Applications validation (must be an array of valid ServiceApp IDs)
-            'applications' => ['required', 'array', 'min:1'],
-            'applications.*' => ['required', 'integer', 'exists:service_apps,id'],
+            // 🔥 PRICE PLAN (monthly / yearly / etc)
+            'priceId' => [
+                'required',
+                'integer',
+                'exists:bundle_package_prices,id'
+            ],
 
-            // Customer ID validation (assuming the Customer ID is passed explicitly)
-            // Note: If you use Laravel Sanctum/Passport, you might get this from auth() instead.
-            'customer.id' => ['required', 'integer', 'exists:clients,id'],
+            // Optional applications
+            'applications' => ['sometimes', 'array'],
+            'applications.*' => ['integer', 'exists:service_apps,id'],
         ];
     }
 

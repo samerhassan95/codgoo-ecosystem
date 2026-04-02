@@ -6,6 +6,8 @@ use App\Models\Invoice;
 use App\Services\OpayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\Payment as PaymentModel;
+use App\Services\PayPalService;
 
 class PaymentController extends Controller
 {
@@ -76,14 +78,41 @@ public function handleCallback(Request $request)
 
 
 
-    public function paymentSuccess()
-    {
-        return response()->json(['message' => 'Payment has been completed successfully!']);
+public function paypalSuccess(PaymentModel $payment, PayPalService $paypal)
+{
+    if ($payment->status !== 'pending') {
+        return response()->json(['status' => false]);
     }
 
-    public function paymentCancel()
-    {
-        return response()->json(['message' => 'Payment cancelled!']);
+    $capture = $paypal->captureOrder(
+        $payment->provider_payment_id
+    );
+
+    if (($capture['status'] ?? null) !== 'COMPLETED') {
+        $payment->update(['status' => 'failed']);
+        return response()->json(['status' => false]);
     }
+
+    DB::transaction(function () use ($payment) {
+        $payment->update(['status' => 'completed']);
+
+        $bundle = $payment->payable;
+        $bundle->update(['status' => 'active']);
+
+        if (!empty($bundle->requested_app_ids)) {
+            $bundle->applications()->sync($bundle->requested_app_ids);
+        }
+    });
+
+    return response()->json(['status' => true]);
+}
+
+    
+    
+
+public function paypalCancel()
+{
+    return redirect()->route('payment.failed')->with('error', 'Payment cancelled by user.');
+}
 
 }

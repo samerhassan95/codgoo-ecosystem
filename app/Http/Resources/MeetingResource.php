@@ -17,7 +17,7 @@ class MeetingResource extends JsonResource
             'status' => $this->status,
             'project' => new ProjectResource($this->project),
             'description' => $this->description,
-            'meeting_date' => $this->slot ? $this->slot->date : null, 
+            'meeting_date' => $this->date, 
             'meeting_name' => $this->meeting_name,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

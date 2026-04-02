@@ -9,7 +9,12 @@ class Milestone extends Model
 {
     use HasFactory;
     protected $guarded = [];
-
+    public const PHASES = [
+        'planning',
+        'design',
+        'development',
+        'testing',
+    ];
     public function project()
     {
         return $this->belongsTo(Project::class);

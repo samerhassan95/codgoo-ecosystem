@@ -13,17 +13,23 @@ class BundlePackageResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'apps_count'=>$this->apps_count,
             'name' => $this->name,
             'tagline' => $this->tagline,
-            'price' => [
-                'amount' => $this->price_amount / 100,
-                'currency' => $this->price_currency,
-            ],
             'features' => $this->features, // JSON cast as array in Model
             'savings' => [
                 'percentage' => (int) $this->savings_percentage,
                 'text' => $this->savings_text,
             ],
+            'prices' => $this->prices->map(function($price) {
+    return [
+        'id' => $price->id,
+        'name' => $price->name,
+        'amount' => $price->amount / 100,
+        'currency' => $price->currency,
+        'duration_days' => $price->duration_days,
+    ];
+}),
             'badges' => $this->badges ?? [], // JSON cast as array in Model
         ];
     }

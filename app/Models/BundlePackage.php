@@ -12,8 +12,6 @@ class BundlePackage extends Model
     protected $fillable = [
         'name',
         'tagline',
-        'price_amount',
-        'price_currency',
         'features',
         'savings_percentage',
         'savings_text',
@@ -35,4 +33,9 @@ class BundlePackage extends Model
     {
         return $this->hasMany(CustomBundle::class);
     }
+    
+    public function prices()
+{
+    return $this->hasMany(BundlePackagePrice::class);
+}
 }

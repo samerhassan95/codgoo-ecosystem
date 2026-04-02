@@ -62,9 +62,17 @@ class Handler extends ExceptionHandler
      */
     protected function unauthenticated($request, AuthenticationException $exception)
     {
-        return response()->json([
-            'status' => false,
-            'message' => 'Unauthorized access. Please provide a valid token.',
-        ], 401);
+        // 💡 CRITICAL FIX: If the request is expecting JSON (typical for API calls),
+        // return a 401 JSON response. This stops the framework from trying to redirect.
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthenticated.',
+                'code' => 401
+            ], 401);
+        }
+
+        // Fallback for standard web-based requests (if any)
+        return redirect()->guest($exception->redirectTo() ?? route('login'));
     }
 }

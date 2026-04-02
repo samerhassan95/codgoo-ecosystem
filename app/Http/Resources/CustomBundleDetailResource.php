@@ -14,8 +14,8 @@ class CustomBundleDetailResource extends JsonResource
     {
         // Calculate modification window details
         $now = Carbon::now();
-        $canModify = $now->lessThan($this->expires_at);
-        $diff = $now->diff($this->expires_at);
+        // $canModify = $now->lessThan($this->expires_at);
+        // $diff = $now->diff($this->expires_at);
         $bundlePackage = $this->bundlePackage;
 
         return [
@@ -25,10 +25,6 @@ class CustomBundleDetailResource extends JsonResource
                 'applicationsPurchased' => $this->applications->count(),
                 'purchasedAt' => $this->purchased_at->toISOString(),
                 'purchasedAtLabel' => 'Purchased ' . $this->purchased_at->format('F j, Y'),
-                'totalPrice' => [
-                    'amount' => $this->total_price_amount / 100,
-                    'currency' => $this->total_price_currency,
-                ],
                 // Pull savings data from the related BundlePackage model
                 'savings' => [
                     'percentage' => (int) $bundlePackage->savings_percentage,
@@ -38,11 +34,11 @@ class CustomBundleDetailResource extends JsonResource
             // Use the ServiceAppResource to format the included applications
             'applications' => ServiceAppResource::collection($this->applications),
 
-            'modification' => [
-                'canModify' => $canModify,
-                'remainingDays' => $canModify ? $diff->days : 0,
-                'remainingHours' => $canModify ? $diff->h : 0,
-            ],
+            // 'modification' => [
+            //     'canModify' => $canModify,
+            //     'remainingDays' => $canModify ? $diff->days : 0,
+            //     'remainingHours' => $canModify ? $diff->h : 0,
+            // ],
         ];
     }
 }

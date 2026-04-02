@@ -21,14 +21,31 @@ class FirebaseService
     {
         $credentialsPath = config('firebase.credentials');
 
-        if (!file_exists(base_path($credentialsPath))) {
-            throw new \Exception("Firebase credentials file not found at: " . base_path($credentialsPath));
+        // Handle both absolute and relative paths
+        if (!$credentialsPath) {
+            throw new \Exception("Firebase credentials path not configured");
         }
 
-        $factory = (new Factory)->withServiceAccount(base_path($credentialsPath));
+        // If path is not absolute, make it relative to base path
+        if (!file_exists($credentialsPath)) {
+            $basePath = base_path($credentialsPath);
+            if (file_exists($basePath)) {
+                $credentialsPath = $basePath;
+            } else {
+                throw new \Exception(
+                    "Firebase credentials file not found at: {$credentialsPath} or {$basePath}"
+                );
+            }
+        }
+
+        $factory = (new Factory)->withServiceAccount($credentialsPath);
+
         $this->messaging = $factory->createMessaging();
+
         $this->firestore = new FirestoreClient([
-            'keyFilePath' => base_path($credentialsPath),
+            'keyFilePath' => $credentialsPath,
+             'transport' => 'rest',
+            
         ]);
     }
 

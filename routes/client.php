@@ -23,11 +23,26 @@ use App\Http\Controllers\{CategoryController,
     PaymentController,
     ChatController,
     ClientDashboardController,
+    MarketplaceController,
+    TaskDiscussionController,
+    AddonController
 };
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Client\TwoFactorController;
+use App\Http\Controllers\Client\AdditionalEmailController;
+use App\Http\Controllers\Client\PaymentMethodController;
+use App\Http\Controllers\Client\AccountShareController;
+use App\Http\Controllers\Employee\EmployeeAuthController;
 
 
-Route::middleware('client')->group(function ()  {
+    Route::apiResource('products', ProductController::class)->only(['index', 'show'])->names([
+        'index' => 'client.products.index',
+        'show' => 'client.products.show',
+    ]);
+
+    Route::get('our-products', [ProductController::class, 'ourProducts']);
+
+Route::middleware('client','jwt.auth')->group(function ()  {
     Route::apiResource('projects', ProjectController::class)->names([
         'index' => 'client.projects.index',
         'show' => 'client.projects.show',
@@ -35,10 +50,7 @@ Route::middleware('client')->group(function ()  {
         'update' => 'client.projects.update',
         'destroy' => 'client.projects.destroy',
     ]);
-    Route::apiResource('products', ProductController::class)->only(['index', 'show'])->names([
-        'index' => 'client.products.index',
-        'show' => 'client.products.show',
-    ]);
+
 
     Route::apiResource('milestone', MilestoneController::class)->only(['index', 'show'])->names([
         'index' => 'client.milestone.index',
@@ -56,14 +68,17 @@ Route::middleware('client')->group(function ()  {
     Route::apiResource('tasks', TaskController::class)->names([
         'index' => 'client.tasks.index',
         'show' => 'client.tasks.show',
-        'store' => 'client.tasks.store',
-        'update' => 'client.tasks.update',
-        'destroy' => 'client.tasks.destroy',
+        // 'store' => 'client.tasks.store',
+        // 'update' => 'client.tasks.update',
+        // 'destroy' => 'client.tasks.destroy',
     ]);
 
     Route::get('milestones/{milestone_id}/tasks', [TaskController::class, 'getTasksByMilestone']);
     Route::get('projects/{project_id}/tasks', [TaskController::class, 'getTasksByProject']);
     Route::post('change-password', [ClientAuthController::class, 'changePassword']);
+    // add under the settings / change-password lines
+Route::post('change-email', [ClientAuthController::class, 'changeEmail']);     // two-step: initiate (new_email+password) or verify (otp)
+Route::post('change-profile', [ClientAuthController::class, 'changeProfile']); // multipart/form-data: name + photo file
     Route::post('verify-change-phone', [ClientAuthController::class, 'verifyChangePhone']);
     Route::post('change-phone-request', [ClientAuthController::class, 'changePhoneRequest']);
 
@@ -83,6 +98,7 @@ Route::middleware('client')->group(function ()  {
     Route::apiResource('topic', TopicController::class)->names([
         'index' => 'client.topic.index',
         'show' => 'client.topic.show',
+        'store' => 'client.topic.store',
     ]);
 
     Route::apiResource('departments', DepartmentController::class)->names([
@@ -108,13 +124,15 @@ Route::middleware('client')->group(function ()  {
 
     Route::get('project/status-count', [ProjectController::class, 'getStatusCounts']);
     Route::get('project/filter/{status}', [ProjectController::class, 'filterProjectsByStatus']);
-    Route::get('project/{project_id}/details', [ProjectController::class, 'getProjectDetails']);
+    // Route::get('project/{project_id}/details', [ProjectController::class, 'getProjectDetails']);
     Route::get('invoice/status/count', [InvoiceController::class, 'getInvoiceStatusCounts']);
     Route::get('project/{projectId}/tasks-summary', [ProjectController::class, 'getTaskSummaryForProject']);
+    Route::get('milestones/{milestoneId}/tasks/summary', [ProjectController::class, 'getTaskSummaryForMilestone']);
     Route::post('project/{projectId}/attachments', [ProjectController::class, 'uploadAttachment']);
     Route::get('project/{projectId}/attachments', [ProjectController::class, 'getAllAttachments']);
     Route::get('projects/{projectId}/invoices', [InvoiceController::class, 'getInvoicesForProject']);
 
+Route::get('/addons', [AddonController::class, 'index']);
 
 
     Route::prefix('meetings')->group(function () {
@@ -166,9 +184,9 @@ Route::middleware('client')->group(function ()  {
 
     Route::post('pay-invoice/{invoiceId}', [PaymentController::class, 'payInvoice']);
     ///Software Dashboard Routes
-    Route::get('dashboard/projects', [ProjectController::class, 'getClientDashboardProjects']);
+    Route::get('dashboard/projects', [ProjectController::class, 'getClientDashboardProjects'])->name('client_projects');
     Route::get('project/overview/{id}', [ProjectController::class, 'getProjectFullDetails']);
-    // Route::get('project/tasks/{id}', [ProjectController::class, 'getProjectTasks']);
+    Route::get('project/task-details/{id}', [ProjectController::class, 'getTaskFullDetails']);
     Route::get('all-client-invoices', [InvoiceController::class, 'getUserInvoices']);
     Route::get('project/attachments/{id}', [ProjectController::class, 'getProjectAttachments']);
     Route::delete('project/attachments/{id}', [ProjectController::class, 'deleteAttachment']);
@@ -176,10 +194,75 @@ Route::middleware('client')->group(function ()  {
     Route::delete('meetings/{id}', [MeetingController::class, 'destroy']);
     Route::put('meetings/{id}', [MeetingController::class, 'update']);
     Route::get('meeting-summary/{id}', [MeetingController::class, 'getMeetingSummary']);
-    Route::get('our-products', [ProductController::class, 'ourProducts']);
     Route::get('dashboard', [ClientDashboardController::class, 'dashboard']);
     Route::get('project/tasks/{id}', [ProjectController::class, 'getMilestoneTasks']);
+    Route::get('tasks/{discussionId}/discussion', [TaskDiscussionController::class, 'index']);
+
+    Route::get('view-invoice/{invoiceID}', [InvoiceController::class, 'getInvoiceDetails']);
+    Route::post('meetings/{meeting}/notes', [MeetingController::class, 'saveNotes']);
+        Route::get('all-employees', [EmployeeAuthController::class, 'allEmployees']);
+    
+    ////////settings//////////
+    Route::get('/settings', [ClientAuthController::class, 'getProfile']); // or a consolidated settings endpoint
+
+    // Two-Factor
+    Route::get('/two-factor', [TwoFactorController::class, 'show']);
+    Route::post('/two-factor/enable', [TwoFactorController::class, 'enable']);
+    Route::post('/two-factor/verify', [TwoFactorController::class, 'verify']);
+    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable']);
+
+    // Additional Emails
+    Route::get('/emails', [AdditionalEmailController::class, 'index']);
+    Route::post('/emails', [AdditionalEmailController::class, 'store']);
+    Route::post('/emails/{id}/verify', [AdditionalEmailController::class, 'verify']);
+    Route::delete('/emails/{id}', [AdditionalEmailController::class, 'destroy']);
+
+    // Account Sharing
+    Route::get('/account-sharing', [AccountShareController::class, 'index']);
+    Route::post('/account-sharing/invite', [AccountShareController::class, 'store']);
+    Route::post('/account-sharing/{id}/update', [AccountShareController::class, 'update']);
+    Route::delete('/account-sharing/{id}', [AccountShareController::class, 'destroy']);
+
+////////
+Route::get('/unbooked-slots', [AvailableSlotController::class, 'getUnbookedSlots']);
 
 
+
+
+    // Payment Methods
+    Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
+    Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
+    Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
+
+Route::get('codgoo-app-dashboard',[MarketplaceController::class, 'dashboard']);
+Route::get('billing',[MarketplaceController::class, 'billingDashboard']);
 });
-Route::get('topics', [TopicController::class, 'getTopicsBySection']);
+// Route::middleware('multi.guard:admin,employee,client')->get('tasks/{discussionId}/discussion', [TaskDiscussionController::class, 'index']);
+// Route::middleware('multi.guard:admin,employee,client')->post('tasks/{task}/discussion/send', [TaskDiscussionController::class, 'send']);
+Route::middleware('auth:admin,employee,client')->get('/tasks/{task}/alldiscussions', [TaskDiscussionController::class, 'listDiscussions']);
+Route::middleware('auth:admin,employee,client')->post('/tasks/{taskId}/discussions', [TaskDiscussionController::class, 'createDiscussion'])
+    ->name('tasks.discussions.create');
+    
+    Route::get('discussions/{discussion}/messages', [
+    TaskDiscussionController::class,
+    'viewDiscussionMessages'
+])->middleware(['auth:admin,client,employee']);
+Route::patch('/meetings/{id}/cancel', [MeetingController::class, 'cancelMeeting'])
+    ->middleware(['auth:admin,client,employee']);
+    Route::get('/meetings/{id}/join', [MeetingController::class, 'joinMeeting'])
+    ->middleware(['auth:admin,client,employee']);// or your auth middleware
+
+    Route::get('employees', [EmployeeAuthController::class, 'getAllEmployees'])->middleware(['auth:admin,client,employee']);
+
+// Route::get('topics', [TopicController::class, 'getTopicsBySection']);
+ Route::get('sections', [TopicController::class, 'getSections']);
+  Route::get('sections/{id}', [TopicController::class, 'getSectionById']);
+  Route::get('topics/{id}', [TopicController::class, 'getTopicById']);
+  Route::post('/topics/{id}/feedback', [TopicController::class, 'handleFeedback']);
+
+
+
+Route::post(
+    '/discussions/{discussionId}/messages',
+    [TaskDiscussionController::class, 'sendToDiscussion']
+)->middleware(['auth:admin,employee,client']);

@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Meeting extends Model
 {
-    protected $fillable = ['slot_id', 'client_id', 'start_time', 'end_time', 'jitsi_url', 'meeting_name', 'project_id','status', 'description'];
+    protected $fillable = ['slot_id', 'start_time', 'end_time', 'jitsi_url', 'meeting_name', 'project_id','status', 'description','client_id','task_id','date','notes'];
+        protected $casts = [
+        'date' => 'date', // ✅ optional but recommended
+    ];
 
     public function slot()
     {
@@ -26,11 +29,14 @@ class Meeting extends Model
     {
         return $this->hasMany(MeetingLog::class);
     }
-    public function employees()
+public function employees()
+{
+    return $this->belongsToMany(Employee::class, 'meeting_employees', 'meeting_id', 'employee_id');
+}
+
+
+    public function task()
     {
-        return $this->belongsToMany(Employee::class, 'meeting_employees');
+        return $this->belongsTo(Task::class);
     }
-
-
-
 }

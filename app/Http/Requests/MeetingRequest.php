@@ -21,7 +21,9 @@ class MeetingRequest extends FormRequest
             'meeting_name' => ['required', 'string', 'max:255'],
             'project_id' => ['nullable', 'exists:projects,id'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'client_id' => ['required', 'exists:clients,id'],
+            // 'client_id' => ['required', 'exists:clients,id'],
+                    'task_id' => 'nullable|exists:tasks,id',
+
             'slot_id' => [
                 'required',
                 'exists:available_slots,id',

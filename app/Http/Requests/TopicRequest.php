@@ -27,6 +27,7 @@ class TopicRequest extends FormRequest
             'header' => 'required|string|max:255',
             'description' => 'nullable|string',
             'gallery' => 'array', 
+            'date' => 'required|date',
             'gallery.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }

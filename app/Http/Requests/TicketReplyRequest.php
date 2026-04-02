@@ -9,7 +9,7 @@ class TicketReplyRequest extends FormRequest
     public function rules()
     {
         return [
-            'reply' => 'required|string|max:255',
+            'reply' => 'nullable|string|max:255',
             'ticket_id' => 'required|exists:tickets,id',
             'admin_id' => 'required|exists:admins,id',
         ];

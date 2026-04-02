@@ -211,6 +211,7 @@ class EmployeeAuthController extends Controller
                  'data' => null,
                     ], 402);
         }
+Log::info('LOGIN VALUE', ['login' => $request->login]);
 
         $employee = Employee::where('phone', $request->login)
                         ->first();
@@ -589,4 +590,37 @@ class EmployeeAuthController extends Controller
             'data' => $employees,
         ]);
     }
+    
+    
+    public function allEmployees(Request $request)
+{
+    try {
+        $employees = Employee::select(
+                'id',
+                'name',
+                'phone',
+                'email',
+                'role',
+                'image',
+                'created_at'
+            )
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Employees retrieved successfully.',
+            'data' => $employees,
+        ], 200);
+
+    } catch (\Exception $e) {
+        Log::error('Get all employees error: ' . $e->getMessage());
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to retrieve employees.',
+            'data' => null,
+        ], 500);
+    }
+}
 }
