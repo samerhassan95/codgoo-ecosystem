@@ -1,0 +1,2 @@
+# This file ensures the firebase directory is created in Git
+# The actual Firebase credentials JSON files are ignored for security reasons

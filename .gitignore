@@ -47,3 +47,7 @@ public/untitled file
 # Security - JWT Keys (IMPORTANT: Never commit these!)
 /storage/keys/*.pem
 !/storage/keys/.gitkeep
+
+# Security - Firebase Credentials (IMPORTANT: Never commit these!)
+/storage/firebase/*.json
+!/storage/firebase/.gitkeep
