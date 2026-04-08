@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Repositories\Employee\EmployeeRepositoryInterface;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 
 class EmployeeRepository implements EmployeeRepositoryInterface
 {
@@ -44,10 +45,25 @@ class EmployeeRepository implements EmployeeRepositoryInterface
     {
         $employee = Employee::where('phone', $phone)->first();
         if (!$employee) {
-            return ['error' => 'Employee not found'];
+            return [
+                'status' => false,
+                'message' => 'Employee not found',
+                'data' => null
+            ];
         }
 
-        // Implement your password reset logic here (e.g., sending reset email or SMS)
-        return ['message' => 'Password reset link sent'];
+        // Generate OTP for testing/development
+        $otp = 1234;
+        
+        // Store OTP in cache for 10 minutes
+        Cache::put('forgot_password_otp_' . $phone, $otp, now()->addMinutes(10));
+
+        return [
+            'status' => true,
+            'message' => 'OTP sent successfully for password reset',
+            'data' => [
+                'otp' => $otp  // إضافة OTP للـ response للتطوير والاختبار
+            ]
+        ];
     }
 }

@@ -74,7 +74,9 @@ class EmployeeAuthController extends Controller
         return response()->json([
             'status' => true,
             'message' => "OTP sent successfully, please verify.",
-            'data' => null,
+            'data' => [
+                'otp' => $otp  // إضافة OTP للـ response للتطوير والاختبار
+            ],
         ]);
     }
 
