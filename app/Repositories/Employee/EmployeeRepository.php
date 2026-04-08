@@ -52,8 +52,8 @@ class EmployeeRepository implements EmployeeRepositoryInterface
             ];
         }
 
-        // Generate OTP for testing/development
-        $otp = 1234;
+        // Generate random 4-digit OTP for production security
+        $otp = rand(1000, 9999);
         
         // Store OTP in cache for 10 minutes
         Cache::put('forgot_password_otp_' . $phone, $otp, now()->addMinutes(10));

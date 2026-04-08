@@ -52,9 +52,8 @@ class EmployeeAuthController extends Controller
         }
 
         // $imagePath = $request->hasFile('image') ? ImageService::upload($request->file('image'), 'employee_images') : null;
-        // $coverPhotoPath = $request->hasFile('cover_photo') ? ImageService::upload($request->file('cover_photo'), 'employee_cover_photos') : null;
-
-        $otp = 1234;
+        // Generate random 4-digit OTP for production security
+        $otp = rand(1000, 9999);
 
         $cachedData = [
             'phone' => $request->phone,
@@ -318,7 +317,7 @@ Log::info('LOGIN VALUE', ['login' => $request->login]);
         }
 
         $phone = $request->phone;
-        $otp = 1234; // يمكنك استبداله بـ rand(1000, 9999) للإنتاج
+        $otp = rand(1000, 9999); // Random 4-digit OTP for production security
 
         // تخزين OTP لكل رقم هاتف بشكل منفصل
         Cache::put('otp_' . $phone, $otp, now()->addMinutes(10));
@@ -475,7 +474,7 @@ Log::info('LOGIN VALUE', ['login' => $request->login]);
             ], 401);
         }
 
-        $otp = 1234;
+        $otp = rand(1000, 9999); // Random 4-digit OTP for production security
 
 
         Cache::put('otp_change_phone_' . $Employee->id, [
