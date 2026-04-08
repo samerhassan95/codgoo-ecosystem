@@ -59,7 +59,7 @@ class EmployeeAuthController extends Controller
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'name' => $request->name,
-            'email' => $request->email ?: null,  // استخدام null بدلاً من string فارغ لتجنب مشكلة unique constraint
+            'email' => $request->email ?: ('no-email-' . time() . '-' . rand(1000, 9999) . '@temp.local'),  // Generate unique email if not provided
             // 'image' => $imagePath,
             // 'cover_photo' => $coverPhotoPath,
             'intro' => $request->intro,
